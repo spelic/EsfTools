@@ -4,31 +4,25 @@ using EsfCore.Tags;
 
 namespace EsfCore.Tags
 {
-    public class ParmTag : IEsfTagModel
+    public class ParmTag
     {
-        [JsonIgnore]
-        public string TagName => "PARM";
-
-        [JsonPropertyName("name")]
         public string Name { get; set; }
+        public ParamType ParmType { get; set; }
+        public DataType Type { get; set; }
+        public int? Bytes { get; set; }
+        public int Decimals { get; set; }
+        public string Desc { get; set; }
 
-        [JsonPropertyName("type")]
-        public string Type { get; set; }
-
-        public static ParmTag Parse(TagNode node)
+        public static ParmTag Parse(TagNode n)
         {
-            var tag = new ParmTag();
-
-            if (node.Attributes.TryGetValue("NAME", out var nameList) && nameList.Count > 0)
-                tag.Name = nameList[0];
-
-            if (node.Attributes.TryGetValue("TYPE", out var typeList) && typeList.Count > 0)
-                tag.Type = typeList[0];
-
-            return tag;
+            var p = new ParmTag();
+            p.Name = n.Attributes["NAME"].First();
+            p.ParmType = Enum.Parse<ParamType>(n.Attributes.GetValueOrDefault("PARMTYPE")?.First() ?? "ITEM", true);
+            p.Type = Enum.Parse<DataType>(n.Attributes.GetValueOrDefault("TYPE")?.First() ?? "CHA", true);
+            if (n.Attributes.TryGetValue("BYTES", out var b)) p.Bytes = int.Parse(b.First());
+            if (n.Attributes.TryGetValue("DECIMALS", out var d)) p.Decimals = int.Parse(d.First());
+            p.Desc = n.Attributes.GetValueOrDefault("DESC")?.First();
+            return p;
         }
-
-        public override string ToString() =>
-            $"ParmTag: Name={Name}, Type={Type}";
     }
 }

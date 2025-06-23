@@ -16,7 +16,7 @@ namespace EsfCore.Validation
             _validators = validators.ToList();
         }
 
-        public List<string> ValidateAll(EsfProgram program)
+        public List<string> ValidateAll(Tags.EsfProgram program)
         {
             var errors = new List<string>();
 

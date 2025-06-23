@@ -14,18 +14,26 @@ namespace EsfParser.Builder
             {
                 new EzeeTagParser(),
                 new ProgramTagParser(),
-                new ProlTagParser(),
-                new FuncTagParser()
+               
+                new FuncTagParser(),
+                new RecordTagParser(),
+                new TbleTagParser(),
+                new MapTagParser(),
+                new ItemTagParser()
+
             };
 
+           
             foreach (var parser in parsers)
             {
-                var tag = parser.Parse(nodes);
-                if (tag != null)
-                    program.Tags.Add(tag);
+                var parsed = parser.Parse(nodes);
+                if (parsed is IEsfTagModel tag)
+                {
+                    program.AddTag(tag);
+                }
             }
-            // Add all FUNCs individually
-            program.Tags.AddRange(FuncTagParser.ParseAll(nodes));
+
+
             return program;
         }
 

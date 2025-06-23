@@ -1,23 +1,24 @@
-﻿using EsfCore.Esf;
-using EsfParser.Builder;
+using EsfCore.Esf;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace EsfCore.Tags
 {
-    public class FuncTagParser : IEsfTagParser
+    public class ItemTagParser : EsfParser.Builder.IEsfTagParser
     {
-        public string TagName => "FUNC";
+        public string TagName => "ITEM";
 
         public IEsfTagModel Parse(List<TagNode> nodes)
         {
-            var funcs = nodes
+            var items = nodes
                 .Where(n => string.Equals(n.TagName, TagName, StringComparison.OrdinalIgnoreCase))
-                .Select(FuncTag.Parse)
+                .Select(ItemTag.Parse)
                 .ToList();
 
-            return new FuncTagCollection { Functions = funcs };
+            return new ItemTagCollection { Items = items };
         }
     }
+
+    
 }

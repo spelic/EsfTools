@@ -1,0 +1,1746 @@
+:EZEE 440              02/03/21 13:10:21
+:program   name      = M000A             
+           date      = '12/20/2019' time = '13:23:23' type = MAIN     
+           workstor  = M000W01
+           mapgroup  = M000G
+           helpkey   = 01
+           pfequate  = N     implicit = Y  
+           bypkey    = 03 06 
+           execmode  = SEGMENTED
+:mainfun   name      = M000P01.
+:emainfun.
+:tabrec    name      = M000W02
+           type      = RECORD
+:tabrec    name      = TE99W01
+           type      = RECORD
+:prol.
+Glavni meni - proizvodnja
+Aplikacijo izdelal Leskovar Franc            05.12.2002
+--------------spremembe-------------------------------------
+
+
+**********************************************
+03.02.2021 - V22 - Matej
+Dodan IS Alumat - funkcija 41
+**********************************************
+20.12.2019 - V21 - Matej
+Dodan IS Final - funkcija 40
+**********************************************
+16.03.2018 - V20 - Matej
+Dodam IS Stampal - funkcija 39
+**********************************************
+04.10.2017 - V19 - Matej
+Dodam IS Rondal - funkcija 38
+**********************************************
+11.07.2013 - V18 - Matej
+Popravil napis Kontrolne zaheve....
+**********************************************
+25.10.2011 - V17 - Matej
+»e grem not z funkcijo 18, dam
+takoj firmo na '03'. Reöeno v F01.
+**********************************************
+06.01.2011 - V16a - Matej
+Dodal zaËasno funkcijo 50 - program
+ZZ97 - polnenje lokacij (projekt PCP).
+**********************************************
+24.11.2010 - V16 - Matej
+Dodal F37 - Alumobil
+**********************************************
+26.04.2007 - V15 - LF - dodal, ker je vedno bila za naju
+ firma 1:
+      IF M000W01.FIRMA = ' ';    /* ni vsebine, sicer pusti
+        M000W01.FIRMA = '01';
+      END;
+------------------------------------------------------------
+------
+11.04.2007 - V14 - LF
+Ëe si öel direktno v program - F18 ni bilo vseh podatkov za
+ povratek
+kot da bi priöel preko IS00A v M00F01 dodal
+------------------------------------------------------------
+---------
+ 12.12.2006 - V13 - LF
+povratek ni bil kamorkoli od preteklega, ampak
+vedno v IMPOA, zaradi drugaËnega poteka menujev
+****************************************************
+17.10.2006 - V12 - Matej
+STEVAPPL je bil na zaËetku postavljen na
+vrednost 0 in je pri prehodu v Namis metalo
+ven. Opazil TomaûiË Boötkan.
+****************************************************
+12.07.2006 - V10 - Matej
+Sprememba - NOVI WS!!!
+****************************************************
+14.09.2004 - V08
+Funkcija 22 - prehod v Sledljivost II (Kontrolne
+zahteve). Funkcijo 18 (programi za Franca in
+Mateja) "skril" iz mape - öe stalno v uporabi. Matej
+
+*****************************************************
+dodal Seval      03.02.2003-V03
+
+dodal F11 - vodje obratov
+
+
+19.02.2003-V04
+
+*************************************************
+Sprememba        21.11.2003    v05
+dodala na meni funkcijo
+28 - interno naroËanje  eg50a
+
+Breda
+
+************************************************************
+**********************
+Sprememba 17.02.2004 V06
+Dodal funkcijo 35 za IS Livarna. Matej
+*******************************************************
+ Sprememba 18.02.2004 - V07
+Program je bil definiran kot NEsegmenten ???? - obrnil
+na segmentno. Matej
+******************************************************
+:eprol.
+:genopts   print     = N     fold     = N     lines   = 055
+           validsql  = N     validloc = N  
+           mapgrp1   = M000G
+           gengrp1   = Y     gengrp2  = Y  
+:targsys   system    = VSECICS
+:eprogram.
+
+:func      name      = ER99P01           
+           date      = '09/27/2006' time = '06:54:46' option = EXECUTE  
+           desc      = 'Za sporo»ila o napakah na ekr.'
+           refine    = N  
+:before.
+/* To je proces, ki ga v aplikacijah vkljuËimo v primeru napake
+/* in sicer je za to potrebno:
+/* - imeti v WS polja :
+     /* - MSG78  cha/78 - celo sporo»ilo, ki gre v EZEMSG
+     /* - MSG64  cha/64 - za tekstualni del sporo»ila
+     /* - MSGCOD cha/11 - tekst EZESQCOD: - ali SQLCODE: -
+                       /* oz.   EZESQCOD: + ali SQLCODE: +
+     /* - MSG3   num/3  - ätevilka napake
+ /* Ko pride do napake : MOVE 'Text napake ...' TO WS.MSG64
+ /* in naredimo perform v ta proces, kjer sporo»ilo dopolnimo
+ /* s kodo in ga tu poäljemo na ekran ali v procesu od koder
+ /* smo sem priäli.
+ /* Priporo»ljivo je v sporo»ilo vklju»iti tudi naziv tabele
+ /* kjer je napaka nastala!
+ /* ------------------------------------------------------------
+IF EZESQCOD < 0;                 /* negativna napaka
+  MOVE 'SQLCODE: -' TO MSGCOD;
+  MSGN3 = EZESQCOD * -1;
+ELSE;                                /* pozitivni EZESQCOD
+  MOVE 'SQLCODE: +' TO MSGCOD;
+  MOVE EZESQCOD TO MSGN3;
+END;
+:ebefore.
+:efunc.
+
+:func      name      = M000P01           
+           date      = '02/03/2021' time = '13:10:02' option = EXECUTE  
+           desc      = 'glavni proces pregleda'
+           refine    = N  
+:before.
+/* *To je glavni proces aplikacije M000A - Izbirni meni za *
+/* *terminerje v proizvodnji ima naslednje bistvene dele : *
+/* *                                                       *
+/* * - postavijo se vrednosti standardnim sist. spremenlj. *
+/* *   in v skupni WS se postavi ime aplikacije            *
+/* *                                                       *
+/* * - glavna zanka aplikacije :                           *
+/* *   - prikaz mape za izbiro - M000P02 za mapo M000M01  *
+/* *   - test na tipke F3 in PA2                           *
+/* *   - test na tipko F6 in brisanje mape M000M01         *
+/* *                                                       *
+/* *********************************************************
+
+/* ---CALL ME91A;                      /* gleda Ëe so sporoËila
+
+/* **********************************************************
+/* Proces ima zanko v kateri se izvaja prikaz mape M000M01  *
+/* **********************************************************
+MOVE 1 TO EZEFEC;
+MOVE 1 TO EZESQISL;
+/* MOVE 1 TO EZECNVCM; 18.02.2004 - program definiral segmentno
+/* MOVE 0 TO STEVAPPL;
+MOVE 'M000' TO EZESEGTR;         /* transakcija
+MOVE 'M000A' TO M000W01.APPL[STEVAPPL];
+
+
+
+MOVE EZESYS TO M000W02.SISTEM;   /* preverja, Ëe je v testu
+/* IF M000W02.SISTEM = 'ITF' AND M000W01.ZAPRIIM = ' '; /* dela v testu
+/* MOVE 2 TO M000W01.STEVAPPL;
+/* MOVE 'SPINDLER M.' TO M000W01.ZAPRIIM;
+/* MOVE 'HECTOR' TO M000W01.ZASIFRA;
+/* END;
+
+
+/* **************************************************************/
+/* Ëitanje parametra t.PARAMETR-STEV3 Ëe je 1
+/* **************************************************************/
+M000P10();                       /* INQUIRY v t.PARAMETR
+
+IF EZESQCOD = 0;
+/* ----»itanje t.SPOROCIL za prikaz na ekranu------------
+  CALL ME91A;                    /* CALL program za Ëitanje sporoËil
+END;
+
+/* -----vstran to mapo 18.09.2006----------
+/* -----MOVE '     ' TO FLOK;            /* indikator zanke za prikaz mape
+/* -----WHILE FLOK EQ '      ';
+/* -----  M000P04();                     /* converse impol
+MOVE 'DELAM' TO FLOK;            /* indikator zanke za prikaz mape
+/* -----END;
+
+/* ---------glavna zanka--------------------------------
+WHILE FLOK EQ 'DELAM';           /* dokler je pogoj
+
+   /* *****************************************************
+   /* *prikaz mape M000M01 - izbira kriterijev za pregled *
+   /* *****************************************************
+
+  M000P02();                     /* converse mape
+
+   /* *****************************************************
+   /* * test na tipke PF3, PA2                            *
+   /* *****************************************************
+
+  IF EZEAID IS PF3;              /* prehod v predh.aplikacijo
+    IF M000W01.STEVAPPL > 1;
+      M000W01.STEVAPPL = M000W01.STEVAPPL - 1; /* kaûe na prejönjega
+      EZEAPP = M000W01.APPL[STEVAPPL]; /* ime predhodne
+
+      IF EZEAPP = 'M000A';       /* Ëe je ta, da ne bo öe enkrat
+        IF M000W01.STEVAPPL > 1;
+          M000W01.STEVAPPL = M000W01.STEVAPPL - 1; /* kaûe na prejönjega
+          EZEAPP = M000W01.APPL[STEVAPPL]; /* ime predhodne
+          DXFR EZEAPP M000W01;   /* se vrne v nek vmesni meni
+        ELSE;
+          DXFR IMPOA M000W01;    /* V OSNOVI MENU
+        END;
+      ELSE;
+        DXFR EZEAPP M000W01;     /* V OSNOVI MENU
+        EZECLOS;
+      END;
+    ELSE;
+      DXFR IMPOA M000W01;        /* se vrne v nek vmesni meni
+
+    END;
+
+    DXFR EZEAPP M000W01;         /* se vrne v nek vmesni meni
+
+  END;
+
+   /* *****************************************************
+   /* *  brisanje mape M000M01 - PF6                      *
+   /* *****************************************************
+  IF EZEAID IS PF6;
+    SET M000M01 CLEAR;
+  END;
+
+   /* *****************************************************
+   /* *  prehod v naslednjo aplikacijo                    *
+   /* *****************************************************
+
+  IF EZEAID IS ENTER;
+    INDIK = 0;
+    M00F01();                    /* kontrola avtorizacije
+
+    IF INDIK = 0;
+      IF M000M01.FUNKCIJA = 1;
+        M000W01.STEVAPPL = M000W01.STEVAPPL + 1; /* ätevec +1
+        DXFR M001A M000W01;      /* MPP
+      END;
+      IF M000M01.FUNKCIJA = 2;
+        M000W01.STEVAPPL = M000W01.STEVAPPL + 1; /* ätevec +1
+        DXFR M002A M000W01;      /* terminer
+      END;
+      IF M000M01.FUNKCIJA = 3;
+        M000W01.STEVAPPL = M000W01.STEVAPPL + 1; /* ätevec +1
+        DXFR M003A M000W01;
+      END;
+      IF M000M01.FUNKCIJA = 4;
+        M000W01.STEVAPPL = M000W01.STEVAPPL + 1; /* ätevec +1
+        DXFR M004A M000W01;
+      END;
+      IF M000M01.FUNKCIJA = 5;
+        M000W01.STEVAPPL = M000W01.STEVAPPL + 1; /* ätevec +1
+        DXFR M005A M000W01;
+      END;
+      IF M000M01.FUNKCIJA = 6;
+        M000W01.STEVAPPL = M000W01.STEVAPPL + 1; /* ätevec +1
+        DXFR M006A M000W01;
+      END;
+      IF M000M01.FUNKCIJA = 7;
+        M000W01.STEVAPPL = M000W01.STEVAPPL + 1; /* ätevec +1
+        DXFR M007A M000W01;
+      END;
+      IF M000M01.FUNKCIJA = 8;
+        M000W01.STEVAPPL = M000W01.STEVAPPL + 1; /* ätevec +1
+        DXFR M008A M000W01;
+      END;
+      IF M000M01.FUNKCIJA = 9;   /* pregledi
+        M000W01.STEVAPPL = M000W01.STEVAPPL + 1; /* ätevec +1
+        DXFR M009A M000W01;
+      END;
+      IF M000M01.FUNKCIJA = 10;
+        M000W01.STEVAPPL = M000W01.STEVAPPL + 1; /* ätevec +1
+        DXFR M010A M000W01;
+      END;
+      IF M000M01.FUNKCIJA = 11;
+        M000W01.STEVAPPL = M000W01.STEVAPPL + 1; /* ätevec +1
+        DXFR M031A M000W01;      /* obratovodje
+      END;
+      IF M000M01.FUNKCIJA = 12;
+        M000W01.STEVAPPL = M000W01.STEVAPPL + 1; /* ätevec +1
+        DXFR M012A M000W01;
+      END;
+      IF M000M01.FUNKCIJA = 13;
+        M000W01.STEVAPPL = M000W01.STEVAPPL + 1; /* ätevec +1
+        DXFR M013A M000W01;
+      END;
+      IF M000M01.FUNKCIJA = 14;
+        M000W01.STEVAPPL = M000W01.STEVAPPL + 1; /* ätevec +1
+        DXFR ZZ90A M000W01;
+      END;
+      IF M000M01.FUNKCIJA = 15;
+        M000W01.STEVAPPL = M000W01.STEVAPPL + 1; /* ätevec +1
+        DXFR M015A M000W01;
+      END;
+      IF M000M01.FUNKCIJA = 16;
+        M000W01.STEVAPPL = M000W01.STEVAPPL + 1; /* ätevec +1
+        DXFR M016A M000W01;
+      END;
+      IF M000M01.FUNKCIJA = 17;
+        M000W01.STEVAPPL = M000W01.STEVAPPL + 1; /* ätevec +1
+        DXFR M017A M000W01;
+      END;
+      IF M000M01.FUNKCIJA = 18;
+        M000W01.STEVAPPL = M000W01.STEVAPPL + 1; /* ätevec +1
+        DXFR M018A M000W01;      /* ---tukaj so moje----
+      END;
+      IF M000M01.FUNKCIJA = 19;
+        M000W01.STEVAPPL = M000W01.STEVAPPL + 1; /* ätevec +1
+        DXFR M019A M000W01;
+      END;
+      IF M000M01.FUNKCIJA = 20;
+        M000W01.STEVAPPL = M000W01.STEVAPPL + 1; /* ätevec +1
+        DXFR M020A M000W01;
+      END;
+      IF M000M01.FUNKCIJA = 21;
+        M000W01.STEVAPPL = M000W01.STEVAPPL + 1; /* ätevec +1
+        DXFR M021A M000W01;
+      END;
+      IF M000M01.FUNKCIJA = 22;
+        M000W01.STEVAPPL = M000W01.STEVAPPL + 1; /* ätevec +1
+        DXFR SL00A M000W01;      /* Sledljivost II (14.09.2004)
+      END;
+/* IF M000M01.FUNKCIJA = 23;
+/* M000W01.STEVAPPL = M000W01.STEVAPPL + 1; /* ätevec +1
+/* DXFR M023A M000W01;        /* obdelava za rondelice
+/* END;
+      IF M000M01.FUNKCIJA = 24;
+        M000W01.STEVAPPL = M000W01.STEVAPPL + 1; /* ätevec +1
+        DXFR M028A M000W01;      /* nomenklatura,klasifikacija
+      END;
+/* IF M000M01.FUNKCIJA = 25;
+/* M000W01.STEVAPPL = M000W01.STEVAPPL + 1; /* ätevec +1
+/* DXFR M024A M000W01;        /* Rondal
+/* END;
+/* IF M000M01.FUNKCIJA = 26;
+/* M000W01.STEVAPPL = M000W01.STEVAPPL + 1; /* ätevec +1
+/* DXFR M026A M000W01;        /* Alumat
+/* END;
+/* IF M000M01.FUNKCIJA = 27;
+/* M000W01.STEVAPPL = M000W01.STEVAPPL + 1; /* ätevec +1
+/* DXFR M027A M000W01;      /* za operaterja
+/* END;
+
+/* **************************************************************/
+/* DODALA BREDA
+/* **************************************************************/
+
+
+      IF M000M01.FUNKCIJA = 28;
+        M000W01.STEVAPPL = M000W01.STEVAPPL + 1; /* ätevec +1
+        MOVE 'M000A' TO M000W01.APPL[STEVAPPL];
+        M000W01.STEVAPPL = M000W01.STEVAPPL + 1; /* ätevec +1
+        MOVE 'EG50A' TO M000W01.APPL[STEVAPPL]; /* ni potrebno
+        DXFR EG50A M000W01;      /* ZA INTERNO NARO»ANJE
+      END;
+/* **************************************************************/
+/* KONEC
+/* **************************************************************/
+      IF M000M01.FUNKCIJA = 29;
+        M000W01.STEVAPPL = M000W01.STEVAPPL + 1; /* ätevec +1
+        DXFR M030A M000W01;      /* za sPREMLJANJE PROIZVODNJE Valjarna
+      END;
+      IF M000M01.FUNKCIJA = 30;
+        M000W01.STEVAPPL = M000W01.STEVAPPL + 1; /* ätevec +1
+        DXFR M031A M000W01;      /* za tehnologijo Cevarne
+      END;
+      IF M000M01.FUNKCIJA = 31;
+        M000W01.STEVAPPL = M000W01.STEVAPPL + 1; /* ätevec +1
+        DXFR M050A M000W01;      /* od 14.03.2002 prehod v M050A za Profilarno
+      END;
+      IF M000M01.FUNKCIJA = 32;
+        M000W01.STEVAPPL = M000W01.STEVAPPL + 1; /* ätevec +1
+        DXFR M011A M000W01;      /* od 11.12.2002 za Cevarno
+      END;
+      IF M000M01.FUNKCIJA = 33;
+        M000W01.STEVAPPL = M000W01.STEVAPPL + 1; /* ätevec +1
+        DXFR M014A M000W01;      /* od 11.12.2002 za Folije
+      END;
+      IF M000M01.FUNKCIJA = 34;
+        M000W01.STEVAPPL = M000W01.STEVAPPL + 1; /* ätevec +1
+        DXFR SE00A M000W01;      /* od 31.01.2003 prehod v SE00A Seval
+      END;
+      IF M000M01.FUNKCIJA = 35;
+        M000W01.STEVAPPL = M000W01.STEVAPPL + 1; /* ätevec +1
+        DXFR M025A M000W01;      /* od 17.02.2004 prehod v IS Livarna - Matej
+      END;
+      IF M000M01.FUNKCIJA = 36;
+        M000W01.STEVAPPL = M000W01.STEVAPPL + 1; /* ätevec +1
+        DXFR RE01A M000W01;      /* od 05.01.2006 prehod v Reklamacije
+      END;
+      IF M000M01.FUNKCIJA = 37;
+        M000W01.STEVAPPL = M000W01.STEVAPPL + 1; /* ätevec +1
+        DXFR M060A M000W01;      /* 11/2010  - Alumobil
+      END;
+
+      IF M000M01.FUNKCIJA = 38;
+        M000W01.STEVAPPL = M000W01.STEVAPPL + 1; /* ätevec +1
+        DXFR M110A M000W01;      /* 10/2017  - Rondal
+      END;
+      IF M000M01.FUNKCIJA = 39;
+        M000W01.STEVAPPL = M000W01.STEVAPPL + 1; /* ätevec +1
+        DXFR M120A M000W01;      /* 3/2018  - Stampal
+      END;
+      IF M000M01.FUNKCIJA = 40;
+        M000W01.STEVAPPL = M000W01.STEVAPPL + 1; /* ätevec +1
+        DXFR M127A M000W01;      /* 12/2019  - Final
+      END;
+      IF M000M01.FUNKCIJA = 41;
+        M000W01.STEVAPPL = M000W01.STEVAPPL + 1; /* ätevec +1
+        DXFR M131A M000W01;      /* 2/2021  - Alumat
+      END;
+
+
+
+/* ********** zaËasno 1/2011 matej **************************************************
+      IF M000M01.FUNKCIJA = 50;
+        M000W01.STEVAPPL = M000W01.STEVAPPL + 1; /* ätevec +1
+        DXFR ZZ97A M000W01;      /* projekt PCP
+      END;
+/* ***********************************************************************************
+
+    END;                         /* od indik
+  END;                           /* od enter
+
+  ;
+END;                             /* --------konec glavne
+                                 /* zanke-----------------------------
+;
+:ebefore.
+:efunc.
+
+:func      name      = M000P02           
+           date      = '01/30/2008' time = '07:45:19' option = CONVERSE 
+           object    = M000M01           
+           desc      = 'mapa M000M01'
+           refine    = N  
+:efunc.
+
+:func      name      = M000P03           
+           date      = '01/30/2008' time = '07:45:19' option = INQUIRY  
+           object    = M000R01           
+           errrtn    = EZERTN            
+           desc      = 'INQUIRY v t.ZASCITA'
+           refine    = N  
+           execbld   = N  
+           singrow   = N  
+:sql       clause    = SELECT      hostvar = '?'.
+ZASIFRA, ZAAPLIK, ZAFUNKC, ZAPRIIM
+:esql.
+:sql       clause    = INTO      hostvar = '?'.
+?ZASIFRA, ?ZAAPLIK, ?ZAFUNKC, ?ZAPRIIM
+:esql.
+:sql       clause    = WHERE      hostvar = '?'.
+WHERE
+ZASIFRA=?ZASIFRA AND
+ZAFUNKC=?ZAFUNKC AND
+(ZAAPLIK='M000A' OR
+ZAAPLIK='ME00A')
+/*
+/*ORDER BY
+/*<add ORDER BY  statements here>
+
+:esql.
+:sql       clause    = ORDERBY      hostvar = '?'.
+:esql.
+:efunc.
+
+:func      name      = M000P10           
+           date      = '01/30/2008' time = '07:45:19' option = INQUIRY  
+           object    = M000R02           
+           errrtn    = EZERTN            
+           desc      = 'INQUIRY v t.PARAMETR-STEV3'
+           refine    = N  
+           execbld   = N  
+           singrow   = N  
+:sql       clause    = SELECT      hostvar = '?'.
+STEV3
+:esql.
+:sql       clause    = INTO      hostvar = '?'.
+?STEV3
+:esql.
+:sql       clause    = WHERE      hostvar = '?'.
+WHERE STEV3=1
+/*
+/*ORDER BY
+/*<add ORDER BY  statements here>
+
+:esql.
+:sql       clause    = ORDERBY      hostvar = '?'.
+:esql.
+:efunc.
+
+:func      name      = M000S01           
+           date      = '01/06/2011' time = '08:20:50' option = EXECUTE  
+           desc      = 'SG za kontrolo funkcije'
+           refine    = N  
+:before.
+
+/* To je SG za kontrolo funkcije na ekranu M000M01
+/* ---------------------------------------------------
+IF M000M01.FUNKCIJA > 0
+  AND M000M01.FUNKCIJA <= 50;
+
+  IF M000M01.FUNKCIJA = 18;      /* korekcije (Franc Matej)
+    IF M000W01.ZASIFRA = ' ' AND M000W01.ZAPRIIM = ' '; /* ni vsebine direkten vstop
+      SET M000M01.GESLO DARK,CURSOR;
+      MOVE "Vpiöi geslo za to funkcijo!!!" TO M000M01.EZEMSG;
+      MOVE 9999 TO EZEMNO;
+    END;
+  END;
+ELSE;
+  MOVE "NapaËna funkcija  " TO M000M01.EZEMSG;
+  MOVE 9999 TO EZEMNO;
+
+END;
+:ebefore.
+:efunc.
+
+:func      name      = M00F01            
+           date      = '10/25/2011' time = '08:26:23' option = EXECUTE  
+           desc      = 'Kontrola avtorizacije'
+           refine    = N  
+:before.
+
+IF M000M01.FUNKCIJA = 24;
+
+ELSE;
+
+ /* -----vstran 18.09.2006----
+  IF M000M01.FUNKCIJA = 18;      /* geslo iz mape
+    IF M000M01.GESLO NE ' ';     /* ni vsebine direkten vstop
+      MOVE M000M01.GESLO TO M000W01.ZASIFRA;
+    END;
+  END;
+
+  IF M000M01.GESLO = ' ' AND
+    M000M01.FUNKCIJA = 18 AND
+    M000W01.ZASIFRA = ' ';       /* tudi v WS ni
+    M000M01.EZEMSG = "---- Vpiöi geslo ----";
+    SET M000M01.GESLO DARK,CURSOR;
+    INDIK = 1;
+    EZERTN();
+  END;
+
+  MOVE M000W01.ZASIFRA TO M000R01.ZASIFRA; /* prenos öifre v record
+  MOVE M000M01.FUNKCIJA TO M000R01.ZAFUNKC; /* prenos funkcije v record
+
+  M000P03();                     /* Ëitanje tabele zaöËita
+
+  IF M000R01 IS ERR;             /* napaka
+    IF M000R01 IS NRF;           /* slog v tabeli ne obstaja
+      MOVE "Ta öifra nima avtorizacije za izbrano funkcijo!" TO MSG64;
+      ER99P01();
+      MOVE MSG78 TO M000M01.EZEMSG;
+      INDIK = 1;
+    ELSE;
+      MOVE "Napaka pri Ëitanju tabele öifer!  " TO MSG64;
+      ER99P01();
+      MOVE MSG78 TO M000M01.EZEMSG;
+      INDIK = 1;
+    END;
+  ELSE;
+    IF M000M01.FUNKCIJA = 18;    /* geslo iz mape-SM ali LF
+      MOVE M000R01.ZAPRIIM TO M000W01.ZAPRIIM; /* ker gre direktno v program in ne iz osnovnega m.
+      /* ----dodano 11.04.2007------------
+      MOVE 'IS00A' TO M000W01.APPL[1]; /* ker gre direktno v program da bo povratek ok
+      MOVE 'IMPOA' TO M000W01.APPL[2]; /* ker gre direktno v program da bo povratek ok
+      MOVE 'M000A' TO M000W01.APPL[3]; /* ker gre direktno v program da bo povratek ok
+      M000W01.STEVAPPL = 3;
+      M000W01.PRINTER = 'P010';
+      IF M000W01.FIRMA = ' ';    /* ni vsebine, sicer pusti
+        M000W01.FIRMA = '03';
+      END;
+    END;
+  END;
+
+END;
+:ebefore.
+:efunc.
+
+:record    name      = M000R01
+           date      = '01/30/2008'        time = '07:45:19'
+           org       = SQLROW
+           usage     = SHARED
+:sqltable  tableid   = 'sqluser.zascita'
+           tblnhvar  = N  
+           label     = 'T1'
+:recditem  name      = ZASIFRA
+           usage     = SHARED
+           colname   = 'ZASIFRA'
+           readonly  = Y               key  = N 
+:recditem  name      = ZAAPLIK
+           usage     = SHARED
+           colname   = 'ZAAPLIK'
+           readonly  = Y               key  = N 
+:recditem  name      = ZAFUNKC
+           usage     = SHARED
+           colname   = 'ZAFUNKC'
+           readonly  = Y               key  = N 
+:recditem  name      = ZAPRIIM
+           usage     = SHARED
+           colname   = 'ZAPRIIM'
+           readonly  = Y               key  = N 
+:erecord.
+
+:record    name      = M000R02
+           date      = '01/30/2008'        time = '07:45:19'
+           org       = SQLROW
+           usage     = NONSHARED
+:sqltable  tableid   = 'SQLUSER.PARAMETR'
+           tblnhvar  = N  
+           label     = 'T1'
+:recditem  name      = STEV3
+           usage     = NONSHARED
+           type      = BIN   
+           bytes     = 00004
+           decimals  = 00             evensql = N 
+           colname   = 'STEV3'
+           readonly  = Y               key  = N 
+:erecord.
+
+:record    name      = M000W01
+           date      = '01/30/2008'        time = '07:45:19'
+           org       = WORKSTOR
+           usage     = NONSHARED
+:prol.
+glavni working storage
+:eprol.
+:recditem  name      = APPL
+           level     = 03             occurs = 00030
+           usage     = NONSHARED
+           type      = CHA   
+           bytes     = 00008
+           decimals  = 00             evensql = N 
+           desc      = 'ime programa 30x'
+:recditem  name      = ZAPRIIM
+           level     = 03             occurs = 00001
+           usage     = NONSHARED
+           type      = CHA   
+           bytes     = 00025
+           decimals  = 00             evensql = N 
+           desc      = 'priimek in ime uporabnika'
+:recditem  name      = STEVAPPL
+           level     = 03             occurs = 00001
+           usage     = NONSHARED
+           type      = NUM   
+           bytes     = 00002
+           decimals  = 00             evensql = N 
+           desc      = 'stevec programov'
+:recditem  name      = FUNKCIJA
+           level     = 03             occurs = 00001
+           usage     = NONSHARED
+           type      = NUM   
+           bytes     = 00002
+           decimals  = 00             evensql = N 
+           desc      = 'stevilka funkcije'
+:recditem  name      = PRINTER
+           level     = 03             occurs = 00001
+           usage     = NONSHARED
+           type      = CHA   
+           bytes     = 00004
+           decimals  = 00             evensql = N 
+           desc      = 'PRINTER'
+:recditem  name      = FIRMA
+           level     = 03             occurs = 00001
+           usage     = NONSHARED
+           type      = CHA   
+           bytes     = 00002
+           decimals  = 00             evensql = N 
+           desc      = 'podjetje'
+:recditem  name      = ZASIFRA
+           level     = 03             occurs = 00001
+           usage     = NONSHARED
+           type      = CHA   
+           bytes     = 00008
+           decimals  = 00             evensql = N 
+           desc      = 'uporabnisko geslo'
+:recditem  name      = NAZIVF1
+           level     = 03             occurs = 00001
+           usage     = NONSHARED
+           type      = CHA   
+           bytes     = 00020
+           decimals  = 00             evensql = N 
+           desc      = 'naziv podjetja'
+:recditem  name      = IDZAPST
+           level     = 03             occurs = 00001
+           usage     = NONSHARED
+           type      = BIN   
+           bytes     = 00004
+           decimals  = 00             evensql = N 
+           desc      = 'zaporedna stevilka osebe'
+:recditem  name      = PODRGOV
+           level     = 03             occurs = 00001
+           usage     = NONSHARED
+           type      = CHA   
+           bytes     = 00001
+           decimals  = 00             evensql = N 
+           desc      = 'govorno podrocje'
+:recditem  name      = AVTORIZ
+           level     = 03             occurs = 00001
+           usage     = NONSHARED
+           type      = CHA   
+           bytes     = 00004
+           decimals  = 00             evensql = N 
+           desc      = 'skupina uporabnika'
+:recditem  name      = R1
+           level     = 03             occurs = 00001
+           usage     = NONSHARED
+           type      = CHA   
+           bytes     = 00010
+           decimals  = 00             evensql = N 
+           desc      = 'rezerva 1'
+:recditem  name      = R2
+           level     = 03             occurs = 00001
+           usage     = NONSHARED
+           type      = BIN   
+           bytes     = 00004
+           decimals  = 00             evensql = N 
+           desc      = 'rezerva 2'
+:erecord.
+
+:record    name      = M000W02
+           date      = '01/30/2008'        time = '07:45:19'
+           org       = WORKSTOR
+           usage     = NONSHARED
+:prol.
+Pomozna polja
+:eprol.
+:recditem  name      = SISTEM
+           level     = 03             occurs = 00001
+           usage     = NONSHARED
+           type      = CHA   
+           bytes     = 00006
+           decimals  = 00             evensql = N 
+           desc      = 'ali je v testu'
+:recditem  name      = INDIK
+           level     = 03             occurs = 00001
+           usage     = NONSHARED
+           type      = NUM   
+           bytes     = 00001
+           decimals  = 00             evensql = N 
+:erecord.
+
+:record    name      = TE99W01
+           date      = '09/11/2020'        time = '09:37:35'
+           org       = WORKSTOR
+           usage     = SHARED
+:recditem  name      = CTRSTRAN
+           level     = 10             occurs = 00001
+           usage     = SHARED
+:recditem  name      = CTRSTRA1
+           level     = 10             occurs = 00001
+           usage     = SHARED
+:recditem  name      = CTRLINIJ
+           level     = 10             occurs = 00001
+           usage     = SHARED
+:recditem  name      = CTRSTART
+           level     = 10             occurs = 00001
+           usage     = SHARED
+:recditem  name      = CTRCURSO
+           level     = 10             occurs = 00001
+           usage     = SHARED
+:recditem  name      = CTRKOPIJ
+           level     = 10             occurs = 00001
+           usage     = SHARED
+:recditem  name      = FLOK
+           level     = 10             occurs = 00001
+           usage     = SHARED
+:recditem  name      = FLOK1
+           level     = 10             occurs = 00001
+           usage     = SHARED
+:recditem  name      = FLNAPREJ
+           level     = 10             occurs = 00001
+           usage     = SHARED
+:recditem  name      = FLZAPIS
+           level     = 10             occurs = 00001
+           usage     = SHARED
+:recditem  name      = FLZAPIS1
+           level     = 10             occurs = 00001
+           usage     = SHARED
+:recditem  name      = FLBRISI
+           level     = 10             occurs = 00001
+           usage     = SHARED
+:recditem  name      = TEMN10D0
+           level     = 10             occurs = 00001
+           usage     = SHARED
+:recditem  name      = TE1N10D0
+           level     = 10             occurs = 00001
+           usage     = SHARED
+:recditem  name      = TEMN10D4
+           level     = 10             occurs = 00001
+           usage     = SHARED
+:recditem  name      = TEMN10D2
+           level     = 10             occurs = 00001
+           usage     = SHARED
+:recditem  name      = TE1N10D4
+           level     = 10             occurs = 00001
+           usage     = SHARED
+:recditem  name      = TE1N10D2
+           level     = 10             occurs = 00001
+           usage     = SHARED
+:recditem  name      = TE2N10D4
+           level     = 10             occurs = 00001
+           usage     = SHARED
+:recditem  name      = TE2N10D3
+           level     = 10             occurs = 00001
+           usage     = SHARED
+:recditem  name      = *
+           level     = 10             occurs = 00001
+           usage     = NONSHARED
+           type      = CHA   
+           bytes     = 00003
+           decimals  = 00             evensql = N 
+:recditem  name      = MSG78
+           level     = 10             occurs = 00001
+           usage     = SHARED
+:recditem  name      = MSG64
+           level     = 15             occurs = 00001
+           usage     = SHARED
+:recditem  name      = MSGCOD
+           level     = 15             occurs = 00001
+           usage     = SHARED
+:recditem  name      = MSGN3
+           level     = 15             occurs = 00001
+           usage     = SHARED
+:recditem  name      = *
+           level     = 10             occurs = 00001
+           usage     = NONSHARED
+           type      = CHA   
+           bytes     = 00003
+           decimals  = 00             evensql = N 
+:recditem  name      = TIMEST1
+           level     = 10             occurs = 00001
+           usage     = SHARED
+:erecord.
+
+:map       grpname   = M000G        mapname = M000M01 
+           date      = '02/03/2021'        time = '13:09:12'
+           mapsize   = 024 080     startpos = 0001 0001
+           bypkey    = 03 
+           devices   = 3278-2  3278-2B ANY-2D
+:present   varfold   = Y      deffold  = N  
+           tabpos    = 1 
+:cfield    row       = 001    column = 001
+           type      = CHA    bytes  = 00011
+.M000M01-V22
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 001    column = 013
+           type      = CHA    bytes  = 00006
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = BLUE         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 001    column = 020
+           type      = CHA    bytes  = 00048
+.*** Proizvodni del - sledljivost proizvodnje ***
+:cattr     hilite    = NOHILITE  intense = BRIGHT  protect = ASKIP     
+           color     = TURQUOISE     data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 001    column = 069
+           type      = CHA    bytes  = 00077
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = BLUE         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 002    column = 067
+           type      = CHA    bytes  = 00021
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 003    column = 009
+           type      = CHA    bytes  = 00038
+. 1.Planiranje - terminiranje
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 003    column = 048
+           type      = CHA    bytes  = 00017
+.20.Devizni teËaji
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 003    column = 066
+           type      = CHA    bytes  = 00022
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 004    column = 009
+           type      = CHA    bytes  = 00038
+. 2.Komerciala
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 004    column = 048
+           type      = CHA    bytes  = 00014
+.21.Kalkulacije
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 004    column = 063
+           type      = CHA    bytes  = 00003
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 004    column = 067
+           type      = CHA    bytes  = 00021
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 005    column = 009
+           type      = CHA    bytes  = 00038
+. 3.Spremljanje proizvodnje
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 005    column = 048
+           type      = CHA    bytes  = 00020
+.22.Kontrolne zahteve
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 005    column = 069
+           type      = CHA    bytes  = 00019
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 006    column = 009
+           type      = CHA    bytes  = 00038
+. 4.Tehnologija
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 006    column = 048
+           type      = CHA    bytes  = 00022
+.24.Pregledi brez öifre
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 006    column = 071
+           type      = CHA    bytes  = 00017
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 007    column = 009
+           type      = CHA    bytes  = 00038
+. 5.Pakiranje
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 007    column = 048
+           type      = CHA    bytes  = 00020
+.28.Interno naroËanje
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 007    column = 069
+           type      = CHA    bytes  = 00002
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 007    column = 072
+           type      = CHA    bytes  = 00016
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 008    column = 009
+           type      = CHA    bytes  = 00038
+. 6.Skl.gotovih izdelkov
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 008    column = 048
+           type      = CHA    bytes  = 00014
+.29.IS Valjarna
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 008    column = 063
+           type      = CHA    bytes  = 00006
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 008    column = 070
+           type      = CHA    bytes  = 00018
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 009    column = 009
+           type      = CHA    bytes  = 00038
+. 7.SkladiöËe surovin
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 009    column = 048
+           type      = CHA    bytes  = 00026
+.30.IS Cevarna - param.tehn
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 009    column = 075
+           type      = CHA    bytes  = 00013
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 010    column = 009
+           type      = CHA    bytes  = 00038
+. 8.Vsklajevanje potreb surovine
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 010    column = 048
+           type      = CHA    bytes  = 00016
+.31.IS Profilarna
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 010    column = 065
+           type      = CHA    bytes  = 00010
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 010    column = 076
+           type      = CHA    bytes  = 00012
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 011    column = 009
+           type      = CHA    bytes  = 00038
+. 9.Koordiniranje naroËil
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 011    column = 048
+           type      = CHA    bytes  = 00013
+.32.IS Cevarna
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 011    column = 062
+           type      = CHA    bytes  = 00003
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 011    column = 066
+           type      = CHA    bytes  = 00009
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 011    column = 076
+           type      = CHA    bytes  = 00012
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 012    column = 009
+           type      = CHA    bytes  = 00038
+.10.Standardizacija
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 012    column = 048
+           type      = CHA    bytes  = 00012
+.33.IS Folije
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 012    column = 061
+           type      = CHA    bytes  = 00001
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 012    column = 063
+           type      = CHA    bytes  = 00002
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 012    column = 066
+           type      = CHA    bytes  = 00022
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 013    column = 009
+           type      = CHA    bytes  = 00038
+.11.Vodje obratov
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 013    column = 048
+           type      = CHA    bytes  = 00020
+.34.Obdelave za Seval
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 013    column = 069
+           type      = CHA    bytes  = 00019
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 014    column = 009
+           type      = CHA    bytes  = 00038
+.12.Kontrola kakovosti
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 014    column = 048
+           type      = CHA    bytes  = 00013
+.35.IS Livarna
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 014    column = 062
+           type      = CHA    bytes  = 00007
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 014    column = 070
+           type      = CHA    bytes  = 00018
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 015    column = 009
+           type      = CHA    bytes  = 00038
+.13.Kalkulacije
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 015    column = 048
+           type      = CHA    bytes  = 00023
+.36.Reklamacije-eksterne
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 015    column = 072
+           type      = CHA    bytes  = 00016
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 016    column = 009
+           type      = CHA    bytes  = 00038
+.14.Skrbniötvo PIS-a
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 016    column = 048
+           type      = CHA    bytes  = 00015
+.37.IS Alumobil
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 016    column = 064
+           type      = CHA    bytes  = 00008
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 016    column = 073
+           type      = CHA    bytes  = 00015
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 017    column = 009
+           type      = CHA    bytes  = 00038
+.15.Vodstva IC IMPOL-a
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 017    column = 048
+           type      = CHA    bytes  = 00015
+.38.IS Rondal
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 017    column = 064
+           type      = CHA    bytes  = 00000
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 017    column = 065
+           type      = CHA    bytes  = 00007
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 017    column = 073
+           type      = CHA    bytes  = 00015
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 018    column = 009
+           type      = CHA    bytes  = 00038
+.16.Vodstva PP
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 018    column = 048
+           type      = CHA    bytes  = 00015
+.39.IS Stampal
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 018    column = 064
+           type      = CHA    bytes  = 00000
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 018    column = 065
+           type      = CHA    bytes  = 00023
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 019    column = 009
+           type      = CHA    bytes  = 00038
+.17.Obdelava öarû
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 019    column = 048
+           type      = CHA    bytes  = 00015
+.40.IS Final
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 019    column = 064
+           type      = CHA    bytes  = 00000
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 019    column = 065
+           type      = CHA    bytes  = 00062
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 020    column = 048
+           type      = CHA    bytes  = 00015
+.41.IS Alumat
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 020    column = 064
+           type      = CHA    bytes  = 00000
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 020    column = 065
+           type      = CHA    bytes  = 00079
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 021    column = 065
+           type      = CHA    bytes  = 00039
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 022    column = 025
+           type      = CHA    bytes  = 00016
+.Vpiöi funkcijo:
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:vfield    row       = 022    column = 042
+           type      = NUM    bytes  = 00002
+           name      = FUNKCIJA
+           desc      = 'izbrana funkcija'
+           editordr  = 002
+:mapedits  fillchar  = 'N'
+           inputreq  = N    justify = LEF
+           editrtn   = M000S01
+           currsymb  = N    sign = N       numsep = N  
+:vattr     hilite    = NOHILITE  intense = BRIGHT  protect = UNPROTECT 
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = Y  detect = N 
+           outline   = NOUTLINE 
+:evfield.
+:cfield    row       = 022    column = 045
+           type      = CHA    bytes  = 00001
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:vfield    row       = 022    column = 047
+           type      = CHA    bytes  = 00010
+           name      = GESLO
+           desc      = 'za Franca in Mateja'
+           editordr  = 003
+:mapedits  fillchar  = 'N'
+           inputreq  = N    justify = LEF
+:vattr     hilite    = NOHILITE  intense = DARK   protect = PROTECT   
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:evfield.
+:cfield    row       = 022    column = 058
+           type      = CHA    bytes  = 00001
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 022    column = 060
+           type      = CHA    bytes  = 00006
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:cfield    row       = 022    column = 067
+           type      = CHA    bytes  = 00013
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:vfield    row       = 023    column = 001
+           type      = CHA    bytes  = 00078
+           name      = EZEMSG
+           desc      = 'polje za sporo»ila'
+           editordr  = 001
+:mapedits  fillchar  = 'N'
+           inputreq  = N    justify = LEF
+:vattr     hilite    = NOHILITE  intense = BRIGHT  protect = ASKIP     
+           color     = YELLOW       data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:evfield.
+:cfield    row       = 023    column = 080
+           type      = CHA    bytes  = 00080
+.F3-povratek  F6-brisanje ekrana
+:cattr     hilite    = NOHILITE  intense = NORMAL  protect = ASKIP     
+           color     = MONO         data = ALPHA  
+           enter     = N  mdt = N  fill = N  cursor = N  detect = N 
+           outline   = NOUTLINE 
+:ecfield.
+:emap.
+
+:item      name      = CTRCURSO
+           date      = '09/13/2006' time = '09:00:47' type = BIN 
+           bytes     = 00002      decimals = 00     evensql = N  
+           desc      = 'ätevec pozicije kurzorja'
+:mapedits  fillchar  = ' '
+           inputreq  = N    justify = RIG
+           currsymb  = N    sign = LEA     numsep = N  
+:eitem.
+
+:item      name      = CTRKOPIJ
+           date      = '09/13/2006' time = '09:00:44' type = BIN 
+           bytes     = 00002      decimals = 00     evensql = N  
+           desc      = 'ätevec izpisanih kopij'
+:mapedits  fillchar  = ' '
+           inputreq  = N    justify = RIG
+           currsymb  = N    sign = LEA     numsep = N  
+:eitem.
+
+:item      name      = CTRLINIJ
+           date      = '09/13/2006' time = '09:00:41' type = BIN 
+           bytes     = 00002      decimals = 00     evensql = N  
+           desc      = 'ätevec linij na stran'
+:mapedits  fillchar  = 'N'
+           inputreq  = N    justify = RIG
+           currsymb  = N    sign = LEA     numsep = N  
+:eitem.
+
+:item      name      = CTRSTART
+           date      = '09/13/2006' time = '09:00:41' type = BIN 
+           bytes     = 00002      decimals = 00     evensql = N  
+           desc      = 'ätevec za prenos na ekran'
+:mapedits  fillchar  = ' '
+           inputreq  = N    justify = RIG
+           currsymb  = N    sign = LEA     numsep = N  
+:eitem.
+
+:item      name      = CTRSTRA1
+           date      = '09/13/2006' time = '09:00:44' type = BIN 
+           bytes     = 00002      decimals = 00     evensql = N  
+           desc      = 'ätevec strani'
+:mapedits  fillchar  = ' '
+           inputreq  = N    justify = RIG
+           currsymb  = N    sign = LEA     numsep = N  
+:eitem.
+
+:item      name      = CTRSTRAN
+           date      = '09/13/2006' time = '09:00:43' type = BIN 
+           bytes     = 00002      decimals = 00     evensql = N  
+           desc      = 'ätevec strani'
+:mapedits  fillchar  = ' '
+           inputreq  = N    justify = RIG
+           currsymb  = N    sign = LEA     numsep = N  
+:eitem.
+
+:item      name      = FLBRISI
+           date      = '09/13/2006' time = '09:00:41' type = CHA 
+           bytes     = 00010      decimals = 00     evensql = N  
+           desc      = 'indikator(BRIäI-DA,BRIäI-NE)'
+:mapedits  fillchar  = 'N'
+           inputreq  = N    justify = LEF
+:eitem.
+
+:item      name      = FLNAPREJ
+           date      = '09/13/2006' time = '09:00:44' type = CHA 
+           bytes     = 00010      decimals = 00     evensql = N  
+           desc      = 'indikator(naprej,stop)'
+:mapedits  fillchar  = 'N'
+           inputreq  = N    justify = LEF
+:eitem.
+
+:item      name      = FLOK
+           date      = '09/13/2006' time = '09:00:42' type = CHA 
+           bytes     = 00010      decimals = 00     evensql = N  
+           desc      = 'indikator OK,NE'
+:mapedits  fillchar  = 'N'
+           inputreq  = N    justify = LEF
+:eitem.
+
+:item      name      = FLOK1
+           date      = '09/13/2006' time = '09:00:43' type = CHA 
+           bytes     = 00010      decimals = 00     evensql = N  
+           desc      = 'indikator(DELAM,NEDELAM)'
+:mapedits  fillchar  = 'N'
+           inputreq  = N    justify = LEF
+:eitem.
+
+:item      name      = FLZAPIS
+           date      = '09/13/2006' time = '09:00:44' type = CHA 
+           bytes     = 00010      decimals = 00     evensql = N  
+           desc      = 'indikator(ZAPIS-DA,ZAPIS-NE)'
+:mapedits  fillchar  = 'N'
+           inputreq  = N    justify = LEF
+:eitem.
+
+:item      name      = FLZAPIS1
+           date      = '09/13/2006' time = '09:00:43' type = CHA 
+           bytes     = 00010      decimals = 00     evensql = N  
+           desc      = 'indikator(ZAPIS-DA,ZAPIS-NE)'
+:mapedits  fillchar  = 'N'
+           inputreq  = N    justify = LEF
+:eitem.
+
+:item      name      = MSG64
+           date      = '09/13/2006' time = '09:00:42' type = CHA 
+           bytes     = 00064      decimals = 00     evensql = N  
+           desc      = 'za prenos v ezemsg l=64'
+:mapedits  fillchar  = 'N'
+           inputreq  = N    justify = LEF
+:eitem.
+
+:item      name      = MSG78
+           date      = '09/13/2006' time = '09:00:43' type = CHA 
+           bytes     = 00078      decimals = 00     evensql = N  
+           desc      = 'za prenos v ezemsg l=78'
+:mapedits  fillchar  = 'N'
+           inputreq  = N    justify = LEF
+:eitem.
+
+:item      name      = MSGCOD
+           date      = '09/13/2006' time = '09:00:42' type = CHA 
+           bytes     = 00011      decimals = 00     evensql = N  
+           desc      = 'za prenos v ezemsg l=11'
+:mapedits  fillchar  = 'N'
+           inputreq  = N    justify = LEF
+:eitem.
+
+:item      name      = MSGN3
+           date      = '09/13/2006' time = '09:00:44' type = NUM 
+           bytes     = 00003      decimals = 00     evensql = N  
+           desc      = 'za prenos v ezemsg l=3'
+:mapedits  fillchar  = ' '
+           inputreq  = N    justify = RIG
+           currsymb  = N    sign = LEA     numsep = N  
+:eitem.
+
+:item      name      = TE1N10D0
+           date      = '09/13/2006' time = '09:00:40' type = NUM 
+           bytes     = 00010      decimals = 00     evensql = N  
+           desc      = 'pom.polje l=10 dec=0'
+:mapedits  fillchar  = ' '
+           inputreq  = N    justify = RIG
+           currsymb  = N    sign = LEA     numsep = N  
+:eitem.
+
+:item      name      = TE1N10D2
+           date      = '09/13/2006' time = '09:00:42' type = NUM 
+           bytes     = 00010      decimals = 02     evensql = N  
+           desc      = 'pom.polje l=10 dec=2'
+:mapedits  fillchar  = ' '
+           inputreq  = N    justify = RIG
+           currsymb  = N    sign = LEA     numsep = N  
+:eitem.
+
+:item      name      = TE1N10D4
+           date      = '09/13/2006' time = '09:00:44' type = NUM 
+           bytes     = 00010      decimals = 04     evensql = N  
+           desc      = 'pom.polje l=10 dec=4'
+:mapedits  fillchar  = ' '
+           inputreq  = N    justify = RIG
+           currsymb  = N    sign = LEA     numsep = N  
+:eitem.
+
+:item      name      = TE2N10D3
+           date      = '09/13/2006' time = '09:00:45' type = NUM 
+           bytes     = 00010      decimals = 03     evensql = N  
+           desc      = 'pom.polje l=10 dec=3'
+:mapedits  fillchar  = ' '
+           inputreq  = N    justify = RIG
+           currsymb  = N    sign = LEA     numsep = N  
+:eitem.
+
+:item      name      = TE2N10D4
+           date      = '09/13/2006' time = '09:00:45' type = NUM 
+           bytes     = 00010      decimals = 04     evensql = N  
+           desc      = 'pom.polje l=10 dec=4'
+:mapedits  fillchar  = ' '
+           inputreq  = N    justify = RIG
+           currsymb  = N    sign = LEA     numsep = N  
+:eitem.
+
+:item      name      = TEMN10D0
+           date      = '09/13/2006' time = '09:00:40' type = NUM 
+           bytes     = 00010      decimals = 00     evensql = N  
+           desc      = 'pom.polje l=10 dec=0'
+:mapedits  fillchar  = ' '
+           inputreq  = N    justify = RIG
+           currsymb  = N    sign = LEA     numsep = N  
+:eitem.
+
+:item      name      = TEMN10D2
+           date      = '09/13/2006' time = '09:00:42' type = PACK
+           bytes     = 00006      decimals = 02     evensql = N  
+           desc      = 'pom.polje l=10 dec=2'
+:mapedits  fillchar  = ' '
+           inputreq  = N    justify = RIG
+           currsymb  = N    sign = LEA     numsep = N  
+:eitem.
+
+:item      name      = TEMN10D4
+           date      = '09/13/2006' time = '09:00:44' type = PACK
+           bytes     = 00006      decimals = 04     evensql = Y  
+           desc      = 'pom.polje l=10 dec=4'
+:mapedits  fillchar  = ' '
+           inputreq  = N    justify = RIG
+           currsymb  = N    sign = LEA     numsep = N  
+:eitem.
+
+:item      name      = TIMEST1
+           date      = '09/13/2006' time = '09:00:45' type = CHA 
+           bytes     = 00026      decimals = 00     evensql = N  
+           desc      = 'timest.za primerjavo pred vp.'
+:mapedits  fillchar  = 'N'
+           inputreq  = N    justify = LEF
+:eitem.
+
+:item      name      = ZAAPLIK
+           date      = '09/13/2006' time = '09:00:44' type = CHA 
+           bytes     = 00008      decimals = 00     evensql = N  
+           desc      = 'ZAAPLIK'
+:mapedits  fillchar  = 'N'
+           inputreq  = N    justify = N  
+:eitem.
+
+:item      name      = ZAFUNKC
+           date      = '09/13/2006' time = '09:00:43' type = BIN 
+           bytes     = 00002      decimals = 00     evensql = N  
+           desc      = 'ZAFUNKC'
+:mapedits  fillchar  = 'N'
+           inputreq  = N    justify = RIG
+           currsymb  = N    sign = N       numsep = N  
+:eitem.
+
+:item      name      = ZAPRIIM
+           date      = '09/13/2006' time = '09:00:41' type = CHA 
+           bytes     = 00025      decimals = 00     evensql = N  
+:mapedits  fillchar  = 'N'
+           inputreq  = N    justify = LEF
+:eitem.
+
+:item      name      = ZASIFRA
+           date      = '09/13/2006' time = '09:00:41' type = CHA 
+           bytes     = 00008      decimals = 00     evensql = N  
+           desc      = 'ZASIFRA'
+:mapedits  fillchar  = 'N'
+           inputreq  = N    justify = N  
+:eitem.

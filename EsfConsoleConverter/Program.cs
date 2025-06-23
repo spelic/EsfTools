@@ -5,6 +5,8 @@ using EsfParser.Parser;
 using EsfParser.Builder;
 using EsfCodeGen;
 using EsfCore.Tags;
+using System.Text;
+Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
 string path = args.Length > 0 ? args[0] : "M000A-V22.esf";
 path =  "D123A-V54.esf";
@@ -16,24 +18,15 @@ if (!File.Exists(path))
     return;
 }
 
-var lines = File.ReadAllLines(path);
+var lines = File.ReadAllLines(path, Encoding.GetEncoding(1250));
+Console.OutputEncoding = Encoding.UTF8;
 var nodes = EsfParser.Parser.BlockParser.Parse(lines);
 //var nodes = EsfParser.Parser.EsfParser.Parse(lines);
 //foreach (var node in nodes) Console.WriteLine(node.ToString());
 //EsfParser.Parser.BlockParser.PrintTagTree(nodes);
 var program = EsfProgramBuilder.GenerateEsfProgram(nodes);
+
 Console.WriteLine(program);
-var funcs = program.GetTag<EsfCore.Tags.ProgramTag>()?.Funcs;
 
-var exporter = new EsfFunctionExporter();
-
-if (funcs != null)
-{
-    foreach (var func in funcs)
-    {
-        exporter.Export(func, outDir);
-        Console.WriteLine($"Exported FUNC: {func.Name}");
-    }
-}
 
 Console.WriteLine("Done.");

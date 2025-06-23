@@ -6,18 +6,20 @@ using System.Linq;
 
 namespace EsfCore.Tags
 {
-    public class FuncTagParser : IEsfTagParser
+    public class RecordTagParser : IEsfTagParser
     {
-        public string TagName => "FUNC";
+        public string TagName => "RECORD";
 
         public IEsfTagModel Parse(List<TagNode> nodes)
         {
-            var funcs = nodes
+            var records = nodes
                 .Where(n => string.Equals(n.TagName, TagName, StringComparison.OrdinalIgnoreCase))
-                .Select(FuncTag.Parse)
+                .Select(RecordTag.Parse)
                 .ToList();
 
-            return new FuncTagCollection { Functions = funcs };
+            return new RecordTagCollection { Records = records };
         }
     }
+
+  
 }

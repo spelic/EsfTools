@@ -35,7 +35,7 @@ namespace EsfCore.Tags
         [JsonPropertyName("prol")] public List<ProlTag> Prols { get; set; } = new();
         [JsonPropertyName("genopts")] public List<GenoptsTag> GenOpts { get; set; } = new();
         [JsonPropertyName("gentable")] public List<TagNode> GenTables { get; set; } = new();
-        [JsonPropertyName("funcs")] public List<FuncTag> Funcs { get; set; } = new();
+
 
         public static ProgramTag Parse(TagNode node)
         {
@@ -75,7 +75,7 @@ namespace EsfCore.Tags
                     case "PROL": tag.Prols.Add(ProlTag.Parse(child)); break;
                     case "GENOPTS": tag.GenOpts.Add(GenoptsTag.Parse(child)); break;
                     case "GENTABLE": tag.GenTables.Add(child); break;
-                    case "FUNC": tag.Funcs.Add(FuncTag.Parse(child)); break;
+        
                 }
             }
 
@@ -109,7 +109,7 @@ namespace EsfCore.Tags
                 $"  PROLs      : {Prols.Count}",
                 $"  GENOPTS    : {GenOpts.Count}",
                 $"  GENTABLEs  : {GenTables.Count}",
-                $"  FUNCs      : {Funcs.Count}"
+      
             };
 
             return string.Join('\n', lines);

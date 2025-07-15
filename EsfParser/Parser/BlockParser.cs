@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -8,6 +8,27 @@ namespace EsfParser.Parser
 {
     public static class BlockParser
     {
+        // tags whose bodies we treat as opaque text (no nested children)
+        private static readonly HashSet<string> _noChildTags =
+            new(StringComparer.OrdinalIgnoreCase)
+            { "SQL", "BEFORE", "AFTER", "QUAL", "RETURN" };
+
+        private static readonly Regex _tagStartRegex = new Regex(
+            @"^:(?<name>\w+)(?<attrs>[^.]*)\.?$",
+            RegexOptions.Compiled);
+
+        private static readonly Regex _tagEndRegex = new Regex(
+            @"^:e(?<name>\w+)\.?$",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        private static readonly Regex _rowRegex = new Regex(
+            @"^:ROW\.\s*(?<key>\d+)\s+(?<text>.+)$",
+            RegexOptions.Compiled);
+
+        private static readonly Regex _attrRegex = new Regex(
+            @"(?<key>\w+)\s*=\s*(?:'(?<sq>[^']*)'|""(?<dq>[^""]*)""|(?<raw>\S+))",
+            RegexOptions.Compiled);
+
         public static List<TagNode> Parse(string[] lines)
         {
             var result = new List<TagNode>();
@@ -15,133 +36,123 @@ namespace EsfParser.Parser
             return result;
         }
 
-        public static void PrintTagTree(List<TagNode> nodes, int indent = 0)
-        {
-            foreach (var node in nodes)
-            {
-                string pad = new string(' ', indent * 2);
-                Console.WriteLine($"{pad}- {node.TagName} (line {node.StartLine}–{node.EndLine})");
-                if (node.Children?.Count > 0)
-                    PrintTagTree(node.Children, indent + 1);
-            }
-        }
-
         private static void ParseBlock(string[] lines, int start, int end, List<TagNode> result)
         {
-            var tagStartRegex = new Regex(@"^:(?<name>\w+)(?<attrs>[^.]*)\.?$", RegexOptions.Compiled);
-            var rowRegex = new Regex(@"^:ROW\.\s*(?<key>\d+)\s+(?<text>.+)$", RegexOptions.Compiled);
-
-            int i = start;
-            while (i < end)
+            for (int i = start; i < end;)
             {
                 var line = lines[i].TrimEnd();
-                if (string.IsNullOrWhiteSpace(line)) { i++; continue; }
-
-                // ROW tag
-                var rowMatch = rowRegex.Match(line);
-                if (rowMatch.Success)
+                if (string.IsNullOrWhiteSpace(line))
                 {
-                    var rowNode = new TagNode("ROW", i + 1)
-                    {
-                        Content = $"{rowMatch.Groups["key"].Value} {rowMatch.Groups["text"].Value}",
-                        EndLine = i + 1
-                    };
-                    result.Add(rowNode);
                     i++;
                     continue;
                 }
 
-                // Start-tag?
-                var startMatch = tagStartRegex.Match(line);
-                if (startMatch.Success)
+                // --- specialâ€case ROW
+                var rowM = _rowRegex.Match(line);
+                if (rowM.Success)
                 {
-                    string tagName = startMatch.Groups["name"].Value.ToUpperInvariant();
-                    int blockStart = i;
-                    int blockEnd = FindTagEnd(lines, blockStart + 1, tagName);
-                    if (blockEnd <= blockStart) blockEnd = blockStart + 1;
-
-                    // Zberi VEÈ-vrstiène atribute, prekinemo pri vrstici, ki zaène z ':' ali '.'
-                    string attrs = startMatch.Groups["attrs"].Value.Trim();
-                    int attrEndLine = blockStart + 1;
-                    if (!string.IsNullOrEmpty(attrs) || !line.EndsWith("."))
+                    result.Add(new TagNode("ROW", i + 1)
                     {
-                        var attrBuilder = new StringBuilder(attrs);
-                        int j = blockStart + 1;
-                        while (j < blockEnd)
-                        {
-                            var trimmed = lines[j].TrimStart();
-                            if (trimmed.StartsWith(":") || trimmed.StartsWith("."))
-                                break;
-                            attrBuilder.Append(' ').Append(lines[j].TrimEnd());
-                            j++;
-                        }
-                        attrs = attrBuilder.ToString();
-                        attrEndLine = j;
-                    }
-
-                    // Ustvari vozlišèe
-                    var node = new TagNode(tagName, blockStart + 1)
-                    {
-                        EndLine = blockEnd
-                    };
-
-                    // Parsaj atribute
-                    var attrRegex = new Regex(
-                        @"(?<key>\w+)\s*=\s*(?:(?<sq>'[^']*')|(?<dq>""[^""]*"")|(?<raw>\S+))",
-                        RegexOptions.Compiled);
-                    foreach (Match m in attrRegex.Matches(attrs))
-                    {
-                        var key = m.Groups["key"].Value.ToUpperInvariant();
-                        var val = m.Groups["sq"].Success
-                            ? m.Groups["sq"].Value.Trim('\'')
-                            : m.Groups["dq"].Success
-                                ? m.Groups["dq"].Value.Trim('"')
-                                : m.Groups["raw"].Value;
-                        if (!node.Attributes.ContainsKey(key))
-                            node.Attributes[key] = new List<string>();
-                        node.Attributes[key].Add(val);
-                    }
-
-                    // Zberi vsebino (vrstice, ki zaènejo s '.' ali katerakoli vrsta "gole" vsebine)
-                    var contentLines = new List<string>();
-                    for (int k = attrEndLine; k < blockEnd; k++)
-                    {
-                        var l = lines[k];
-                        var t = l.TrimStart();
-                        if (t.StartsWith(":")) break;   // podtag
-                        // vsebino sprejmemo tudi, èe se zaène s piko
-                        contentLines.Add(l.TrimEnd());
-                    }
-                    node.Content = string.Join(Environment.NewLine, contentLines).Trim();
-
-                    // Rekurzivno parsaj otroke
-                    if (blockEnd - attrEndLine > 1)
-                    {
-                        var children = new List<TagNode>();
-                        ParseBlock(lines, attrEndLine, blockEnd, children);
-                        node.Children.AddRange(children);
-                    }
-
-                    result.Add(node);
-                    i = blockEnd;
+                        Content = $"{rowM.Groups["key"].Value} {rowM.Groups["text"].Value}",
+                        EndLine = i + 1
+                    });
+                    i++;
                     continue;
                 }
 
-                // Èe ni tag, preskoèi
-                i++;
-            }
-        }
+                // --- tag start?
+                var m = _tagStartRegex.Match(line);
+                if (!m.Success)
+                {
+                    // not a tag at all â†’ append as content to last node
+                    if (result.Count > 0)
+                        result[^1].Content += line + Environment.NewLine;
+                    i++;
+                    continue;
+                }
 
-        private static int FindTagEnd(string[] lines, int from, string tagName)
-        {
-            var endRegex = new Regex($":e{tagName}\\.", RegexOptions.IgnoreCase);
-            for (int i = from; i < lines.Length; i++)
-                if (endRegex.IsMatch(lines[i]))
-                    return i + 1;
-            for (int i = from; i < lines.Length; i++)
-                if (lines[i].TrimStart().StartsWith(":"))
-                    return i;
-            return lines.Length;
+                string tagName = m.Groups["name"].Value.ToUpperInvariant();
+
+                // 1) look for explicit :eTAG
+                int blockEnd = -1;
+                for (int k = i + 1; k < end; k++)
+                {
+                    var t = lines[k].TrimStart();
+                    var em = _tagEndRegex.Match(t);
+                    if (em.Success &&
+                        string.Equals(em.Groups["name"].Value, tagName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        blockEnd = k + 1;
+                        break;
+                    }
+                }
+                // 2) fallback: next line that starts with ':'
+                if (blockEnd < 0)
+                {
+                    for (int k = i + 1; k < end; k++)
+                    {
+                        if (lines[k].TrimStart().StartsWith(":"))
+                        {
+                            blockEnd = k;
+                            break;
+                        }
+                    }
+                }
+                if (blockEnd < 0) blockEnd = end;
+
+                // --- build node
+                var node = new TagNode(tagName, i + 1)
+                {
+                    EndLine = blockEnd
+                };
+
+                // --- attribute parsing: accumulate from the first line + any nonâ€colon lines up to blockEnd
+                var rawAttrSb = new StringBuilder(m.Groups["attrs"].Value);
+                for (int a = i + 1; a < blockEnd; a++)
+                {
+                    if (lines[a].TrimStart().StartsWith(":")) break;
+                    rawAttrSb.Append(' ')
+                             .Append(lines[a].Trim());
+                }
+                var rawAttrs = rawAttrSb.ToString();
+                foreach (Match a in _attrRegex.Matches(rawAttrs))
+                {
+                    var key = a.Groups["key"].Value.ToUpperInvariant();
+                    var val = a.Groups["sq"].Success ? a.Groups["sq"].Value
+                            : a.Groups["dq"].Success ? a.Groups["dq"].Value
+                            : a.Groups["raw"].Value;
+                    if (!node.Attributes.ContainsKey(key))
+                        node.Attributes[key] = new List<string>();
+                    node.Attributes[key].Add(val);
+                }
+
+                // --- content: inline after the period on the start line...
+                var sb = new StringBuilder();
+                var dot = line.IndexOf('.');
+                if (dot >= 0 && dot < line.Length - 1)
+                {
+                    var after = line.Substring(dot + 1).Trim();
+                    if (after.Length > 0)
+                        sb.AppendLine(after);
+                }
+                // ...and every line in between start+1 and blockEnd-1
+                for (int k = i + 1; k < blockEnd - 1; k++)
+                    sb.AppendLine(lines[k]);
+                node.Content = sb.ToString().TrimEnd('\r', '\n');
+
+                result.Add(node);
+
+                // --- recurse unless it's in the noâ€child set
+                if (!_noChildTags.Contains(tagName))
+                {
+                    var children = new List<TagNode>();
+                    ParseBlock(lines, i + 1, blockEnd - 1, children);
+                    node.Children.AddRange(children);
+                }
+
+                // advance past the entire block (which consumes any :eTAG too)
+                i = blockEnd;
+            }
         }
     }
 }

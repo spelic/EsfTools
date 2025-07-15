@@ -13,7 +13,7 @@ public class EzeeTagParser : IEsfTagParser
         if (first == null) return null;
 
         var tag = new EzeeTag { TagName = "EZEE" };
-        var rx = new Regex(@":EZEE\s+(?<version>\d+)?\s+(?<date>\d{2}/\d{2}/\d{2})?\s+(?<time>\d{2}:\d{2}:\d{2})?");
+        var rx = new Regex(@"(?<version>\d+)?\s+(?<date>\d{2}/\d{2}/\d{2})?\s+(?<time>\d{2}:\d{2}:\d{2})?");
         var m = rx.Match(first.Content);
         if (m.Success)
         {

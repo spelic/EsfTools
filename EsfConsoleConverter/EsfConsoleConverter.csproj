@@ -9,6 +9,12 @@
     <None Update="D123A-V54.esf">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="debug.esf">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="IS00A-V26.esf">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="TEST.esf">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

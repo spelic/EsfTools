@@ -27,9 +27,9 @@ namespace EsfCore.Tags
         {
             var pad = new string(' ', indent * 2);
             var lines = new List<string>
-    {
-        $"{pad}<{TagName}> (lines {StartLine}-{(EndLine > 0 ? EndLine : StartLine)})"
-    };
+                {
+                    $"{pad}<{TagName}> (lines {StartLine}-{(EndLine > 0 ? EndLine : StartLine)})"
+                };
 
             if (Attributes.Count > 0)
             {

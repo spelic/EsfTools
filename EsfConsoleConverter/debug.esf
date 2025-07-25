@@ -28,103 +28,28 @@ Vhodni meni informacijskega sistema IMPOL
   FLDELA = ' ' AND FLDELA = '1') AND (FLDELA = ' ' AND FLDELA = '1' OR (FLDELA = ' ' AND FLDELA = '1'));
 :eprol.
 :eprogram.
-:func      name      = IS00P20           
-           date      = '04/03/2023' time = '08:15:52' option = EXECUTE  
-           desc      = 'prikaz-izbira-zapis menuja'
-           refine    = N  
-:before.
-  IF IS00R01 IS ERR;
-    MOVE "Vpisali ste napaèno geslo. (ePIS 2)" TO IS00M01.EZEMSG;
-    SET IS00M01.ZASIFRA CURSOR,MODIFIED,DARK;
-    MOVE 'NE' TO FLOK1;          /* glava ni v redu
-    MOVE '  ' TO IS00M01.ZASIFRA;
-    MOVE 9999 TO EZEMNO;
-    EZERTN();                    /* izskok
-  ELSE;
-
-    WHILE EZESQCOD = 0 AND STEVEC <= 21;
-      STEVEC = STEVEC + 1;
-
-    /* --na mapo kar ima zapisano---
-      IS00M02.ZS[STEVEC] = IS00R10.ZAPOREDJE; /* na mapo
-      IS00M02.NAZIV_FIRME[STEVEC] = IS00R10.NAZIV_FIRME_FUNK; /* na mapo
-      IS00M02.FIRMA[STEVEC] = IS00R10.FIRMA; /* na mapo
-      IS00M02.PROG_MENI[STEVEC] = IS00R10.NAZIV_PROG; /* na mapo
-
-      IS00P23();                 /* SCAN v t.OSEBA_MENI
-    END;
-
-WHILE EZEAID NOT PF3;            /* nazaj
-
-  IS00P21();                     /* prikaz mape 2 - lista firma
-
-  IF EZEAID IS PF6;              /* brisanje ekrana na definirano
-    SET IS00M02 CLEAR;
-    IS00P40();                   /* PRENOS konstant na ekran
-  END;
-
-  IF EZEAID IS PF2;              /* brisanje ekrana na definirano
-    IS00P25();                   /* zapis-vedno briše in zapiše
-  END;
-END;
-:ebefore.
-:efunc.
-
-:func      name      = IS00P21           
-           date      = '04/03/2023' time = '08:15:52' option = CONVERSE 
-           object    = IS00M02           
-           desc      = 'mapa 2'
-           refine    = N  
-:efunc.
-
-:func      name      = IS00P22           
-           date      = '04/03/2023' time = '08:15:52' option = SETINQ   
-           object    = IS00R10           
-           errrtn    = EZERTN            
-           desc      = 'SETINQ v t.OSEBA_MENI'
-           refine    = N  
-           execbld   = N  
-:sql       clause    = SELECT      hostvar = '?'.
-IDZAPST, ZASIFRA, IME, NIVO, ZAPOREDJE, NAZIV_FIRME_FUNK, NAZIV_PROG, FIRMA, DATURA
-:esql.
-:sql       clause    = INTO      hostvar = '?'.
-?IDZAPST, ?ZASIFRA, ?IME, ?NIVO, ?ZAPOREDJE, ?NAZIV_FIRME_FUNK, ?NAZIV_PROG, ?FIRMA, ?DATURA
-:esql.
-:sql       clause    = WHERE      hostvar = '?'.
-WHERE
-IDZAPST = ?IDZAPST AND
-ZASIFRA = ?ZASIFRA AND
-NIVO = 1  /*--PRVI MENI----
-:esql.
-:sql       clause    = ORDERBY      hostvar = '?'.
-ORDER BY
- ZAPOREDJE   ASC
-
-:esql.
-:efunc.
-
-:func      name      = IS00P23           
-           date      = '04/03/2023' time = '08:15:52' option = SCAN     
-           object    = IS00R10           
-           errrtn    = EZERTN            
-           desc      = 'SCAN v t.OSEBA_MENI'
-           refine    = N  
-:efunc.
-
-:func      name      = IS00P24           
-           date      = '04/03/2023' time = '08:15:52' option = INQUIRY  
-           object    = IS00R22           
-           errrtn    = EZERTN            
-           desc      = 'INQUIRY v t.TT_FIRMA'
-           refine    = N  
-:efunc.
 
 :func      name      = IS00P25           
            date      = '04/03/2023' time = '08:15:52' option = EXECUTE  
            desc      = 'zapis v t.OSEBA_MENI'
            refine    = N  
 :before.
+IF STEVAPPL > 0;
+    MOVE 'IS00A' TO IS00W01.APPL[Workstor.IS00W01.STEVAPPL];
+END;
+
+IF (EZESQCOD = 0) AND (IS00R01.LDAP_UID NE ' ');
+    IS00W02.PRINTER = IS00R01.TISKALNIK;
+END;
+
+IF IS00R01 IS ERR;
+    MOVE IS00M01.ZASIFRA TO IS00R01.ZASIFRA;
+END;
 /* ---kontrola izbire, èe je kaj izbrano in èe se ne ponavljajo ista številka----
+EZEREPLY = 1;
+
+MOVE 1 TO EZEREPLY;
+
 STEVEC = 1;
 WHILE STEVEC <= 25;
   IF IS00M02.ZS[STEVEC] > 0;     /* je kaj notri

@@ -116,7 +116,7 @@ namespace EsfCore.Tags.Logic
             }
             var result = sb.ToString();
             if (result.EndsWith(" == ERR"))
-                result = result.Substring(0,result.Length-4) + ".IsErr";
+                result = result.Substring(0,result.Length-7) + ".IsErr";
             return result;
         }
     }

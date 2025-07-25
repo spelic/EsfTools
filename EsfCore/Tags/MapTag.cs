@@ -141,8 +141,6 @@ namespace EsfCore.Tags
             const int ConsoleHeight = 24;
 
             var sb = new StringBuilder();
-            sb.AppendLine($"public static void {MapName}()");
-            sb.AppendLine("{");
             sb.AppendLine("    Console.Clear();");
             sb.AppendLine();
             sb.AppendLine("    void WriteWrapped(int col, int row, string text)");
@@ -195,7 +193,6 @@ namespace EsfCore.Tags
                 sb.AppendLine("    Console.SetCursorPosition(0, 0);");
             }
 
-            sb.AppendLine("}");
             return sb.ToString();
         }
     }

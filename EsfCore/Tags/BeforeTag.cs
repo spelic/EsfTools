@@ -16,7 +16,7 @@ namespace EsfCore.Tags
         {
             return new BeforeTag
             {
-                Content = node.Content?.Trim()
+                Content = node.Content?.TrimStart('.').Trim()
             };
         }
 

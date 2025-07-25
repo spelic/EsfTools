@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using EsfCore.Esf;
 using EsfParser.Parser;
@@ -6,6 +6,7 @@ using EsfParser.Builder;
 using EsfCore.Tags;
 using System.Text;
 using EsfCore;
+using EsfCore.Tags.Logic;
 
 Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 string path = args.Length > 0 ? args[0] : "M000A-V22.esf";
@@ -63,16 +64,6 @@ if (analitics)
 }
 else
 {
-
-    //var a = Console.ReadKey(true);
-
-    //if (a.Key != ConsoleKey.Enter)
-    //{
-    //    Console.WriteLine("Press Enter to continue...");
-    //    Console.ReadLine();
-    //}
-
-
     if (!File.Exists(path))
     {
         Console.WriteLine($"File not found: {path}");
@@ -81,32 +72,12 @@ else
 
     var lines = File.ReadAllLines(path, Encoding.GetEncoding(1250));
     Console.OutputEncoding = Encoding.UTF8;
+
     var nodes = MyEsfParser.Parse(lines);
-
-    //foreach (var node in nodes) Console.WriteLine(node.ToString());
-
     var program = EsfProgramBuilder.GenerateEsfProgram(nodes);
+
     string name = path.ToLower().Replace(".esf", "").Replace("-", "_").ToUpper();
     program.ExportToConsoleProject(name + ".Console", name + "_ConsoleApp");
-
-
-    //Console.WriteLine(program);
-
-    // build FuncTagCollection
-    var funcs = nodes
-        .Where(n => n.TagName == "FUNC")
-        .Select(FuncTag.Parse)
-        .ToList();
-
-    Console.WriteLine($"Found {funcs.Count} FUNC tags\n");
-
-    // print first three
-    for (int i = 0; i < Math.Min(3, funcs.Count); i++)
-    {
-        var f = funcs[i];
-        Console.WriteLine($"{i + 1}. {f.Name}");
-        Console.WriteLine($"   Before-lines: {f.BeforeLogic.Count}, After-lines: {f.AfterLogic.Count}, SQL-clauses: {f.SqlClauses.Count}");
-    }
 
     Console.WriteLine("Done.");
 }

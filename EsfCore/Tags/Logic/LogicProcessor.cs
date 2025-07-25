@@ -59,8 +59,11 @@ namespace EsfCore.Tags.Logic
                     }
                 }
 
+                Console.WriteLine($"{indent} Processing: {raw}");
+
                 // --- 1) qualify all tokens ---
                 var qualified = _qualifiers.Aggregate(trimmed, (txt, q) => q.Qualify(txt));
+                Console.WriteLine($"{indent}     1) Qualify: {qualified}");
 
                 // --- 2) translators for single-line statements ---
                 var translator = _translators.FirstOrDefault(t => t.CanTranslate(qualified));
@@ -69,17 +72,24 @@ namespace EsfCore.Tags.Logic
                     var code = translator.Translate(qualified, out var org);
                     sb.Append(indent).Append("//ORG: ").AppendLine(org);
                     foreach (var ln in code.Split(Environment.NewLine))
+                    {
                         sb.Append(indent).AppendLine(ln);
+                        Console.WriteLine($"{indent}     2) Translators: {ln}");
+                    }
                     if (inlineComment != null)
                         sb.Append(indent).AppendLine("// " + inlineComment);
                     
                     continue;
-                }
+                } else
+                    Console.WriteLine($"{indent}    2) Translators: NOT APPLIED");
+
 
                 // 3) IF / WHILE
                 if (qualified.StartsWith("IF ", StringComparison.OrdinalIgnoreCase) ||
                     qualified.StartsWith("WHILE ", StringComparison.OrdinalIgnoreCase))
                 {
+                    Console.WriteLine($"{indent}    3) IF/WHILE: Start");
+
                     bool isWhile = qualified.StartsWith("WHILE", StringComparison.OrdinalIgnoreCase);
                     string keyword = isWhile ? "WHILE" : "IF";
 
@@ -113,6 +123,7 @@ namespace EsfCore.Tags.Logic
 
                     // 3b) build the full COBOL condition text
                     var condText = string.Join(" ", condLines);
+                    Console.WriteLine($"{indent}    3) GEN Condition: {condText}");
 
                     // 3c) now parse the body until the matching END;
                     var body = new List<string>();
@@ -138,6 +149,7 @@ namespace EsfCore.Tags.Logic
 
                     // 3d) convert the COBOL condition into C#
                     var csCond = _condConv.Convert(condText);
+                    Console.WriteLine($"{indent}    3) C# Condition: {csCond}");
 
                     // 3e) emit the header
                     sb.Append(indent).Append("//ORG: ").AppendLine(trimmed);
@@ -151,16 +163,19 @@ namespace EsfCore.Tags.Logic
                     sb.Append(Process(body, indentSpaces + 4));
 
                     sb.Append(indent).AppendLine("}");
+                    Console.WriteLine($"{indent}    3) IF/WHILE END");
                     continue;
                 }
 
                 // 3) ASSIGEMENT
                 if (qualified.IndexOf(" = ")>0)
                 {
+                    Console.WriteLine($"{indent}    3) ASSIGEMENT {qualified}");
                     continue;
                 }
 
                 // --- 4) fallback for anything else ---
+                Console.WriteLine($"{indent}    4) fallback {trimmed}");
                 sb.Append(indent)
                   .Append("// UNSUPPORTED: ")
                   .AppendLine(trimmed);

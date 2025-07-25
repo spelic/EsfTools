@@ -16,7 +16,7 @@ namespace EsfCore.Tags
 
         public override string ToString()
         {
-            return $"{Name} ({Type}, {Bytes} bytes, level {Level}, occurs {Occurs})";
+            return $"{Name} - {Desc} ({Type}, {Bytes} bytes, level {Level}, occurs {Occurs})";
         }
 
         public static RecordItemTag Parse(TagNode node)

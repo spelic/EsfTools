@@ -1,4 +1,6 @@
 ﻿using System;
+using static System.Net.Mime.MediaTypeNames;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace EsfCore.Tags
 {
@@ -70,6 +72,23 @@ namespace EsfCore.Tags
         {
             get => _ezeapp;
             set => _ezeapp = value;
+        }
+
+        private static int _ezemno;
+        /// <summary>
+        /// Definition considerations for EZEMNO
+        /// A function used as an edit routine indicates that an error has been detected by
+        /// moving a nonzero value to EZEMNO.This automatically displays the map
+        /// again, with the field in error highlighted and the text of the message
+        /// displayed.
+        /// If a message table is not available, an edit routine can force the map to be
+        /// conversed again by moving message text to EZEMSG and setting EZEMNO to
+        /// 9999.
+        /// </summary>
+        public static int EZEMNO
+        {
+            get => _ezemno;
+            set => _ezemno = value;
         }
 
         // ——————————————————————————————————————————————

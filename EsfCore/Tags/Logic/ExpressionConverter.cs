@@ -6,13 +6,11 @@ namespace EsfCore.Tags.Logic
 {
     public class ExpressionConverter : IExpressionConverter
     {
-        // literal matcher: single‐ or double‐quoted
+        // literal matcher: single- or double-quoted
         private static readonly Regex _literal = new(@"^(['""])(.*)\1$", RegexOptions.Compiled);
-
         // subscript matcher: A[1]
         private static readonly Regex _subscript = new(@"(?<name>\w+)\[(?<idx>\d+)\]", RegexOptions.Compiled);
-
-        // integer‐division matcher (COBOL “//”)
+        // integer-division matcher (COBOL “//”)
         private static readonly Regex _intDiv = new(@"//", RegexOptions.Compiled);
 
         private readonly ITokenQualifier[] _qualifiers;
@@ -26,30 +24,38 @@ namespace EsfCore.Tags.Logic
         {
             expr = expr.Trim();
 
+           
+
             // ─────────────────────────────────────────────────────────────────
-            // special-case: strip any "<MapName>.GlobalItems.<Field>" → "<MapName>.<Field>"
-            // so you don't get "Foo.GlobalItems.Bar" doubled up
+            // 1) Deduplicate accidental “Foo.GlobalItems.Bar” → “Foo.Bar”
             // ─────────────────────────────────────────────────────────────────
-            var mg = Regex.Match(expr, @"^(?<map>\w+)\.GlobalItems\.(?<fld>\w+)$", RegexOptions.IgnoreCase);
+            var mg = Regex.Match(expr,
+                @"^(?<map>\w+)\.GlobalItems\.(?<fld>\w+)$",
+                RegexOptions.IgnoreCase
+            );
             if (mg.Success)
                 return $"{mg.Groups["map"].Value}.{mg.Groups["fld"].Value}";
 
-            // 1) string literal → always emit C# double-quoted
+            // ─────────────────────────────────────────────────────────────────
+            // 2) string literal → always emit C# double-quoted
+            // ─────────────────────────────────────────────────────────────────
             var litM = _literal.Match(expr);
             if (litM.Success)
             {
                 var content = litM.Groups[2].Value
-                    .Replace("\\", "\\\\")
-                    .Replace("\"", "\\\"");
+                                 .Replace("\\", "\\\\")
+                                 .Replace("\"", "\\\"");
                 return $"\"{content}\"";
             }
 
-            // 2) numeric literal → pass through
+            // ─────────────────────────────────────────────────────────────────
+            // 3) numeric literal → pass through
+            // ─────────────────────────────────────────────────────────────────
             if (Regex.IsMatch(expr, @"^\d+(\.\d+)?$"))
                 return expr;
 
             // ─────────────────────────────────────────────────────────────────
-            // special PFx / ENTER handling
+            // 4) PFx / ENTER handling
             // ─────────────────────────────────────────────────────────────────
             var up = expr.ToUpperInvariant();
             if (up == "ENTER")
@@ -57,12 +63,16 @@ namespace EsfCore.Tags.Logic
             var pfm = Regex.Match(up, @"^PF(?<n>\d{1,2})$", RegexOptions.IgnoreCase);
             if (pfm.Success)
                 return $"ConsoleKey.F{pfm.Groups["n"].Value}";
-            // (you can extend here for PAx, BYPASS, etc.)
+            // … you can add PAx, BYPASS etc. here …
 
-            // 3) COBOL integer-division `//` → C# modulus `%`
+            // ─────────────────────────────────────────────────────────────────
+            // 5) COBOL integer-division “//” → C# modulus “%”
+            // ─────────────────────────────────────────────────────────────────
             expr = _intDiv.Replace(expr, "%");
 
-            // 4) subscripts: A[1] → A[0]
+            // ─────────────────────────────────────────────────────────────────
+            // 6) subscripts: A[1] → A[0]
+            // ─────────────────────────────────────────────────────────────────
             expr = _subscript.Replace(expr, m =>
             {
                 var name = m.Groups["name"].Value;
@@ -70,7 +80,10 @@ namespace EsfCore.Tags.Logic
                 return $"{name}[{idx}]";
             });
 
-            // 5) apply all token-qualifiers in turn (SpecialFunctions, GlobalItems, workstor…)
+            // ─────────────────────────────────────────────────────────────────
+            // 7) finally, run all your qualifiers (SpecialFunctions, GlobalItems,
+            //    workstor, etc.) in order
+            // ─────────────────────────────────────────────────────────────────
             return _qualifiers.Aggregate(expr, (current, q) => q.Qualify(current));
         }
     }

@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.Json.Serialization;
+using EsfCode.CodeGen;
 
 namespace EsfCore.Tags
 {
@@ -74,40 +75,45 @@ namespace EsfCore.Tags
             else if (tag is TbleTagCollection t) Tables.Tables.AddRange(t.Tables);
         }
 
-        public void ExportToConsoleProject(string outputDir, string projectName = "EsfConsoleApp")
+        public void ExportToConsoleProject(string outputDir, string projectNameSpace = "EsfConsoleApp")
         {
             Directory.CreateDirectory(outputDir);
 
             // 1) Project file
-            GenerateCsProj(outputDir, projectName);
+            GenerateCsProj(outputDir, projectNameSpace);
 
             // 2) Screens
-            GenerateMapClasses(outputDir);
+            var generatorMap = new MapClassGenerator(Maps.Maps, outputDir, projectNameSpace);
+            generatorMap.Generate();
 
             // 3) SpecialFunctions helper class
-            GenerateSpecialFunctionsClass(outputDir, projectName);
+            GenerateSpecialFunctionsClass(outputDir, projectNameSpace);
 
             // 4) Functions
-            GenerateFunctionClasses(outputDir);
+            GenerateFunctionClasses(outputDir, projectNameSpace);
 
             // 5) Program + DataAccess
-            GenerateProgramCs(outputDir, projectName);
+            GenerateProgramCs(outputDir, projectNameSpace);
 
             // 6) Records
-            GenerateRecordClasses(outputDir);
+            // GenerateRecordClasses(outputDir);
+
+            // 6) Records
+            var generator = new RecordClassGenerator(records: Records.Records, outputDirectory: outputDir, rootNamespace: projectNameSpace);
+            generator.Generate();
+
 
             // 7) Items → a static Globals class
-            GenerateItemGlobals(outputDir, projectName);
+            GenerateItemGlobals(outputDir, projectNameSpace);
 
             Console.WriteLine($"Scaffolded console project in '{outputDir}'.");
         }
-
-        private void GenerateSpecialFunctionsClass(string outputDir, string projectName)
+        private void GenerateSpecialFunctionsClass(string outputDir, string projectNameSpace)
         {
             var itemsDir = Path.Combine(outputDir, "Items");
             Directory.CreateDirectory(itemsDir);
 
-            var itemsNs = $"{Program.Name}.Items";
+            var itemsNs = $"{projectNameSpace}.Items";
 
             var dir = new DirectoryInfo(Directory.GetCurrentDirectory());
             while (dir != null && !Directory.Exists(Path.Combine(dir.FullName, "EsfCore", "Tags")))
@@ -131,13 +137,12 @@ namespace EsfCore.Tags
 
             File.WriteAllLines(Path.Combine(itemsDir, "SpecialFunctions.cs"), lines);
         }
-
-        private void GenerateItemGlobals(string outputDir, string projectName)
+        private void GenerateItemGlobals(string outputDir, string ProjectNameSpace)
         {
             var itemsDir = Path.Combine(outputDir, "Items");
             Directory.CreateDirectory(itemsDir);
 
-            var itemsNs = $"{Program.Name}.Items";
+            var itemsNs = $"{ProjectNameSpace}.Items";
             var sb = new StringBuilder();
 
             sb.AppendLine("using System;");
@@ -182,16 +187,15 @@ namespace EsfCore.Tags
 
             File.WriteAllText(Path.Combine(itemsDir, "GlobalItems.cs"), sb.ToString());
         }
-
-        private void GenerateCsProj(string outputDir, string projectName)
+        private void GenerateCsProj(string outputDir, string ProjectNameSpace)
         {
-            var csproj = Path.Combine(outputDir, $"{projectName}.csproj");
+            var csproj = Path.Combine(outputDir, $"{ProjectNameSpace}.csproj");
             File.WriteAllText(csproj, $@"
 <Project Sdk=""Microsoft.NET.Sdk"">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net7.0</TargetFramework>
-    <RootNamespace>{projectName}</RootNamespace>
+    <RootNamespace>{ProjectNameSpace}</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include=""Dapper"" Version=""2.0.123"" />
@@ -199,20 +203,99 @@ namespace EsfCore.Tags
   </ItemGroup>
 </Project>".Trim());
         }
-
-        private void GenerateMapClasses(string outputDir)
+        private void GenerateFunctionClasses(string outputDir, string ProjectNameSpace)
         {
-            var maps = Maps.Maps;
+            var functions = Funcs.Functions;
+            var fnDir = Path.Combine(outputDir, "Functions");
+            Directory.CreateDirectory(fnDir);
+
+            EsfLogicToCs.program = this;
+
+            foreach (var func in functions)
+            {
+                var className = func.Name;
+                var filePath = Path.Combine(fnDir, className + ".cs");
+                var sb = new StringBuilder();
+
+                sb.AppendLine("using System;");
+                sb.AppendLine($"using {ProjectNameSpace}.Records;");
+                sb.AppendLine($"using {ProjectNameSpace}.Items;");
+                sb.AppendLine($"using {ProjectNameSpace}.Screens;");
+                sb.AppendLine();
+                sb.AppendLine($"namespace {ProjectNameSpace}.Functions");
+                sb.AppendLine("{");
+                sb.AppendLine($"    public static class {className}");
+                sb.AppendLine("    {");
+                sb.AppendLine("        public static void Execute()");
+                sb.AppendLine("        {");
+
+                // now calls the zero-parameter overload
+                sb.Append(func.GenerateCSharpBody(indentSpaces: 8));
+
+                sb.AppendLine("        }");
+                sb.AppendLine("    }");
+                sb.AppendLine("}");
+
+                File.WriteAllText(filePath, sb.ToString());
+            }
+        }
+        private void GenerateProgramCs(string outputDir, string projectNameSpace)
+        {
+            string mainCall;
+            if (!string.IsNullOrEmpty(Program?.Mainfun.Name) &&
+                Funcs.Functions.Exists(f => f.Name == Program.Mainfun.Name))
+            {
+                mainCall = $"{Program.Mainfun.Name}.Execute();";
+            }
+            else if (Maps.Maps.Count > 0)
+            {
+                mainCall = $"{Maps.Maps[0].MapName}Screen.Render();";
+            }
+            else
+            {
+                mainCall = "// nothing to run";
+            }
+
+            var sb = new StringBuilder();
+            sb.AppendLine("using System;");
+            sb.AppendLine($"using {projectNameSpace}.Screens;");
+            sb.AppendLine($"using {projectNameSpace}.Functions;");
+            sb.AppendLine();
+            sb.AppendLine($"namespace {projectNameSpace}");
+            sb.AppendLine("{");
+            sb.AppendLine("  class Program");
+            sb.AppendLine("  {");
+            sb.AppendLine("    static void Main(string[] args)");
+            sb.AppendLine("    {");
+            sb.AppendLine($"      Console.Title = \"{Program?.Name}\";");
+            sb.AppendLine("      Console.Clear();");
+            sb.AppendLine("      " + mainCall);
+            sb.AppendLine("      Console.ReadLine();");
+            sb.AppendLine("    }");
+            sb.AppendLine("  }");
+            sb.AppendLine("}");
+
+            File.WriteAllText(Path.Combine(outputDir, "Program.cs"), sb.ToString());
+
+            // DataAccess.cs...
+        }
+    }
+
+}
+
+
+/*
+
+        private void GenerateMapClasses(string outputDir, string ProjectNameSpace)
+        {
             var screensDir = Path.Combine(outputDir, "Screens");
             Directory.CreateDirectory(screensDir);
-            var screenNs = $"{Program.Name}.Screens";
-
             // CfieldTag.cs
             File.WriteAllText(
                 Path.Combine(screensDir, "CfieldTag.cs"),
                 $@"using System;
 
-namespace {screenNs}
+namespace {ProjectNameSpace}.Screens
 {{
     /// <summary>
     /// A constant (read‐only) field on the screen.
@@ -235,7 +318,7 @@ namespace {screenNs}
                 Path.Combine(screensDir, "VfieldTag.cs"),
                 $@"using System;
 
-namespace {screenNs}
+namespace {ProjectNameSpace}.Screens
 {{
     /// <summary>
     /// A variable (read‐write) field on the screen, with runtime MDT & intensity.
@@ -271,7 +354,7 @@ namespace {screenNs}
     }}
 }}");
 
-            foreach (var map in maps)
+            foreach (var map in Maps.Maps)
             {
                 var className = map.MapName;
                 var filePath = Path.Combine(screensDir, className + ".cs");
@@ -282,9 +365,8 @@ namespace {screenNs}
                 sb.AppendLine("using System.Collections.Generic;");
                 sb.AppendLine("using System.Reflection;");  // for CopyFrom
                 sb.AppendLine("using System.Linq;    // for GroupBy/ToDictionary");
-                sb.AppendLine("using EsfCore.Tags;   // for CfieldTag & VfieldTag");
                 sb.AppendLine();
-                sb.AppendLine($"namespace {screenNs}");
+                sb.AppendLine($"namespace {ProjectNameSpace}.Screens");
                 sb.AppendLine("{");
                 sb.AppendLine($"    public static class {className}");
                 sb.AppendLine("    {");
@@ -464,230 +546,5 @@ namespace {screenNs}
                 File.WriteAllText(filePath, sb.ToString());
             }
         }
-
-
-
-        private void GenerateFunctionClasses(string outputDir)
-        {
-            var functions = Funcs.Functions;
-            var fnDir = Path.Combine(outputDir, "Functions");
-            Directory.CreateDirectory(fnDir);
-
-            EsfLogicToCs.program = this;
-
-            foreach (var func in functions)
-            {
-                var className = func.Name;
-                var filePath = Path.Combine(fnDir, className + ".cs");
-                var sb = new StringBuilder();
-
-                sb.AppendLine("using System;");
-                sb.AppendLine($"using {Program.Name}.Records;");
-                sb.AppendLine($"using {Program.Name}.Items;");
-                sb.AppendLine($"using {Program.Name}.Screens;");
-                sb.AppendLine();
-                sb.AppendLine($"namespace {Program.Name}.Functions");
-                sb.AppendLine("{");
-                sb.AppendLine($"    public static class {className}");
-                sb.AppendLine("    {");
-                sb.AppendLine("        public static void Execute()");
-                sb.AppendLine("        {");
-
-                // now calls the zero-parameter overload
-                sb.Append(func.GenerateCSharpBody(indentSpaces: 8));
-
-                sb.AppendLine("        }");
-                sb.AppendLine("    }");
-                sb.AppendLine("}");
-
-                File.WriteAllText(filePath, sb.ToString());
-            }
-        }
-
-        private void GenerateProgramCs(string outputDir, string projectName)
-        {
-            string mainCall;
-            if (!string.IsNullOrEmpty(Program?.Mainfun.Name) &&
-                Funcs.Functions.Exists(f => f.Name == Program.Mainfun.Name))
-            {
-                mainCall = $"{Program.Mainfun.Name}.Execute();";
-            }
-            else if (Maps.Maps.Count > 0)
-            {
-                mainCall = $"{Maps.Maps[0].MapName}Screen.Render();";
-            }
-            else
-            {
-                mainCall = "// nothing to run";
-            }
-
-            var sb = new StringBuilder();
-            sb.AppendLine("using System;");
-            sb.AppendLine($"using {projectName}.Screens;");
-            sb.AppendLine($"using {projectName}.Functions;");
-            sb.AppendLine();
-            sb.AppendLine($"namespace {projectName}");
-            sb.AppendLine("{");
-            sb.AppendLine("  class Program");
-            sb.AppendLine("  {");
-            sb.AppendLine("    static void Main(string[] args)");
-            sb.AppendLine("    {");
-            sb.AppendLine($"      Console.Title = \"{Program?.Name}\";");
-            sb.AppendLine("      Console.Clear();");
-            sb.AppendLine("      " + mainCall);
-            sb.AppendLine("      Console.ReadLine();");
-            sb.AppendLine("    }");
-            sb.AppendLine("  }");
-            sb.AppendLine("}");
-
-            File.WriteAllText(Path.Combine(outputDir, "Program.cs"), sb.ToString());
-
-            // DataAccess.cs...
-        }
-
-        private void GenerateRecordClasses(string outputDir)
-        {
-            var recordsDir = Path.Combine(outputDir, "Records");
-            Directory.CreateDirectory(recordsDir);
-            var recordNs = $"{Program.Name}.Records";
-
-            // Keep track of all workstor record names for the Workstor class:
-            var workstorNames = new List<string>();
-
-            foreach (var rec in Records.Records)
-            {
-                var className = rec.Name;
-                var filePath = Path.Combine(recordsDir, className + ".cs");
-                var sb = new StringBuilder();
-
-                bool isWorkstor = true; // rec.Org.Equals("WORKSTOR", StringComparison.OrdinalIgnoreCase);
-                if (isWorkstor) workstorNames.Add(className);
-
-                var classModifier = isWorkstor ? " static" : "";
-                var memberModifier = isWorkstor ? "static " : "";
-
-                sb.AppendLine("using System;");
-                sb.AppendLine("using System.Reflection;");
-                sb.AppendLine();
-                sb.AppendLine($"namespace {recordNs}");
-                sb.AppendLine("{");
-                sb.AppendLine("    /// <summary>");
-                sb.AppendLine($"    /// ESF record “{className}”, Org = {rec.Org}");
-                sb.AppendLine("    /// </summary>");
-                sb.AppendLine($"    public{classModifier} class {className}");
-                sb.AppendLine("    {");
-                sb.AppendLine($"        // Org type: {rec.Org}");
-                sb.AppendLine($"        public static bool IsErr {{get; set;}}");
-                sb.AppendLine();
-
-                // collect each field so we can generate CopyFrom and SetEmpty
-                var props = new List<(string Name, string CsType)>();
-
-                foreach (var fld in rec.Items)
-                {
-                    if (fld.Name == "*") continue;
-                    var propName = fld.Name.Replace('-', '_');
-                    string csType = fld.Type.ToUpperInvariant() switch
-                    {
-                        "BIN" => "int",
-                        "NUM" => (int.TryParse(fld.Decimals, out var d) && d > 0) ? "decimal" : "int",
-                        "PACK" or "PACF" => (int.TryParse(fld.Decimals, out var d2) && d2 > 0) ? "decimal" : "int",
-                        "CHA" or "DBCS" or "MIX" => "string",
-                        _ => "string"
-                    };
-
-                    string arrayInit = "";
-                    if (int.TryParse(fld.Occurs, out int occurs) && occurs > 1)
-                    {
-                        arrayInit = $" = new {csType}[{occurs}];";
-                        csType += "[]";
-                    }
-
-                    props.Add((propName, csType));
-
-                    if (!string.IsNullOrWhiteSpace(fld.Desc))
-                    {
-                        sb.AppendLine("        /// <summary>");
-                        sb.AppendLine($"        /// {fld.Desc}");
-                        sb.AppendLine("        /// </summary>");
-                    }
-                    sb.AppendLine($"        public {memberModifier}{csType} {propName} {{ get; set; }}{arrayInit}");
-                    sb.AppendLine();
-                }
-
-                // 1) Reflection-based CopyFrom(object)
-                sb.AppendLine("        /// <summary>");
-                sb.AppendLine("        /// Copies all matching fields/properties from any other record instance.");
-                sb.AppendLine("        /// </summary>");
-                sb.AppendLine("        public void CopyFrom(object other)");
-                sb.AppendLine("        {");
-                sb.AppendLine("            if (other is null) throw new ArgumentNullException(nameof(other));");
-                sb.AppendLine("            var srcType = other.GetType();");
-                sb.AppendLine("            var tgtType = this.GetType();");
-                sb.AppendLine("            foreach (var prop in tgtType.GetProperties(BindingFlags.Public | BindingFlags.Instance))");
-                sb.AppendLine("            {");
-                sb.AppendLine("                // only writable, non-indexed properties");
-                sb.AppendLine("                if (!prop.CanWrite || prop.GetIndexParameters().Length > 0) continue;");
-                sb.AppendLine("                var srcProp = srcType.GetProperty(prop.Name, BindingFlags.Public | BindingFlags.Instance);");
-                sb.AppendLine("                if (srcProp == null || !srcProp.CanRead) continue;");
-                sb.AppendLine("                if (srcProp.PropertyType != prop.PropertyType) continue;");
-                sb.AppendLine("                var value = srcProp.GetValue(other);");
-                sb.AppendLine("                prop.SetValue(this, value);");
-                sb.AppendLine("            }");
-                sb.AppendLine("        }");
-                sb.AppendLine();
-
-                //
-                // 2) Generate SetEmpty()
-                //
-                sb.AppendLine("        /// <summary>");
-                sb.AppendLine("        /// Clears all fields to their default values.");
-                sb.AppendLine("        /// </summary>");
-                sb.AppendLine($"        public {memberModifier}void SetEmpty()");
-                sb.AppendLine("        {");
-                foreach (var (Name, CsType) in props)
-                    sb.AppendLine($"            {Name} = default({CsType});");
-                sb.AppendLine("        }");
-                sb.AppendLine();
-
-                sb.AppendLine("    }");
-                sb.AppendLine("}");
-
-                File.WriteAllText(filePath, sb.ToString());
-            }
-
-            //
-            // 3) Emit the Workstor.cs file
-            //
-            if (workstorNames.Count > 0)
-            {
-                var wsPath = Path.Combine(recordsDir, "Workstor.cs");
-                var wsb = new StringBuilder();
-
-                wsb.AppendLine("using System;");
-                wsb.AppendLine();
-                wsb.AppendLine($"namespace {recordNs}");
-                wsb.AppendLine("{");
-                wsb.AppendLine("    /// <summary>");
-                wsb.AppendLine("    /// Singletons for all working‐storage records");
-                wsb.AppendLine("    /// </summary>");
-                wsb.AppendLine("    public static class Workstor");
-                wsb.AppendLine("    {");
-
-                foreach (var name in workstorNames)
-                {
-                    wsb.AppendLine($"        public static readonly {name} {name} = new {name}();");
-                }
-
-                wsb.AppendLine("    }");
-                wsb.AppendLine("}");
-
-                File.WriteAllText(wsPath, wsb.ToString());
-            }
-        }
-
-
-    }
-
-}
-
+        
+*/

@@ -1,3 +1,5 @@
+// File: RecordTag.cs
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,7 +16,8 @@ namespace EsfCore.Tags
         public string Usage { get; set; } = string.Empty;
         public string Prol { get; set; } = string.Empty;
 
-        public List<RecordItemTag> Items { get; set; } = new();
+        public List<RecordItemTag> Items { get; } = new();
+        public List<SqlTableTag> SqlTables { get; } = new();
 
         public string TagName => "RECORD";
 
@@ -25,10 +28,10 @@ namespace EsfCore.Tags
             sb.AppendLine($"  Date: {Date}  Time: {Time}");
             if (!string.IsNullOrWhiteSpace(Prol))
                 sb.AppendLine($"  Prol: {Prol}");
+            foreach (var t in SqlTables)
+                sb.AppendLine($"  - {t}");
             foreach (var item in Items)
-            {
                 sb.AppendLine($"  - {item}");
-            }
             return sb.ToString();
         }
 
@@ -36,11 +39,11 @@ namespace EsfCore.Tags
         {
             var tag = new RecordTag
             {
-                Name = node.GetString("NAME"),
-                Date = node.GetString("DATE"),
-                Time = node.GetString("TIME"),
-                Org = node.GetString("ORG"),
-                Usage = node.GetString("USAGE")
+                Name = node.GetString("NAME") ?? throw new FormatException("RECORD missing NAME"),
+                Date = node.GetString("DATE") ?? "",
+                Time = node.GetString("TIME") ?? "",
+                Org = node.GetString("ORG") ?? "",
+                Usage = node.GetString("USAGE") ?? ""
             };
 
             foreach (var child in node.Children)
@@ -50,9 +53,16 @@ namespace EsfCore.Tags
                     case "PROL":
                         tag.Prol = child.Content?.Trim() ?? "";
                         break;
+
                     case "RECDITEM":
                         tag.Items.Add(RecordItemTag.Parse(child));
                         break;
+
+                    case "SQLTABLE":
+                        tag.SqlTables.Add(SqlTableTag.Parse(child));
+                        break;
+
+                        // you can similarly add JOINCON, RCDHELP, TITLE, etc.
                 }
             }
 

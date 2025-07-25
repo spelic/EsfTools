@@ -184,6 +184,8 @@ namespace EsfParser.Parser
                     )
                 {
                     // this is the content of the tag
+                    if (line == ".")
+                        line = "";
                     tagNode.Content = line;
                     
                     // add the rest of the content lines until next tag or end of tag

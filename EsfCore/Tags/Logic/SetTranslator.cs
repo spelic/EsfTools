@@ -41,7 +41,7 @@ namespace EsfCore.Tags.Logic
                 {
                     "MODIFIED" => $"{tgt}.SetModified();",
                     "DARK" => $"{tgt}.SetDark();",
-                    "EMPTY" => $"{tgt}.SetEmpty();",
+                    "EMPTY" => $"Workstor.{tgt}.SetEmpty();",
                     "CLEAR" => $"{tgt}.SetClear();",
                     "CURSOR" => $"{tgt}.SetCursor();",
                     "BRIGHT" => $"{tgt}.SetBright();",

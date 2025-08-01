@@ -9,16 +9,25 @@ namespace EsfCore.Tags.Logic
     {
         private readonly HashSet<string> _records;
         private readonly Dictionary<string, string> _fieldToRecord;
-
+        // you pass in the list of global-item names at construction
+        private readonly HashSet<string> _names;
+        private readonly Regex _rx;
         /// <summary>
         /// workstorDefinitions: map of recordName → field‑names
         /// </summary>
-        public WorkstorQualifier(IDictionary<string, IEnumerable<string>> workstorDefinitions)
+        public WorkstorQualifier(IDictionary<string, IEnumerable<string>> workstorDefinitions, IEnumerable<string> globalItemNames)
         {
             // record names
             _records = new HashSet<string>(
                 workstorDefinitions.Keys,
                 StringComparer.OrdinalIgnoreCase
+            );
+
+            _names = new HashSet<string>(globalItemNames, StringComparer.OrdinalIgnoreCase);
+
+            _rx = new Regex(
+                $@"(?<!GlobalItems\.)\b({string.Join("|", _names.Select(Regex.Escape))})\b",
+                RegexOptions.Compiled | RegexOptions.IgnoreCase
             );
 
             // flatten & filter out any "*" pseudo‑fields
@@ -48,8 +57,22 @@ namespace EsfCore.Tags.Logic
                 var tok = parts[i];
                 if (string.IsNullOrWhiteSpace(tok)) continue;
 
-                // remove all non-word characters from beggining of tok and store them in tok2 variable
-                var tok2 = Regex.Replace(tok, @"^\W+", "");
+                // if tok starts with ' or " then it's a string literal continue;
+                if (tok.StartsWith('\'') || tok.StartsWith('"'))
+                {
+                    // do not qualify string literals
+                    continue;
+                }
+
+                // chack if tok is not started with character
+                // that is not a word character (e.g. letter, digit, or underscore)
+                var beforeString = "";
+                if (Regex.IsMatch(tok, @"^\W"))
+                {
+                    // remove all non-word characters from beggining of tok and store them in tok2 variable
+                    beforeString = Regex.Replace(tok, @"^\W+", "");
+                }
+                
                 // remove all non-word characters from beggining of tok
                 tok = Regex.Replace(tok, @"^\W+", "");
                 if (string.IsNullOrWhiteSpace(tok)) continue;
@@ -73,16 +96,19 @@ namespace EsfCore.Tags.Logic
                 if (_records.Contains(tok))
                 {
                     // it's a record name
-                    parts[i] = $"Workstor.{tok2}{tok}";
+                    parts[i] = $"Workstor.{beforeString}{tok}";
                     continue;
                 }
                 else if (_fieldToRecord.TryGetValue(tok, out var rec))
                 {
                     // it's a field of some record
-                    parts[i] = $"Workstor.{rec}.{tok2}{tok}";
+                    parts[i] = $"Workstor.{rec}.{beforeString}{tok}";
+                } else
+                {                     
+                    parts[i] = _rx.Replace(beforeString + tok, "GlobalItems.$1");
                 }
 
-                
+
             }
 
             return string.Concat(parts);

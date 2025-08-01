@@ -249,7 +249,7 @@ namespace EsfCore.Tags
             }
             else if (Maps.Maps.Count > 0)
             {
-                mainCall = $"{Maps.Maps[0].MapName}Screen.Render();";
+                mainCall = $"{Maps.Maps[0].MapName}.Render();";
             }
             else
             {

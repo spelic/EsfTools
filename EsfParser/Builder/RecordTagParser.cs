@@ -1,10 +1,10 @@
-﻿using EsfCore.Esf;
-using EsfParser.Builder;
+﻿using EsfParser.Builder;
+using EsfParser.Esf;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace EsfCore.Tags
+namespace EsfParser.Tags
 {
     public class RecordTagParser : IEsfTagParser
     {

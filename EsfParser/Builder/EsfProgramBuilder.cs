@@ -1,6 +1,7 @@
+using EsfParser.Esf;
+using EsfParser.Tags;
 using System.Collections.Generic;
-using EsfCore.Esf;
-using EsfCore.Tags;
+
 
 namespace EsfParser.Builder
 {

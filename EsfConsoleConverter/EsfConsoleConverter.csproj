@@ -1,7 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\EsfCore\EsfCore.csproj" />
     <ProjectReference Include="..\EsfParser\EsfParser.csproj" />
   </ItemGroup>
 
@@ -9,10 +8,16 @@
     <None Update="D123A-V54.esf">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="D133A-V63.esf">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="debug.esf">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="IS00A-V26.esf">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="S535A-V16.esf">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="TEST.esf">

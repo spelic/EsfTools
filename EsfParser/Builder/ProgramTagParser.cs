@@ -2,8 +2,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using EsfCore.Esf;
-using EsfCore.Tags;
+
+using EsfParser.Esf;
+using EsfParser.Tags;
 
 namespace EsfParser.Builder
 {
@@ -12,7 +13,7 @@ namespace EsfParser.Builder
         public IEsfTagModel Parse(List<TagNode> nodes)
         {
             var node = nodes.FirstOrDefault(n => n.TagName.Equals("PROGRAM", StringComparison.OrdinalIgnoreCase));
-            return node != null ? ProgramTag.Parse(node) : null;
+            return node != null ? ProgramTag.Parse(node) : new ProgramTag();
         }
     }
 }

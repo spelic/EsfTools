@@ -127,6 +127,13 @@ namespace EsfCore.Tags.Logic
         public IdentifierExpr(string n) { Name = n; }
     }
 
+    // Add a new AST node for IS ERR
+    public class IsErrExpr : Expr
+    {
+        public Expr Target;
+        public IsErrExpr(Expr target) { Target = target; }
+    }
+
     #endregion
 
     #region Parser
@@ -187,6 +194,27 @@ namespace EsfCore.Tags.Logic
         private Expr ParseComparison()
         {
             var left = ParsePrimary();
+
+            // Handle "IS ERR" (or "IS NOT ERR")
+            if (Current.Type == TokenType.EQ && PeekIsErr())
+            {
+                Eat(TokenType.EQ); // Eat IS/EQ/ =
+                bool isNot = false;
+                if (Current.Type == TokenType.NOT)
+                {
+                    Eat(TokenType.NOT);
+                    isNot = true;
+                }
+                if (Current.Type == TokenType.Identifier && Current.Text.Equals("ERR", StringComparison.OrdinalIgnoreCase))
+                {
+                    Eat(TokenType.Identifier);
+                    var isErrExpr = new IsErrExpr(left);
+                    return isNot ? new UnaryExpr(TokenType.NOT, isErrExpr) : isErrExpr;
+                }
+                // fallback: treat as normal comparison if not followed by ERR
+                _pos--; // rewind to before IS/EQ
+            }
+
             if (new[] {
                     TokenType.EQ, TokenType.NE,
                     TokenType.GT, TokenType.LT,
@@ -229,6 +257,17 @@ namespace EsfCore.Tags.Logic
                 default:
                     throw new InvalidOperationException($"Unexpected token {Current.Type}");
             }
+        }
+
+        // Helper to peek for "ERR" after IS/EQ/=
+        private bool PeekIsErr()
+        {
+            int peek = _pos + 1;
+            if (peek < _tokens.Count && _tokens[peek].Type == TokenType.NOT)
+                peek++;
+            return peek < _tokens.Count &&
+                   _tokens[peek].Type == TokenType.Identifier &&
+                   _tokens[peek].Text.Equals("ERR", StringComparison.OrdinalIgnoreCase);
         }
     }
 
@@ -298,6 +337,10 @@ namespace EsfCore.Tags.Logic
                         _ => throw new InvalidOperationException()
                     };
                     return $"({left} {op} {right})";
+
+                // ... existing cases ...
+                case IsErrExpr iserr:
+                    return $"{GenerateInternal(iserr.Target)}.IsErr";
 
                 default:
                     throw new InvalidOperationException("Unknown AST node");

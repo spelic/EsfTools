@@ -1,0 +1,13 @@
+﻿namespace EsfParser.Parser.Logic.Statements
+{
+    public class TestStatement : IStatement
+    {
+        public StatementType Type => StatementType.Test;
+        public string OriginalCode { get; set; } = string.Empty;
+        public string Expression { get; set; } = string.Empty;
+
+        public int LineNumber { get; set; }
+
+
+    }
+}

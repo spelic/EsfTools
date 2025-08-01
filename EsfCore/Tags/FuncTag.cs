@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using EsfCore.Esf;
 
+
 namespace EsfCore.Tags
 {
     public class FuncTag : IEsfTagModel
@@ -34,6 +35,10 @@ namespace EsfCore.Tags
         public ReturnTag Return { get; set; }
         public List<string> BeforeLogic { get; } = new();
         public List<string> AfterLogic { get; } = new();
+        [JsonIgnore] public List<IStatement> BeforeLogicStatements { get; set; } = new();
+        [JsonIgnore] public List<IStatement> AfterLogicStatements { get; set; } = new();
+
+
         [JsonPropertyName("sqlClauses")]
         public List<SqlClause> SqlClauses { get; } = new();
         public DlicallTag DliCall { get; set; }
@@ -91,11 +96,23 @@ namespace EsfCore.Tags
                         t.BeforeLogic.AddRange(child.Content
                             .Split('\n', StringSplitOptions.RemoveEmptyEntries)
                             .Select(l => l.Trim()));
+                        if (t.BeforeLogic.Count > 0)
+                        {
+                            var parser = new VisualAgeLogicParser(t.BeforeLogic);
+                            t.BeforeLogicStatements = parser.Parse();
+                        }
+
+                       
                         break;
                     case "AFTER":
                         t.AfterLogic.AddRange(child.Content
                             .Split('\n', StringSplitOptions.RemoveEmptyEntries)
                             .Select(l => l.Trim()));
+                        if (t.AfterLogic.Count > 0)
+                        {
+                            var parser = new VisualAgeLogicParser(t.AfterLogic);
+                            t.AfterLogicStatements = parser.Parse();
+                        }
                         break;
                     case "SQL": t.SqlClauses.Add(SqlClause.Parse(child)); break;
                     case "DLICALL": t.DliCall = DlicallTag.Parse(child); break;

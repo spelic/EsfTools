@@ -1,9 +1,9 @@
-using EsfCore.Esf;
+using EsfParser.Esf;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace EsfCore.Tags
+namespace EsfParser.Tags
 {
     public class TbleTagParser : EsfParser.Builder.IEsfTagParser
     {

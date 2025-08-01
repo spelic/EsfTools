@@ -1,7 +1,8 @@
-﻿using System;
+﻿using EsfParser.Tags;
+using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using EsfCore.Tags;
+
 
 namespace EsfParser.Parser
 {

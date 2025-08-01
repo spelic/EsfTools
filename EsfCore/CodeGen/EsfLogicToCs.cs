@@ -42,9 +42,8 @@ namespace EsfCore.Tags
 
             // 1) Build your expression converter
             var exprConv = new ExpressionConverter(
-                new SpecialFunctionQualifier(),
-                new GlobalItemQualifier(globalItemNames),
-                new WorkstorQualifier(workstorDefs)
+                new WorkstorQualifier(workstorDefs, globalItemNames),
+                new SpecialFunctionQualifier()
             );
 
             // 3) Gather all record‐ and map‐class names
@@ -59,9 +58,8 @@ namespace EsfCore.Tags
             // 5) Finally wire up your LogicProcessor
             var processor = new LogicProcessor(
                 qualifiers: new ITokenQualifier[] {
-        new SpecialFunctionQualifier(),
-        new GlobalItemQualifier(globalItemNames),
-        new WorkstorQualifier(workstorDefs)
+                    new WorkstorQualifier(workstorDefs,globalItemNames),
+                    new SpecialFunctionQualifier()       
                 },
                 condConv: condGen,
                 translators: new IStatementTranslator[] {

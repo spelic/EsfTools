@@ -79,6 +79,28 @@ namespace EsfCore.Tags.Logic
                 else
                     throw new Exception("GlobalItems - invalid variable.: " + esfName);
             }
+
+            // 1) workstor items? than parse bare and check in _recordDefs for a match
+            //    qualified names like "Workstor.IS00R10.ZAPOREDJE"
+            if (bare.StartsWith("Workstor.") && bare.Length > 10)
+            {
+                bare = bare.Substring(9);
+                if (_globalTypes.TryGetValue(bare, out var gtype2))
+                    return gtype2;
+                else
+                {
+                    // check if it's a record field
+                    var parts2 = bare.Split('.');
+                    if (parts2.Length == 2 && _recordDefs.TryGetValue(parts2[0], out var recDef2) &&
+                        recDef2.FieldTypes.TryGetValue(parts2[1], out var fldType2))
+                    {
+                        return fldType2;
+                    }
+                    throw new Exception("Workstor - invalid variable.: " + esfName);
+                }
+            }
+            
+
             if (_globalTypes.TryGetValue(bare, out var gtype))
                 return gtype;
 

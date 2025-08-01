@@ -34,22 +34,6 @@ Vhodni meni informacijskega sistema IMPOL
            desc      = 'zapis v t.OSEBA_MENI'
            refine    = N  
 :before.
-IF STEVAPPL > 0;
-    MOVE 'IS00A' TO IS00W01.APPL[Workstor.IS00W01.STEVAPPL];
-END;
-
-IF (EZESQCOD = 0) AND (IS00R01.LDAP_UID NE ' ');
-    IS00W02.PRINTER = IS00R01.TISKALNIK;
-END;
-
-IF IS00R01 IS ERR;
-    MOVE IS00M01.ZASIFRA TO IS00R01.ZASIFRA;
-END;
-/* ---kontrola izbire, èe je kaj izbrano in èe se ne ponavljajo ista številka----
-EZEREPLY = 1;
-
-MOVE 1 TO EZEREPLY;
-
 STEVEC = 1;
 WHILE STEVEC <= 25;
   IF IS00M02.ZS[STEVEC] > 0;     /* je kaj notri

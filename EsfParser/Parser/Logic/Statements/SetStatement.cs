@@ -7,6 +7,7 @@
         public string Target { get; set; } = string.Empty;
         public List<string> Attributes { get; set; } = new();
         public int LineNumber { get; set; }
+        public int NestingLevel { get; set; } = 0;
 
     }
 }

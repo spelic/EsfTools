@@ -7,6 +7,7 @@ public class SystemFunctionStatement : IStatement
     public string Name { get; set; } = string.Empty;
     public List<string> Parameters { get; set; } = new();
     public int LineNumber { get; set; }
+    public int NestingLevel { get; set; } = 0;
 
 
     public override string ToString()

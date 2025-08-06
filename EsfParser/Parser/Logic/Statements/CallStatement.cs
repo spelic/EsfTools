@@ -32,6 +32,7 @@
         public List<CallParameter> Parameters { get; set; } = new();
         public List<string> Options { get; set; } = new(); // NOMAPS, NONCSP, REPLY
         public int LineNumber { get; set; }
+        public int NestingLevel { get; set; } = 0;
 
 
     }

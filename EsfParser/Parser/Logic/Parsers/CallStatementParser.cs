@@ -17,10 +17,11 @@ namespace EsfParser.Parser.Logic.Parsers
         public bool CanParse(string line) =>
             line.TrimStart().StartsWith("CALL ", StringComparison.OrdinalIgnoreCase);
 
-        public IStatement Parse(List<PreprocessedLine> lines, ref int index)
+        public IStatement Parse(List<PreprocessedLine> lines, ref int index, int currentLevel = 0)
         {
             var line = lines[index];
-            string clean = line.CleanLine.Trim()[4..].Trim(); // remove "CALL"
+            string clean = line.CleanLine.TrimEnd(';')[4..].Trim(); // remove "CALL"
+
             var result = new CallStatement
             {
                 OriginalCode = line.OriginalBlock,

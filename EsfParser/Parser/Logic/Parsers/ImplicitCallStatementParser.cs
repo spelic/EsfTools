@@ -9,12 +9,12 @@ public class ImplicitCallStatementParser : IStatementParser
         return Regex.IsMatch(line.Trim(), @"^[A-Z0-9_-]+\s*\(.*\)\s*;?$", RegexOptions.IgnoreCase);
     }
 
-    public IStatement Parse(List<PreprocessedLine> lines, ref int index)
+    public IStatement Parse(List<PreprocessedLine> lines, ref int index, int currentLevel = 0)
     {
         var line = lines[index];
-        var cleanLine = line.CleanLine;
+        var clean = line.CleanLine.TrimEnd(';');
 
-        var match = Regex.Match(cleanLine, @"^(?<prog>[A-Z0-9_-]+)\s*\((?<args>[^)]*)\)\s*;?$", RegexOptions.IgnoreCase);
+        var match = Regex.Match(clean, @"^(?<prog>[A-Z0-9_-]+)\s*\((?<args>[^)]*)\)\s*;?$", RegexOptions.IgnoreCase);
 
         var program = match.Groups["prog"].Value.Trim();
         var argText = match.Groups["args"].Value.Trim();

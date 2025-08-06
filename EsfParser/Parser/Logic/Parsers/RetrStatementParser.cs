@@ -10,21 +10,20 @@ namespace EsfParser.Parser.Logic.Parsers
             return line.TrimStart().StartsWith("RETR ", StringComparison.OrdinalIgnoreCase);
         }
 
-        public IStatement Parse(List<PreprocessedLine> lines, ref int index)
+        public IStatement Parse(List<PreprocessedLine> lines, ref int index, int currentLevel = 0)
         {
             var current = lines[index];
-            var rawLine = current.OriginalBlock;
-            var body = current.CleanLine.TrimEnd(';').Substring(5).Trim(); // remove "RETR "
+            var clean = current.CleanLine.TrimEnd(';').Substring(5).Trim(); // remove "RETR "
 
             // Split by whitespace
-            var tokens = Regex.Split(body, @"\s+");
+            var tokens = Regex.Split(clean, @"\s+");
 
             // Expecting at least 3 tokens
             if (tokens.Length < 3)
             {
                 return new UnknownStatement
                 {
-                    OriginalCode = rawLine,
+                    OriginalCode = current.OriginalBlock,
                     LineNumber = current.StartLineNumber,
                 };
             }
@@ -40,7 +39,7 @@ namespace EsfParser.Parser.Logic.Parsers
 
             return new RetrStatement
             {
-                OriginalCode = rawLine,
+                OriginalCode = current.OriginalBlock,
                 SourceItem = sourceItem,
                 TableName = tableName,
                 SearchColumn = searchColumn,

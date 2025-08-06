@@ -7,5 +7,6 @@
 
         public string OriginalCode { get; set; } = string.Empty;
         public string Text { get; set; } = string.Empty;
+        public int NestingLevel { get; set; } = 0;
     }
 }

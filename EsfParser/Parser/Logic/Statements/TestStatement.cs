@@ -8,6 +8,6 @@
 
         public int LineNumber { get; set; }
 
-
+        public int NestingLevel { get; set; } = 0;
     }
 }

@@ -9,5 +9,7 @@
         public List<IStatement> TrueStatements { get; set; } = new();
         public List<IStatement> ElseStatements { get; set; } = new();
         public int LineNumber { get; set; }
+
+        public int NestingLevel { get; set; } = 0; 
     }
 }

@@ -27,10 +27,27 @@
                 continue;
             }
 
-            // as long as raw start with ; remove ; and trim in loop
-            while (trimmed.StartsWith(";"))
+            if (trimmed.StartsWith(";") && buffer.Count == 0)
             {
-                trimmed = trimmed[1..].Trim();
+                // as long as raw start with ; remove ; and trim in loop
+                while (trimmed.StartsWith(";"))
+                {
+                    trimmed = trimmed[1..].Trim();
+                }
+
+                // if after removing all ; it is not empty, treat as comment
+                if (!string.IsNullOrWhiteSpace(trimmed))
+                {
+                    result.Add(new PreprocessedLine
+                    {
+                        StartLineNumber = i + 1,
+                        EndLineNumber = i + 1,
+                        FullLineComment = "/*" + trimmed,
+                        OriginalBlock = raw,
+                        CleanLine = ""
+                    });
+                    continue;
+                }
             }
 
             // if raw empty or just whitespace, skip
@@ -43,7 +60,21 @@
             if (buffer.Count == 0)
                 startLine = i + 1;
 
-            buffer.Add(raw);
+            // chack for inline comments in raw line
+            // 
+            int inlineCommentIndex = trimmed.IndexOf("/*");
+            if (inlineCommentIndex >= 0)
+            {
+                string inlineComment = trimmed.Substring(inlineCommentIndex + 2).Trim();
+                if (!string.IsNullOrWhiteSpace(inlineComment))
+                {
+                    inlineComments.Add((i + 1, inlineComment));
+                    trimmed = trimmed.Substring(0, inlineCommentIndex).Trim();
+                }
+            }
+
+
+            buffer.Add(trimmed);
 
             // === Check for end of logic (first semicolon outside quotes)
             int semiIndex = IndexOfFirstSemicolonOutsideQuotes(trimmed);
@@ -100,9 +131,9 @@
         if (string.IsNullOrWhiteSpace(line)) return null;
 
         string trimmed = line.TrimStart();
-        if (trimmed.StartsWith(";") || trimmed.StartsWith("//") || trimmed.StartsWith("/*"))
+        if (trimmed.StartsWith("//") || trimmed.StartsWith("/*"))
         {
-            return trimmed.TrimStart(';', '/', '*').Trim();
+            return trimmed.TrimStart('/', '*').Trim();
         }
 
         return null;

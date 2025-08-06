@@ -9,6 +9,7 @@
         public string TargetField { get; set; } = string.Empty;
         public string SourceApp { get; set; } = string.Empty;
         public int LineNumber { get; set; }
+        public int NestingLevel { get; set; } = 0;
 
     }
 }

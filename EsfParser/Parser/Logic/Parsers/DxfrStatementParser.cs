@@ -8,20 +8,35 @@ namespace EsfParser.Parser.Logic.Parsers
         public bool CanParse(string line) =>
             line.TrimStart().StartsWith("DXFR ", StringComparison.OrdinalIgnoreCase);
 
-        public IStatement Parse(List<PreprocessedLine> lines, ref int index)
+        public IStatement Parse(List<PreprocessedLine> lines, ref int index, int currentLevel = 0)
         {
             var line = lines[index];
-            var clean = line.CleanLine.Trim();
+            var clean = line.CleanLine.TrimEnd(';');
 
             var match = Regex.Match(clean, @"^DXFR\s+(\S+)\s+(\S+);?", RegexOptions.IgnoreCase);
 
             if (!match.Success)
             {
-                return new UnknownStatement
+
+                var parts = clean.Split(' ');
+                if (parts.Length == 2 && parts[0].Trim() == "DXFR")
                 {
-                    OriginalCode = line.OriginalBlock,
-                    LineNumber = line.StartLineNumber
-                };
+                    return new DxfrStatement
+                    {
+                        OriginalCode = line.OriginalBlock,
+                        TargetApp = parts[1],
+                        TargetScreen = "",
+                        LineNumber = line.StartLineNumber
+                    };
+                }
+                else
+
+
+                    return new UnknownStatement
+                    {
+                        OriginalCode = line.OriginalBlock,
+                        LineNumber = line.StartLineNumber
+                    };
             }
 
             return new DxfrStatement

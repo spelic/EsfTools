@@ -8,7 +8,7 @@ public class AssignStatementParser : IStatementParser
     public bool CanParse(string line)
         => line.Contains("=") && !line.TrimStart().StartsWith("MOVE", StringComparison.OrdinalIgnoreCase);
 
-    public IStatement Parse(List<PreprocessedLine> lines, ref int index)
+    public IStatement Parse(List<PreprocessedLine> lines, ref int index, int currentLevel = 0)
     {
         var line = lines[index];
 

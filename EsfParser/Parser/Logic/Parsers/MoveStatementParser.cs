@@ -5,19 +5,18 @@ public class MoveStatementParser : IStatementParser
 {
     public bool CanParse(string line) => line.TrimStart().StartsWith("MOVE ", StringComparison.OrdinalIgnoreCase);
 
-    public IStatement Parse(List<PreprocessedLine> lines, ref int index)
+    public IStatement Parse(List<PreprocessedLine> lines, ref int index, int currentLevel = 0)
     {
         var line = lines[index];
-        index++; // advance
+        string clean = line.CleanLine.TrimEnd(';')[5..].Trim(); // remove "MOVE "
 
-        string body = line.CleanLine.Trim()[5..].Trim(); // remove "MOVE "
         string[] parts;
 
         // Handle optional TO keyword
-        if (body.Contains(" TO "))
-            parts = body.Split(new[] { " TO " }, 2, StringSplitOptions.None);
+        if (clean.Contains(" TO "))
+            parts = clean.Split(new[] { " TO " }, 2, StringSplitOptions.None);
         else
-            parts = body.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries); // fallback
+            parts = clean.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries); // fallback
 
         if (parts.Length != 2)
         {

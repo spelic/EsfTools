@@ -5,15 +5,14 @@ public class MoveAStatementParser : IStatementParser
 {
     public bool CanParse(string line) => line.TrimStart().StartsWith("MOVEA ", StringComparison.OrdinalIgnoreCase);
 
-    public IStatement Parse(List<PreprocessedLine> lines, ref int index)
+    public IStatement Parse(List<PreprocessedLine> lines, ref int index, int currentLevel = 0)
     {
         var line = lines[index];
-        index++; // advance
+        string clean = line.CleanLine.TrimEnd(';')[6..].Trim(); // remove "MOVEA "
 
-        string body = line.CleanLine.Trim()[6..].Trim(); // remove "MOVEA "
         string source = "", target = "", forClause = null;
 
-        var tokens = body.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+        var tokens = clean.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
         if (tokens.Length >= 3 && string.Equals(tokens[^2], "FOR", StringComparison.OrdinalIgnoreCase))
         {

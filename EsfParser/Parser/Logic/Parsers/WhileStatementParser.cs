@@ -1,5 +1,6 @@
 ﻿using EsfParser.Parser.Logic.Statements;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace EsfParser.Parser.Logic.Parsers
 {
@@ -8,24 +9,23 @@ namespace EsfParser.Parser.Logic.Parsers
         public bool CanParse(string line) =>
             line.TrimStart().StartsWith("WHILE", StringComparison.OrdinalIgnoreCase);
 
-        public IStatement Parse(List<PreprocessedLine> lines, ref int index)
+        public IStatement Parse(List<PreprocessedLine> lines, ref int index, int currentLevel = 0)
         {
-            var startIndex = index;
+            var overallStartIndex = index;
             var conditionBuilder = new StringBuilder();
+            var conditionStartIndex = index;
 
-            // === 1. Accumulate multiline WHILE condition
+            // Accumulate multiline WHILE condition without extra spaces
             while (index < lines.Count)
             {
                 var current = lines[index];
-
-                // Strip inline comment for condition parsing
                 var lineText = current.CleanLine;
                 if (lineText.Contains("/*"))
                     lineText = lineText.Substring(0, lineText.IndexOf("/*")).Trim();
 
-                conditionBuilder.Append(lineText + " ");
+                conditionBuilder.Append(lineText.Trim()).Append(' ');
 
-                if (lineText.TrimEnd().EndsWith(";"))
+                if (lineText.Trim().EndsWith(";"))
                     break;
 
                 index++;
@@ -33,25 +33,19 @@ namespace EsfParser.Parser.Logic.Parsers
 
             var stmt = new WhileStatement
             {
-                OriginalCode = string.Join("\n", lines.GetRange(startIndex, index - startIndex + 1)
-                                                      .Select(l => l.OriginalBlock)),
-                LineNumber = lines[startIndex].StartLineNumber,
+                Condition = Regex.Replace(conditionBuilder.ToString().Trim().Substring(5).Trim().TrimEnd(';'), @"\s+", " "),  // Normalize spaces after removing "WHILE"
+                LineNumber = lines[conditionStartIndex].StartLineNumber
             };
 
-            string fullCondition = conditionBuilder.ToString().Trim();
-            stmt.Condition = fullCondition[5..].Trim().TrimEnd(';'); // remove "WHILE"
+            index++;  // Move past condition
 
-            index++; // move past last line of condition
-
-            bool foundEnd = false;
-
-            // === 2. Parse body
+            // Parse body
             while (index < lines.Count)
             {
                 var current = lines[index];
                 string line = current.CleanLine.Trim();
 
-                if (line.StartsWith("END;", StringComparison.OrdinalIgnoreCase))
+                if (line.StartsWith("END", StringComparison.OrdinalIgnoreCase))
                 {
                     if (!string.IsNullOrWhiteSpace(current.InlineComment))
                     {
@@ -60,6 +54,7 @@ namespace EsfParser.Parser.Logic.Parsers
                             OriginalCode = current.InlineComment,
                             Text = current.InlineComment.TrimStart('/', '*').Trim(),
                             LineNumber = current.StartLineNumber,
+                            NestingLevel = currentLevel,
                         });
                     }
 
@@ -67,27 +62,20 @@ namespace EsfParser.Parser.Logic.Parsers
                     {
                         OriginalCode = current.OriginalBlock,
                         LineNumber = current.StartLineNumber,
+                        InlineComent = "END_WHILE",
+                        NestingLevel = currentLevel,
                     });
-
-                    index++;
-                    foundEnd = true;
+                    //index++;
                     break;
                 }
 
-                var parsed = VisualAgeLogicParser.TryParse(lines, ref index);
+                // Parse sub-statement (advances index internally)
+                var parsed = VisualAgeLogicParser.TryParse(lines, ref index, currentLevel + 1);
                 stmt.BodyStatements.AddRange(parsed);
-                index++;
             }
 
-            // === 3. Auto-insert END if missing
-            if (!foundEnd)
-            {
-                stmt.BodyStatements.Add(new EndStatement
-                {
-                    OriginalCode = "// [auto-inserted] END;",
-                    LineNumber = lines.Last().EndLineNumber + 1,
-                });
-            }
+            // Set full OriginalCode including body and END;
+            stmt.OriginalCode = lines[overallStartIndex].OriginalBlock;
 
             return stmt;
         }

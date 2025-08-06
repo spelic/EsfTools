@@ -12,4 +12,5 @@ public class RetrStatement : IStatement
     public string ReturnColumn { get; set; } = string.Empty;    // AREA
 
     public int LineNumber { get; set; }
+    public int NestingLevel { get; set; } = 0;
 }

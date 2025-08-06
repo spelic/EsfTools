@@ -7,9 +7,11 @@ namespace EsfParser.Parser.Logic.Parsers
         public bool CanParse(string line) =>
             line.TrimStart().StartsWith("/*") || line.TrimStart().StartsWith("//");
 
-        public IStatement Parse(List<PreprocessedLine> lines, ref int index)
+        public IStatement Parse(List<PreprocessedLine> lines, ref int index, int currentLevel = 0)
         {
             var line = lines[index];
+
+
             return new CommentStatement
             {
                 OriginalCode = line.OriginalBlock,

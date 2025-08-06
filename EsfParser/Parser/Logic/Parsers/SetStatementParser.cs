@@ -7,11 +7,10 @@ namespace EsfParser.Parser.Logic.Parsers
         public bool CanParse(string line) =>
             line.TrimStart().StartsWith("SET ", StringComparison.OrdinalIgnoreCase);
 
-        public IStatement Parse(List<PreprocessedLine> lines, ref int index)
+        public IStatement Parse(List<PreprocessedLine> lines, ref int index, int currentLevel = 0)
         {
             var current = lines[index];
-            var raw = current.OriginalBlock;
-            var clean = current.CleanLine.Trim();
+            var clean = current.CleanLine.TrimEnd(';');
 
             // Remove "SET "
             clean = clean.Substring(4).Trim();
@@ -21,7 +20,7 @@ namespace EsfParser.Parser.Logic.Parsers
             {
                 return new SetStatement
                 {
-                    OriginalCode = raw,
+                    OriginalCode = current.OriginalBlock,
                     Target = "",
                     Attributes = new(),
                     LineNumber = current.StartLineNumber,
@@ -30,7 +29,7 @@ namespace EsfParser.Parser.Logic.Parsers
 
             return new SetStatement
             {
-                OriginalCode = raw,
+                OriginalCode = current.OriginalBlock,
                 Target = parts[0],
                 Attributes = parts.Skip(1).Select(p => p.ToUpperInvariant()).ToList(),
                 LineNumber = current.StartLineNumber,

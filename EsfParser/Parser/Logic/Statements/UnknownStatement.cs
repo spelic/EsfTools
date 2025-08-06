@@ -5,6 +5,7 @@
         public StatementType Type => StatementType.Unknown;
         public string OriginalCode { get; set; } = string.Empty;
         public int LineNumber { get; set; }
+        public int NestingLevel { get; set; } = 0;
 
     }
 

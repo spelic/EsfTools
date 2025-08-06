@@ -85,8 +85,8 @@ namespace EsfParser.Parser.Logic
         public static void Print(IEnumerable<IStatement> statements, int indent = 0)
         {
             foreach (var stmt in statements)
-            {
-                string meta = $"[L:{stmt.LineNumber:D4}]".PadRight(20);
+            {                
+                string meta = $"[L:{stmt.LineNumber:D4}][{stmt.NestingLevel:D2}]".PadRight(10);
                 string indentPad = new string(' ', indent * 4);
                 string output = stmt switch
                 {
@@ -101,8 +101,8 @@ namespace EsfParser.Parser.Logic
                     SetStatement s => $"[SET] {s.Target}" + (s.Attributes.Any() ? $" ({string.Join(", ", s.Attributes)})" : ""),
                     UnknownStatement u => $"[?] {u.OriginalCode}",
                     MarkerStatement mk => $"[MARKER!!!] {mk.OriginalCode.TrimEnd(';').ToUpper()}",
-                    ElseStatement => "[ELSE]",
-                    EndStatement => "[END]",
+                    ElseStatement els => $"[ELSE] {els.InlineComent}",
+                    EndStatement end => $"[END] {end.InlineComent}",
                     SystemFunctionStatement sf => $"[SYSFUNC] {sf.Name}({string.Join(", ", sf.Parameters)})",
                     MoveAStatement ma => $"[MOVEA] {ma.Target} = {ma.Source} FOR {ma.ForClause}",
                     RetrStatement r => $"[RETR] {r.SourceItem} {r.SearchColumn} → {r.TargetItem} ← {r.ReturnColumn}\";",

@@ -16,6 +16,8 @@ path = "IS00A-V26.esf";
 path = "debug.esf";
 path = "D133A-V63.esf";
 
-EsfDebuggerHelper.DebugString();
+
+//EsfDebuggerHelper.DebugString();
 EsfDebuggerHelper.DebugFunction();
-//EsfDebuggerHelper.DebugPreprocesingOfLines();
+//EsfDebuggerHelper.ExportConsoleApplication("D133A-V68.esf");
+

@@ -8,7 +8,7 @@
         public string Destination { get; set; } = string.Empty;
 
         public int LineNumber { get; set; }
-       
+        public int NestingLevel { get; set; } = 0;
 
 
     }

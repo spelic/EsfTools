@@ -6,13 +6,15 @@ namespace EsfParser.Parser.Logic.Parsers
     {
         public bool CanParse(string line) => line.StartsWith("TEST ", StringComparison.OrdinalIgnoreCase);
 
-        public IStatement Parse(List<PreprocessedLine> lines, ref int index)
+        public IStatement Parse(List<PreprocessedLine> lines, ref int index, int currentLevel = 0)
         {
             var line = lines[index];
+            var clean = line.CleanLine[5..].TrimEnd(';');
+
             return new TestStatement
             {
                 OriginalCode = line.OriginalBlock,
-                Expression = line.CleanLine[5..].TrimEnd(';')
+                Expression = clean
             };
         }
     }

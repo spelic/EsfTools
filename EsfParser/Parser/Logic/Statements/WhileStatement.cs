@@ -8,6 +8,6 @@
         public List<IStatement> BodyStatements { get; set; } = new();
 
         public int LineNumber { get; set; }
-
+        public int NestingLevel { get; set; } = 0;
     }
 }

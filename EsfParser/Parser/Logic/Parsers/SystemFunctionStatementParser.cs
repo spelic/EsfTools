@@ -8,7 +8,7 @@ public class SystemFunctionStatementParser : IStatementParser
     {
         "EZECLOS", "EZEWAIT", "EZECNVCM", "EZECONCT", "EZECOMIT",
         "EZEBYTES", "EZEAPP", "EZEAID", "EZEUSRID", "EZEDAY",
-        "EZECONV", "EZEREPLY", "EZEFLO", "EZEROLLB"
+        "EZECONV", "EZEREPLY", "EZEFLO", "EZEROLLB", "EZERTN"
         // Add more as needed
     };
 
@@ -19,7 +19,7 @@ public class SystemFunctionStatementParser : IStatementParser
         return !string.IsNullOrWhiteSpace(firstToken) && KnownFunctions.Contains(firstToken.ToUpperInvariant());
     }
 
-    public IStatement Parse(List<PreprocessedLine> lines, ref int index)
+    public IStatement Parse(List<PreprocessedLine> lines, ref int index, int currentLevel = 0)
     {
         var line = lines[index];
         var clean = line.CleanLine.Trim().TrimEnd(';');

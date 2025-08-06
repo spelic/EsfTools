@@ -8,8 +8,6 @@
         public string Target { get; set; } = string.Empty;
         public string ForClause { get; set; }
         public int LineNumber { get; set; }
-    
-
-
+        public int NestingLevel { get; set; } = 0;
     }
 }

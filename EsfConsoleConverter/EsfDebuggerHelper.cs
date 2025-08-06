@@ -305,7 +305,7 @@ WHILE 1 = 1;
 
             foreach (var func in EsfProgramFunctions.Functions)
             {
-                Console.WriteLine($"Program: {func.ProgramName}, Function: {func.FunctionName}, Lines: {func.Lines.Count}");
+                //Console.WriteLine($"Program: {func.ProgramName}, Function: {func.FunctionName}, Lines: {func.Lines.Count}");
 
                 var preprocessedLines = EsfLogicPreprocessor.Preprocess(func.Lines);
 
@@ -320,7 +320,7 @@ WHILE 1 = 1;
 
                 if (unknowns.Count > 0)
                 {
-                    Console.Clear();
+                    //Console.Clear();
 
                     unknownCount+= unknowns.Count;
                     Console.ForegroundColor = ConsoleColor.Yellow;
@@ -354,9 +354,9 @@ WHILE 1 = 1;
                 }
                 else
                 {
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine($"[{currentFunctionIndex}/{count}]Program: {func.ProgramName}, Function: {func.FunctionName}, Lines: {func.Lines.Count}  - PARSED OK");
-                    Console.ResetColor();
+                    //Console.ForegroundColor = ConsoleColor.Green;
+                    //Console.WriteLine($"[{currentFunctionIndex}/{count}]Program: {func.ProgramName}, Function: {func.FunctionName}, Lines: {func.Lines.Count}  - PARSED OK");
+                    //Console.ResetColor();
                 }
                 currentFunctionIndex++;
             }

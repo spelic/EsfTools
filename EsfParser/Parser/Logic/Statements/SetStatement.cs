@@ -9,5 +9,11 @@
         public int LineNumber { get; set; }
         public int NestingLevel { get; set; } = 0;
 
+        public override string ToString()
+        {
+            return $"SetStatement: {Target} with attributes [{string.Join(", ", Attributes)}] (Line: {LineNumber}, Nesting: {NestingLevel})";
+        }
+
+
     }
 }

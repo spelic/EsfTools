@@ -9,11 +9,9 @@ public class SystemFunctionStatement : IStatement
     public int LineNumber { get; set; }
     public int NestingLevel { get; set; } = 0;
 
-
+    // tostring pretty print   
     public override string ToString()
     {
-        return Parameters.Count > 0
-            ? $"{Name}({string.Join(", ", Parameters)})"
-            : Name;
+        return $"SystemFunctionStatement: {Name}({string.Join(", ", Parameters)}) (Line: {LineNumber}, Nesting: {NestingLevel})";
     }
 }

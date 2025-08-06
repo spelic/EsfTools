@@ -34,7 +34,11 @@
         public int LineNumber { get; set; }
         public int NestingLevel { get; set; } = 0;
 
-
+        public override string ToString()
+        {
+            var options = Options.Count > 0 ? $" [{string.Join(", ", Options)}]" : string.Empty;
+            return $"CallStatement: {ProgramName}({string.Join(", ", Parameters)}){options} (Line: {LineNumber}, Nesting: {NestingLevel})";
+        }
     }
 
 }

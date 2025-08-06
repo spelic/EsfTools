@@ -10,6 +10,11 @@
         public int LineNumber { get; set; }
         public int NestingLevel { get; set; } = 0;
 
-
+        public override string ToString()
+               => $"MoveStatement: {Source} -> {Destination} (Line: {LineNumber}, Nesting: {NestingLevel})";
     }
-}
+
+}   
+
+    // tostring pretty print
+   

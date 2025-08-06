@@ -11,5 +11,10 @@
         public int LineNumber { get; set; }
         public int NestingLevel { get; set; } = 0;
 
+        public override string ToString()
+        {
+            return $"DxfrStatement: {TargetApp}.{TargetScreen}.{TargetField} <- {SourceApp} (Line: {LineNumber}, Nesting: {NestingLevel})";
+        }
+
     }
 }

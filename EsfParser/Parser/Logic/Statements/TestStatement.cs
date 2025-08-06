@@ -9,5 +9,9 @@
         public int LineNumber { get; set; }
 
         public int NestingLevel { get; set; } = 0;
+
+        // tostring pretty print
+        public override string ToString()
+            => $"TestStatement: {Expression} (Line: {LineNumber}, Nesting: {NestingLevel})";
     }
 }

@@ -11,6 +11,7 @@
         public int LineNumber { get; set; }
         public int NestingLevel { get; set; } = 0;
 
-
+        public override string ToString()
+            => $"AssignStatement: {Left} = {Right} (Line: {LineNumber}, Nesting: {NestingLevel})";
     }
 }

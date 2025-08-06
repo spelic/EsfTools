@@ -9,4 +9,9 @@ public class ElseStatement : IStatement
     public string InlineComent { get; set; } = string.Empty;
 
 
+    public override string ToString()
+    {
+        return $"ElseStatement: (Line: {LineNumber}, Nesting: {NestingLevel}){(string.IsNullOrEmpty(InlineComent) ? string.Empty : $" // {InlineComent}")}";
+    }
+
 }

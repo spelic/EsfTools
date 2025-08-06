@@ -8,5 +8,9 @@
         public string OriginalCode { get; set; } = string.Empty;
         public string Text { get; set; } = string.Empty;
         public int NestingLevel { get; set; } = 0;
+
+        // tostring pretty print
+        public override string ToString()
+            => $"Comment: {Text} (Line: {LineNumber}, Nesting: {NestingLevel})";
     }
 }

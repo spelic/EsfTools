@@ -7,6 +7,10 @@
         public int LineNumber { get; set; }
         public int NestingLevel { get; set; } = 0;
 
+        // tostring pretty print
+        public override string ToString()
+            => $"UnknownStatement: (Line: {LineNumber}, Nesting: {NestingLevel}){(string.IsNullOrEmpty(OriginalCode) ? string.Empty : $" // {OriginalCode}")}";
+
     }
 
 }

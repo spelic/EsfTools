@@ -6,4 +6,8 @@ public class MarkerStatement : IStatement
     public string OriginalCode { get; set; } = string.Empty;
     public int LineNumber { get; set; }
     public int NestingLevel { get; set; } = 0;
+
+    // ToString pretty print
+    public override string ToString()
+        => $"MarkerStatement: (Line: {LineNumber}, Nesting: {NestingLevel}){(string.IsNullOrEmpty(OriginalCode) ? string.Empty : $" // {OriginalCode}")}";
 }

@@ -11,15 +11,7 @@
 
         public string ToCSharp()
         {
-            var options = string.Join(", ", Attributes);
-
-            if (!string.IsNullOrEmpty(Target))
-                return $"SetAttributes({Target}, {string.Join(", ", Attributes.Select(a => $"\"{a}\""))});";
-
-            if (!string.IsNullOrEmpty(Target))
-                return $"SetRecordState({Target}, {string.Join(", ", Attributes.Select(a => $"\"{a}\""))});";
-
-            return $"// SET statement not recognized: SET {OriginalCode}";
+            return " // throw new NotImplementedException();" + this.ToString();
         }
 
         public override string ToString()

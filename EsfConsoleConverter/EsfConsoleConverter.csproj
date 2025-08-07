@@ -14,6 +14,9 @@
     <None Update="debug.esf">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="esf_functions.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="IS00A-V26.esf">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

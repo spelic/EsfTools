@@ -18,9 +18,7 @@
 
         public string ToCSharp()
         {
-            var args = !string.IsNullOrEmpty(RecordName) ? $"({RecordName})" : "";
-            return $"TransferToProgram(\"{ProgramName}\"{(string.IsNullOrEmpty(RecordName) ? "" : $", {RecordName}")});";
-
+            return " // throw new NotImplementedException();" + this.ToString();
         }
     }
 }

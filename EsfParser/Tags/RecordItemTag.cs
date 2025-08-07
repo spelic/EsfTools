@@ -10,13 +10,13 @@ namespace EsfParser.Tags
         public string Usage { get; set; } = string.Empty;
         public string Type { get; set; } = string.Empty;
         public string Bytes { get; set; } = string.Empty;
-        public string Decimals { get; set; } = string.Empty;
+        public int Decimals { get; set; }
         public string EvenSql { get; set; } = string.Empty;
-        public string Desc { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
 
         public override string ToString()
         {
-            return $"{Name} - {Desc} ({Type}, {Bytes} bytes, level {Level}, occurs {Occurs})";
+            return $"{Name} - {Description} ({Type}, {Bytes} bytes, level {Level}, occurs {Occurs})";
         }
 
         public static RecordItemTag Parse(TagNode node)
@@ -29,9 +29,9 @@ namespace EsfParser.Tags
                 Usage = node.GetString("USAGE"),
                 Type = node.GetString("TYPE"),
                 Bytes = node.GetString("BYTES"),
-                Decimals = node.GetString("DECIMALS"),
+                Decimals = (node.GetString("DECIMALS").Trim() == "") ? 0 : int.Parse(node.GetString("DECIMALS").Trim()),
                 EvenSql = node.GetString("EVENSQL"),
-                Desc = node.GetString("DESC")
+                Description = node.GetString("DESC")
             };
         }
     }

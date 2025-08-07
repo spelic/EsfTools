@@ -10,7 +10,7 @@ public class ElseStatement : IStatement
 
     public string ToCSharp()
     {
-        throw new NotImplementedException();
+        return " // throw new NotImplementedException();" + this.ToString();
     }
 
     public override string ToString()

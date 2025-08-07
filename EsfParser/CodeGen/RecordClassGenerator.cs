@@ -261,7 +261,7 @@ namespace EsfParser.CodeGen
                 CsType = baseType switch
                 {
                     "BIN" => "int",
-                    "NUM" => int.TryParse(fld.Decimals, out var d) && d > 0 ? "decimal" : "int",
+                    "NUM" => fld.Decimals > 0 ? "decimal" : "int",
                     "PACK" or "PACF" => "string",
                     "CHA" or "DBCS" or "MIX" => "string",
                     _ => "string"

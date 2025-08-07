@@ -4,7 +4,7 @@ using EsfParser.Esf;
 
 namespace EsfParser.Tags
 {
-    public class TbleTag : IEsfTagModel
+    public class TableTag : IEsfTagModel
     {
         [JsonIgnore] public string TagName => "TBLE";
 
@@ -21,9 +21,9 @@ namespace EsfParser.Tags
         [JsonPropertyName("contitems")] public List<TagNode> ContItems { get; set; } = new();
         [JsonPropertyName("rows")] public List<RowEntry> Rows { get; set; } = new();
 
-        public static TbleTag Parse(TagNode node)
+        public static TableTag Parse(TagNode node)
         {
-            var tag = new TbleTag();
+            var tag = new TableTag();
             node.Attributes.TryGetValue("NAME", out var name); tag.Name = name?.Count > 0 ? name[0] : null;
             node.Attributes.TryGetValue("DATE", out var date); tag.Date = date?.Count > 0 ? date[0] : null;
             node.Attributes.TryGetValue("TIME", out var time); tag.Time = time?.Count > 0 ? time[0] : null;

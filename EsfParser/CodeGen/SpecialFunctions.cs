@@ -2,7 +2,7 @@ using System;
 using static System.Net.Mime.MediaTypeNames;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
-namespace EsfCore.Tags
+namespace EsfParser.CodeGen
 {
     /// <summary>
     /// Holds static properties for special system functions referenced by MOVE translations.

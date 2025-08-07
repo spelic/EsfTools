@@ -12,7 +12,7 @@
 
         public string ToCSharp()
         {
-            return $"while";
+            return " // throw new NotImplementedException();" + this.ToString();
         }
 
         public override string ToString()

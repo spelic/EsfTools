@@ -14,7 +14,7 @@
 
         public string ToCSharp()
         {
-            return " IF: NotImplementedException();";
+            return " // throw new NotImplementedException();" + this.ToString();
         }
 
         // toting pretty print

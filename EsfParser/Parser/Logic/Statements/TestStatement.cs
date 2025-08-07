@@ -12,7 +12,7 @@
 
         public string ToCSharp()
         {
-            throw new NotImplementedException();
+            return " // throw new NotImplementedException();" + this.ToString();
         }
 
         // tostring pretty print

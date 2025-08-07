@@ -9,7 +9,7 @@ public class MarkerStatement : IStatement
 
     public string ToCSharp()
     {
-        throw new NotImplementedException();
+        return " // throw new NotImplementedException();" + this.ToString();
     }
 
     // ToString pretty print

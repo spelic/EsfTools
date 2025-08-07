@@ -16,15 +16,7 @@ public class RetrStatement : IStatement
 
     public string ToCSharp()
     {
-       return
-$@"if ({TableName}.{SearchColumn}.Contains({SearchColumn}))
-{{
-    {TableName} = {TableName}.{ReturnColumn}[EZETST];
-}}
-else
-{{
-    // Not found: EZETST == 0
-}}";
+        return " // throw new NotImplementedException();" + this.ToString();
     }
 
     // tostring pretty print

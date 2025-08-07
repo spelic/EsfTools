@@ -22,7 +22,7 @@ namespace EsfParser.Esf
         public MapTagCollection Maps { get; set; } = new();
         public RecordTagCollection Records { get; set; } = new();
         public ItemTagCollection Items { get; set; } = new();
-        public TbleTagCollection Tables { get; set; } = new();
+        public TableTagCollection Tables { get; set; } = new();
 
         /// <summary>
         /// The actual RecordTag corresponding to PROGRAM.WORKSTOR
@@ -74,7 +74,7 @@ namespace EsfParser.Esf
             else if (tag is MapTagCollection m) Maps.Maps.AddRange(m.Maps);
             else if (tag is RecordTagCollection r) Records.Records.AddRange(r.Records);
             else if (tag is ItemTagCollection i) Items.Items.AddRange(i.Items);
-            else if (tag is TbleTagCollection t) Tables.Tables.AddRange(t.Tables);
+            else if (tag is TableTagCollection t) Tables.Tables.AddRange(t.Tables);
         }
 
         public void ExportToConsoleProject(string outputDir, string projectNameSpace = "EsfConsoleApp")
@@ -110,6 +110,76 @@ namespace EsfParser.Esf
 
             Console.WriteLine($"Scaffolded console project in '{outputDir}'.");
         }
+
+        /// <summary>
+        /// Generate a single C# file containing all code needed to run the ESF
+        /// program as a console application.  This helper builds a combined source
+        /// using the <c>ToCSharp()</c> methods of each collection rather than scaffolding
+        /// a full project.  It also inserts a placeholder <c>Main</c> method for the
+        /// console application entry point.
+        /// </summary>
+        /// <param name="outputFile">Full path to the Program.cs file to generate.</param>
+        /// <param name="projectNameSpace">Namespace for generated types (default "EsfConsoleApp").</param>
+        public void ExportToSingleProgramFile(string outputFile, string projectNameSpace = "EsfConsoleApp")
+        {
+            if (string.IsNullOrWhiteSpace(outputFile))
+                throw new ArgumentException("Output file path must be provided", nameof(outputFile));
+
+            var sb = new StringBuilder();
+
+            // Required usings for the generated program
+            sb.AppendLine("using System;");
+            sb.AppendLine("using System.Collections.Generic;");
+            sb.AppendLine();
+
+            // Begin namespace
+            sb.AppendLine($"namespace {projectNameSpace}");
+            sb.AppendLine("{");
+
+            // Append code for each collection if present
+            if (Items != null && Items.Items.Count>0)
+            {
+                var itemsCode = Items.ToCSharp();
+                if (!string.IsNullOrWhiteSpace(itemsCode)) sb.AppendLine(itemsCode);
+            }
+            if (Records != null && Records.Records.Count>0)
+            {
+                var recordsCode = Records.ToCSharp();
+                if (!string.IsNullOrWhiteSpace(recordsCode)) sb.AppendLine(recordsCode);
+            }
+            if (Maps != null && Maps.Maps.Count > 0)
+            {
+                var mapsCode = Maps.ToCSharp();
+                if (!string.IsNullOrWhiteSpace(mapsCode)) sb.AppendLine(mapsCode);
+            }
+            if (Tables != null && Tables.Tables.Count > 0)
+            {
+                var tablesCode = Tables.ToCSharp();
+                if (!string.IsNullOrWhiteSpace(tablesCode)) sb.AppendLine(tablesCode);
+            }
+
+            // Emit a basic Program class with Main method.  This can be extended to
+            // instantiate and use the generated static classes as needed.
+            sb.AppendLine("    public static class Program");
+            sb.AppendLine("    {");
+            sb.AppendLine("        public static void Main()");
+            sb.AppendLine("        {");
+            sb.AppendLine("            // TODO: Write application logic here using the generated Global* classes.");
+            sb.AppendLine("            Console.WriteLine(\"ESF program initialized.\");");
+            sb.AppendLine("        }");
+            sb.AppendLine("    }");
+
+            // Close namespace
+            sb.AppendLine("}");
+
+            // Ensure output directory exists
+            var outDir = Path.GetDirectoryName(outputFile);
+            if (!string.IsNullOrEmpty(outDir) && !Directory.Exists(outDir))
+                Directory.CreateDirectory(outDir);
+
+            // Write combined source to the output file
+            File.WriteAllText(outputFile, sb.ToString());
+        }
         private void GenerateSpecialFunctionsClass(string outputDir, string projectNameSpace)
         {
             var itemsDir = Path.Combine(outputDir, "Items");
@@ -123,7 +193,7 @@ namespace EsfParser.Esf
             if (dir == null)
                 throw new FileNotFoundException("Could not locate EsfCore\\Tags\\SpecialFunctions.cs");
 
-            var sourcePath = Path.Combine(dir.FullName, "EsfCore", "Tags", "SpecialFunctions.cs");
+            var sourcePath = Path.Combine(dir.FullName, "EsfParser", "CodeGen", "SpecialFunctions.cs");
             if (!File.Exists(sourcePath))
                 throw new FileNotFoundException($"No SpecialFunctions.cs at {sourcePath}");
 

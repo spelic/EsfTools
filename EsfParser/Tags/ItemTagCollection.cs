@@ -1,3 +1,4 @@
+using EsfParser.CodeGen;
 using EsfParser.Esf;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
@@ -22,7 +23,36 @@ namespace EsfParser.Tags
                 details.Add(item.ToString());
             }
             return $"{TagName}: {Items.Count} defined\n" + string.Join("\n", details);
-                      
+        }
+
+        public string ToCSharp()
+        {
+            if (Items == null || Items.Count == 0)
+            {
+                // Return an empty list initializer when there are no items.
+                return "public static class GlobalItems {}";
+            }
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine("#region GLOBAL ITEMS");
+            // GlobalItems class
+            sb.AppendLine(CSharpUtils.Indent(1) + "public static class GlobalItems");
+            sb.AppendLine(CSharpUtils.Indent(1) + "{");
+            foreach (var fld in Items)
+            {
+                var csType = CSharpUtils.MapCsType(fld.Type.ToString(), fld.Decimals);
+                var name = CSharpUtils.CleanUnderscore(fld.Name);
+                if (!string.IsNullOrWhiteSpace(fld.Description))
+                {
+                    sb.AppendLine(CSharpUtils.Indent(2) + "/// <summary>");
+                    sb.AppendLine(CSharpUtils.Indent(2) + $"/// {fld.Description}");
+                    sb.AppendLine(CSharpUtils.Indent(2) + "/// </summary>");
+                }
+                sb.AppendLine(CSharpUtils.Indent(2) + $"public static {csType} {name};");
+                sb.AppendLine();
+            }
+            sb.AppendLine(CSharpUtils.Indent(1) + "}");
+            sb.AppendLine("#endregion");
+            return sb.ToString();
         }
     }
 }

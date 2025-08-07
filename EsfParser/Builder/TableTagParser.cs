@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace EsfParser.Tags
 {
-    public class TbleTagParser : EsfParser.Builder.IEsfTagParser
+    public class TableTagParser : EsfParser.Builder.IEsfTagParser
     {
         public string TagName => "TBLE";
 
@@ -13,10 +13,10 @@ namespace EsfParser.Tags
         {
             var tables = nodes
                 .Where(n => string.Equals(n.TagName, TagName, StringComparison.OrdinalIgnoreCase))
-                .Select(TbleTag.Parse)
+                .Select(TableTag.Parse)
                 .ToList();
 
-            return new TbleTagCollection { Tables = tables };
+            return new TableTagCollection { Tables = tables };
         }
     }
 

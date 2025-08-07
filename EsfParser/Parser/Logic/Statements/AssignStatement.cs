@@ -13,7 +13,7 @@
 
         public string ToCSharp()
         {
-            return "throw new NotImplementedException();";
+            return " // throw new NotImplementedException();" + this.ToString();
         }
 
         public override string ToString()

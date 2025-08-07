@@ -12,11 +12,8 @@
 
        public string ToCSharp()
 {
-    if (!string.IsNullOrEmpty(Occurrence))
-        return $"for (int i = 0; i < {Occurrence}; i++) {Target}[i] = {Source};";
-    
-    return $"{Target} = Enumerable.Repeat({Source}, {Target}.Length).ToArray();";
-}
+            return " // throw new NotImplementedException();" + this.ToString();
+        }
 
         public override string ToString()
             => $"MoveAStatement: {Source} -> {Target} (For: {Occurrence}) (Line: {LineNumber}, Nesting: {NestingLevel})";

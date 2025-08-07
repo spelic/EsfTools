@@ -43,8 +43,7 @@
         // Implement IStatement interface method
         public string ToCSharp()
         {
-            var args = Parameters.Any() ? string.Join(", ", Parameters.Select(p => p.Raw)) : "";
-            return $"{ProgramName}({args});";
+            return " // throw new NotImplementedException();" + this.ToString();
         }
     }
 

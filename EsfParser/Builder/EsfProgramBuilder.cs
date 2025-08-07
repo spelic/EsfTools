@@ -18,7 +18,7 @@ namespace EsfParser.Builder
                
                 new FuncTagParser(),
                 new RecordTagParser(),
-                new TbleTagParser(),
+                new TableTagParser(),
                 new MapTagParser(),
                 new ItemTagParser()
 

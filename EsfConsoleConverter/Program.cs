@@ -10,30 +10,31 @@ using System.IO;
 using System.Text;
 
 
- EsfProgramFunctions.LoadFunctionsFromJson("esf_functions.json");
+// EsfProgramFunctions.LoadFunctionsFromJson("esf_functions.json");
 
-foreach (var func in EsfProgramFunctions.Functions)
-{
+//foreach (var func in EsfProgramFunctions.Functions)
+//{
 
-    var preprocessedLines = EsfLogicPreprocessor.Preprocess(func.Lines);
+//    var preprocessedLines = EsfLogicPreprocessor.Preprocess(func.Lines);
 
-    VisualAgeLogicParser vageLogicParser = new VisualAgeLogicParser(preprocessedLines);
-    var tree = vageLogicParser.Parse();
-    var allStatements = EsfProgramAnalytics.GetAllStatementsRecursive(tree);
-    var unknowns = allStatements.Where(s => s.Type == StatementType.Move).ToList();
+//    VisualAgeLogicParser vageLogicParser = new VisualAgeLogicParser(preprocessedLines);
+//    var tree = vageLogicParser.Parse();
+//    var allStatements = EsfProgramAnalytics.GetAllStatementsRecursive(tree);
+//    var unknowns = allStatements.Where(s => s.Type == StatementType.Move).ToList();
 
-    if (unknowns.Count > 0)
-    {
-        foreach (var unknown in unknowns)
-        {
-            Console.WriteLine($"Unknown statement in function {func.FunctionName}: {unknown}");
-        }   
-    }
-}
+//    if (unknowns.Count > 0)
+//    {
+//        foreach (var unknown in unknowns)
+//        {
+//            Console.WriteLine($"{unknown.OriginalCode.PadRight(60)} -> {unknown.ToCSharp()}");
+            
+//        }   
+//    }
+//}
 
-return;
+//return;
 Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-string path = args.Length > 0 ? args[0] : "M000A-V22.esf";
+string path = args.Length > 0 ? args[0] : "D133A-V68.esf";
 
 path = "D133A-V68.esf";
 
@@ -50,6 +51,6 @@ path = "D133A-V68.esf";
     var program = EsfProgramBuilder.GenerateEsfProgram(nodes);
 
     string name = path.ToLower().Replace(".esf", "").Replace("-", "_").ToUpper();
-    program.ExportToConsoleProject(@"..\..\..\" + name + ".Console", name + "_ConsoleApp");
+    program.ExportToSingleProgramFile(@"..\..\..\..\" + name + ".Console.cs", name + "_ConsoleApp");
 
     Console.WriteLine("Done.");

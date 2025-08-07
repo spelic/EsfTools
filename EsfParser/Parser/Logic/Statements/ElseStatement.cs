@@ -8,6 +8,10 @@ public class ElseStatement : IStatement
     public int NestingLevel { get; set; } = 0;
     public string InlineComent { get; set; } = string.Empty;
 
+    public string ToCSharp()
+    {
+        throw new NotImplementedException();
+    }
 
     public override string ToString()
     {

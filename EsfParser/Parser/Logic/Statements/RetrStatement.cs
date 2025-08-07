@@ -14,6 +14,19 @@ public class RetrStatement : IStatement
     public int LineNumber { get; set; }
     public int NestingLevel { get; set; } = 0;
 
+    public string ToCSharp()
+    {
+       return
+$@"if ({TableName}.{SearchColumn}.Contains({SearchColumn}))
+{{
+    {TableName} = {TableName}.{ReturnColumn}[EZETST];
+}}
+else
+{{
+    // Not found: EZETST == 0
+}}";
+    }
+
     // tostring pretty print
     public override string ToString()
         => $"RetrStatement: {SourceItem} -> {TargetItem} (Table: {TableName}, Search: {SearchColumn}, Return: {ReturnColumn}) (Line: {LineNumber}, Nesting: {NestingLevel})";

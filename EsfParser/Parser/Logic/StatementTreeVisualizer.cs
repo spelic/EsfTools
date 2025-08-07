@@ -30,13 +30,13 @@ namespace EsfParser.Parser.Logic
                                     stmt is MoveStatement m ? $"{m.Destination} = {m.Source}" :
                                     stmt is CallStatement c ? $"{c.ProgramName}" :
                                     stmt is TestStatement t ? t.Expression :
-                                    stmt is DxfrStatement d ? $"{d.TargetApp}->{d.TargetScreen}" :
+                                    stmt is DxfrStatement d ? $"{d.ProgramName}->{d.ProgramStartScreen}" :
                                     stmt is CommentStatement cm ? cm.Text :
                                     stmt is SetStatement s ? $"{s.Target} ({string.Join(", ", s.Attributes)})" :
                                     stmt is SystemFunctionStatement sf ? $"{sf.Name}({string.Join(", ", sf.Parameters)})" :
                                     stmt is UnknownStatement u ? u.OriginalCode :
                                     stmt is MarkerStatement mk ? mk.OriginalCode.TrimEnd(';').ToUpper() :
-                                    stmt is MoveAStatement ma ? $"{ma.Target} = {ma.Source} FOR {ma.ForClause}" :
+                                    stmt is MoveAStatement ma ? $"{ma.Target} = {ma.Source} FOR {ma.Occurrence}" :
                                     stmt is RetrStatement r ? $"{r.SourceItem} {r.SearchColumn} → {r.TargetItem} ← {r.ReturnColumn}" :
                                     stmt.OriginalCode;
 
@@ -96,7 +96,7 @@ namespace EsfParser.Parser.Logic
                     AssignStatement a => $"[ASSIGN] {a.Left} = {Collapse(a.Right)}",
                     CallStatement c => $"[CALL] {c.ProgramName} USING {string.Join(", ", c.Parameters)}",
                     TestStatement t => $"[TEST] {t.Expression}",
-                    DxfrStatement d => $"[DXFR] {d.TargetApp} -> {d.TargetScreen}",
+                    DxfrStatement d => $"[DXFR] {d.ProgramName} -> {d.ProgramStartScreen}",
                     CommentStatement cm => $"[COMMENT] {cm.Text}",
                     SetStatement s => $"[SET] {s.Target}" + (s.Attributes.Any() ? $" ({string.Join(", ", s.Attributes)})" : ""),
                     UnknownStatement u => $"[?] {u.OriginalCode}",
@@ -104,7 +104,7 @@ namespace EsfParser.Parser.Logic
                     ElseStatement els => $"[ELSE] {els.InlineComent}",
                     EndStatement end => $"[END] {end.InlineComent}",
                     SystemFunctionStatement sf => $"[SYSFUNC] {sf.Name}({string.Join(", ", sf.Parameters)})",
-                    MoveAStatement ma => $"[MOVEA] {ma.Target} = {ma.Source} FOR {ma.ForClause}",
+                    MoveAStatement ma => $"[MOVEA] {ma.Target} = {ma.Source} FOR {ma.Occurrence}",
                     RetrStatement r => $"[RETR] {r.SourceItem} {r.SearchColumn} → {r.TargetItem} ← {r.ReturnColumn}\";",
                     _ => $"[{stmt.Type}] {stmt.OriginalCode}"
                 };

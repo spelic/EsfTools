@@ -10,6 +10,11 @@
 
         public int NestingLevel { get; set; } = 0;
 
+        public string ToCSharp()
+        {
+            throw new NotImplementedException();
+        }
+
         // tostring pretty print
         public override string ToString()
             => $"TestStatement: {Expression} (Line: {LineNumber}, Nesting: {NestingLevel})";

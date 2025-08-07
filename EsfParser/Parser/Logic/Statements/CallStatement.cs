@@ -39,6 +39,13 @@
             var options = Options.Count > 0 ? $" [{string.Join(", ", Options)}]" : string.Empty;
             return $"CallStatement: {ProgramName}({string.Join(", ", Parameters)}){options} (Line: {LineNumber}, Nesting: {NestingLevel})";
         }
+
+        // Implement IStatement interface method
+        public string ToCSharp()
+        {
+            var args = Parameters.Any() ? string.Join(", ", Parameters.Select(p => p.Raw)) : "";
+            return $"{ProgramName}({args});";
+        }
     }
 
 }

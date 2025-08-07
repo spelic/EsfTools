@@ -7,6 +7,11 @@
         public int LineNumber { get; set; }
         public int NestingLevel { get; set; } = 0;
 
+        public string ToCSharp()
+        {
+            throw new NotImplementedException();
+        }
+
         // tostring pretty print
         public override string ToString()
             => $"UnknownStatement: (Line: {LineNumber}, Nesting: {NestingLevel}){(string.IsNullOrEmpty(OriginalCode) ? string.Empty : $" // {OriginalCode}")}";

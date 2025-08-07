@@ -10,14 +10,21 @@
         public List<IStatement> ElseStatements { get; set; } = new();
         public int LineNumber { get; set; }
 
-        public int NestingLevel { get; set; } = 0; 
+        public int NestingLevel { get; set; } = 0;
 
-        // tostring pretty print
+        public string ToCSharp()
+        {
+            return " IF: NotImplementedException();";
+        }
+
+        // toting pretty print
         public override string ToString()
         {
-            var trueNumberOfStatemets = TrueStatements.Count;     
+            var trueNumberOfStatemets = TrueStatements.Count;
             var elseNumberOfStatemets = ElseStatements.Count;
             return $"If: {Condition} (Line: {LineNumber}, Nesting: {NestingLevel}) If:{trueNumberOfStatemets} E:{elseNumberOfStatemets}";
         }
+        
+        
     }
 }

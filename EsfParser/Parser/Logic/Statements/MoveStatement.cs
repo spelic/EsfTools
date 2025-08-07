@@ -12,9 +12,17 @@
 
         public override string ToString()
                => $"MoveStatement: {Source} -> {Destination} (Line: {LineNumber}, Nesting: {NestingLevel})";
+
+        // add method to convert this statement to C# code
+
+
+        public string ToCSharp()
+        {
+            return $"{Source} = {Destination};";
+        }
     }
 
 }   
 
-    // tostring pretty print
+   
    

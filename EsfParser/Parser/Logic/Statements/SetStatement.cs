@@ -9,6 +9,19 @@
         public int LineNumber { get; set; }
         public int NestingLevel { get; set; } = 0;
 
+        public string ToCSharp()
+        {
+            var options = string.Join(", ", Attributes);
+
+            if (!string.IsNullOrEmpty(Target))
+                return $"SetAttributes({Target}, {string.Join(", ", Attributes.Select(a => $"\"{a}\""))});";
+
+            if (!string.IsNullOrEmpty(Target))
+                return $"SetRecordState({Target}, {string.Join(", ", Attributes.Select(a => $"\"{a}\""))});";
+
+            return $"// SET statement not recognized: SET {OriginalCode}";
+        }
+
         public override string ToString()
         {
             return $"SetStatement: {Target} with attributes [{string.Join(", ", Attributes)}] (Line: {LineNumber}, Nesting: {NestingLevel})";

@@ -6,11 +6,19 @@
         public string OriginalCode { get; set; } = string.Empty;
         public string Source { get; set; } = string.Empty;
         public string Target { get; set; } = string.Empty;
-        public string ForClause { get; set; }
+        public string Occurrence { get; set; }
         public int LineNumber { get; set; }
         public int NestingLevel { get; set; } = 0;
 
-         public override string ToString()
-            => $"MoveAStatement: {Source} -> {Target} (For: {ForClause}) (Line: {LineNumber}, Nesting: {NestingLevel})";
+       public string ToCSharp()
+{
+    if (!string.IsNullOrEmpty(Occurrence))
+        return $"for (int i = 0; i < {Occurrence}; i++) {Target}[i] = {Source};";
+    
+    return $"{Target} = Enumerable.Repeat({Source}, {Target}.Length).ToArray();";
+}
+
+        public override string ToString()
+            => $"MoveAStatement: {Source} -> {Target} (For: {Occurrence}) (Line: {LineNumber}, Nesting: {NestingLevel})";
     }
 }

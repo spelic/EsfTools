@@ -13,7 +13,7 @@ namespace EsfParser.CodeGen
     public static class EsfLogicToCs
     {
         public static EsfProgram program { get; set; }
-       
+
         /// <summary>
         /// Translate ESF logic to C#, automatically qualifying SpecialFunctions,
         /// GlobalItems, and WORKSTOR.<fields>.
@@ -24,60 +24,31 @@ namespace EsfParser.CodeGen
             int indentSpaces = 6)
         {
 
-            return "";
+            if (func.BeforeLogicStatements == null || func.BeforeLogicStatements.Count == 0)
+                return "// No logic found for this function.";
 
-            var globalItemNames = program.Items.Items
-                .Select(i => i.Name)
-                .ToHashSet(StringComparer.OrdinalIgnoreCase);
-            var workstorFieldNames = program.WorkstorRecord.Items
-                .Select(f => f.Name)
-                .ToHashSet(StringComparer.OrdinalIgnoreCase);
-            var workstorName = program.WorkstorRecord.Name;
+            var sb = new StringBuilder();
 
-            Console.WriteLine($"Function: {func.Name}");
+            string indent = new string(' ', indentSpaces);
+            string doubleIndent = new string(' ', indentSpaces * 2);
 
-            var workstorDefs = program.Records.Records
-                //.Where(r => string.Equals(r.Org, "WORKSTOR", StringComparison.OrdinalIgnoreCase))
-                .ToDictionary(
-                    rec => rec.Name,                    // record class name, e.g. "IS00W01"
-                    rec => rec.Items.Select(f => f.Name)// field names in that record
-                );
+            foreach (var stmt in func.BeforeLogicStatements)
+            {
+                string codeLine = stmt.ToCSharp();
 
-
-
-            // 1) Build your expression converter
-            var exprConv = new ExpressionConverter(
-                new WorkstorQualifier(workstorDefs, globalItemNames),
-                new SpecialFunctionQualifier()
-            );
-
-            // 3) Gather all record‐ and map‐class names
-            var recordNames = program.Records.Records.Select(r => r.Name);
-            var mapNames = program.Maps.Maps.Select(m => m.MapName);
-
-            // 2) create the type resolver
-            var typeResolver = new EsfTypeResolver(program.Items, program.Records, program.Maps);
-
-            var condGen = new ConditionCodeGenerator(exprConv, typeResolver);
-
-            // 5) Finally wire up your LogicProcessor
-            var processor = new LogicProcessor(
-                qualifiers: new ITokenQualifier[] {
-                    new WorkstorQualifier(workstorDefs,globalItemNames),
-                    new SpecialFunctionQualifier()       
-                },
-                condConv: condGen,
-                translators: new IStatementTranslator[] {
-        new MoveTranslator(exprConv),
-        new SetTranslator(exprConv),
-        new CallTranslator(),
-        // Note: now passing the typeResolver into AssignmentTranslator
-        new AssignmentTranslator(exprConv, typeResolver, recordNames, mapNames),
+                if (!string.IsNullOrWhiteSpace(codeLine))
+                {
+                    foreach (var line in codeLine.Split('\n'))
+                    {
+                        sb.AppendLine(doubleIndent + line.TrimEnd());
+                    }
                 }
-            );
+            }
 
-            string csharp = processor.Process(esfLines);
-            return csharp;
+            
+
+            return sb.ToString();
+
         }
     }
 }

@@ -41,7 +41,7 @@ public class MoveAStatementParser : IStatementParser
             LineNumber = line.StartLineNumber,
             Source = source,
             Target = target,
-            ForClause = forClause
+            Occurrence = forClause
         };
     }
 }

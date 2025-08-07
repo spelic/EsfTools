@@ -10,6 +10,11 @@
         public int LineNumber { get; set; }
         public int NestingLevel { get; set; } = 0;
 
+        public string ToCSharp()
+        {
+            return $"while";
+        }
+
         public override string ToString()
         {
             return $"WhileStatement: {Condition} (Line: {LineNumber}, Nesting: {NestingLevel}) with body lines: [{BodyStatements.Count}]";

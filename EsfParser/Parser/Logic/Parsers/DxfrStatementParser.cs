@@ -24,8 +24,8 @@ namespace EsfParser.Parser.Logic.Parsers
                     return new DxfrStatement
                     {
                         OriginalCode = line.OriginalBlock,
-                        TargetApp = parts[1],
-                        TargetScreen = "",
+                        ProgramName = parts[1],
+                        ProgramStartScreen = "",
                         LineNumber = line.StartLineNumber
                     };
                 }
@@ -42,8 +42,8 @@ namespace EsfParser.Parser.Logic.Parsers
             return new DxfrStatement
             {
                 OriginalCode = line.OriginalBlock,
-                TargetApp = match.Groups[1].Value,
-                TargetScreen = match.Groups[2].Value,
+                ProgramName = match.Groups[1].Value,
+                ProgramStartScreen = match.Groups[2].Value,
                 LineNumber = line.StartLineNumber
             };
         }

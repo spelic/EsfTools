@@ -8,6 +8,11 @@ public class EndStatement : IStatement
     public string InlineComent { get; set; } = string.Empty;
     public int NestingLevel { get; set; } = 0;
 
+    public string ToCSharp()
+    {
+        throw new NotImplementedException();
+    }
+
     public override string ToString()
     {
         return $"EndStatement: (Line: {LineNumber}, Nesting: {NestingLevel}){(string.IsNullOrEmpty(InlineComent) ? string.Empty : $" // {InlineComent}")}";

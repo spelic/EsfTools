@@ -128,17 +128,19 @@ namespace EsfParser.Tags
                     t.AfterLogic.Clear();
             }
 
-            //if (t.BeforeLogic.Count > 0)
-            //{
-            //    var parser = new VisualAgeLogicParser(t.BeforeLogic, origin: "BEFORE");
-            //    t.BeforeLogicStatements = parser.Parse();
-            //}
+            if (t.BeforeLogic.Count > 0)
+            {
+                var preprocessedLines = EsfLogicPreprocessor.Preprocess(t.BeforeLogic);
+                var parser = new VisualAgeLogicParser(preprocessedLines);
+                t.BeforeLogicStatements = parser.Parse();
+            }
 
-            //if (t.AfterLogic.Count > 0)
-            //{
-            //    var parser = new VisualAgeLogicParser(t.AfterLogic, origin: "AFTER");
-            //    t.AfterLogicStatements = parser.Parse();
-            //}
+            if (t.AfterLogic.Count > 0)
+            {
+                var preprocessedLines = EsfLogicPreprocessor.Preprocess(t.AfterLogic);
+                var parser = new VisualAgeLogicParser(preprocessedLines);
+                t.AfterLogicStatements = parser.Parse();
+            }
 
             return t;
         }

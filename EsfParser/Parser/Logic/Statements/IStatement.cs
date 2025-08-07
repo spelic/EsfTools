@@ -9,5 +9,8 @@
 
         public int NestingLevel { get; set; }
 
+        // add ToCSharp()
+        string ToCSharp();
+
     }
 }

@@ -1,6 +1,5 @@
 ﻿using EsfParser.Esf;
 using EsfParser.Tags;
-using EsfParser.Tags.Logic;
 using System;
 using System.Collections.Generic;
 using System.Linq;

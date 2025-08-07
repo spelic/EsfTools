@@ -101,7 +101,7 @@ namespace EsfParser.Parser.Logic
                     }
 
                     index++;  // Advance if parser didn't (single-line case)
-                  //  StatementTreeVisualizer.Print(results);
+                 
                     return results;
                 }
             }
@@ -123,10 +123,7 @@ namespace EsfParser.Parser.Logic
                     LineNumber = lineNumber,
                     NestingLevel = currentLevel,
                 });
-            }
-
-            StatementTreeVisualizer.Print(results);
-
+            }     
             index++;  // Advance for unknown
             return results;
         }

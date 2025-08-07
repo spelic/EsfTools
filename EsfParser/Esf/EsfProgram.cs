@@ -118,7 +118,7 @@ namespace EsfParser.Esf
             var itemsNs = $"{projectNameSpace}.Items";
 
             var dir = new DirectoryInfo(Directory.GetCurrentDirectory());
-            while (dir != null && !Directory.Exists(Path.Combine(dir.FullName, "EsfCore", "Tags")))
+            while (dir != null && !Directory.Exists(Path.Combine(dir.FullName, "EsfParser", "CodeGen")))
                 dir = dir.Parent;
             if (dir == null)
                 throw new FileNotFoundException("Could not locate EsfCore\\Tags\\SpecialFunctions.cs");

@@ -1,4 +1,4 @@
-﻿using EsfConsoleConverter;
+﻿
 using EsfParser;
 using EsfParser.Analytics;
 using EsfParser.Builder;
@@ -9,17 +9,33 @@ using System;
 using System.IO;
 using System.Text;
 
+
+ EsfProgramFunctions.LoadFunctionsFromJson("esf_functions.json");
+
+foreach (var func in EsfProgramFunctions.Functions)
+{
+
+    var preprocessedLines = EsfLogicPreprocessor.Preprocess(func.Lines);
+
+    VisualAgeLogicParser vageLogicParser = new VisualAgeLogicParser(preprocessedLines);
+    var tree = vageLogicParser.Parse();
+    var allStatements = EsfProgramAnalytics.GetAllStatementsRecursive(tree);
+    var unknowns = allStatements.Where(s => s.Type == StatementType.Move).ToList();
+
+    if (unknowns.Count > 0)
+    {
+        foreach (var unknown in unknowns)
+        {
+            Console.WriteLine($"Unknown statement in function {func.FunctionName}: {unknown}");
+        }   
+    }
+}
+
+return;
 Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 string path = args.Length > 0 ? args[0] : "M000A-V22.esf";
-path =  "D123A-V54.esf";
-path = "IS00A-V26.esf";
-path = "debug.esf";
+
 path = "D133A-V68.esf";
-
-
-//EsfDebuggerHelper.DebugString();
-//EsfDebuggerHelper.DebugFunction();
-//EsfDebuggerHelper.ExportConsoleApplication("D133A-V68.esf");
 
  if (!File.Exists(path))
     {

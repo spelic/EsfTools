@@ -1,10 +1,23 @@
-using System.Collections.Generic;
-using System.Text.Json.Serialization;
-using EsfParser.Esf;
+﻿// RecordTagCollection.cs ────────────────────────────────────────────────
 using EsfParser.CodeGen;
+using EsfParser.Esf;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Text.Json.Serialization;
 
 namespace EsfParser.Tags
 {
+    /// <summary>
+    /// Holds all <c>:RECORD</c> tags and converts them to two runtime
+    /// containers:
+    /// <list type="bullet">
+    ///   <item><c>GlobalWorkstor</c> – WORKSTOR records</item>
+    ///   <item><c>GlobalSqlRow</c>   – SQLROW   records</item>
+    /// </list>
+    /// Each record becomes a nested static class containing all its items.
+    /// </summary>
     public class RecordTagCollection : IEsfTagModel
     {
         [JsonIgnore]
@@ -17,67 +30,113 @@ namespace EsfParser.Tags
             if (Records.Count == 0)
                 return $"{TagName}: No records defined";
 
-            var details = new List<string>();
-            foreach (var record in Records)
-            {
-                details.Add(record.ToString());
-            }
-            return $"{TagName}: {Records.Count} defined\n" + string.Join("\n", details);
+            var sb = new StringBuilder($"{TagName}: {Records.Count} defined\n");
+            sb.Append(string.Join("\n", Records.Select(r => r.ToString())));
+            return sb.ToString();
         }
 
-        /// <summary>
-        /// Generates a C# code snippet representing this collection's <see cref="Records"/> list.
-        /// Each <c>RecordTag</c> in the list is translated into a static field within
-        /// a <c>GlobalRecords</c> class.  The type of each field is determined via
-        /// <see cref="CSharpUtils.MapCsType"/>, the field name is cleaned via
-        /// <see cref="CSharpUtils.CleanUnderscore"/>, and descriptions are emitted
-        /// as XML summary comments when present.
-        /// </summary>
-        /// <returns>A string containing the generated C# code for the records.</returns>
+        // ────────────────────────────────────────────────────────────────
+        //  Code generation
+        // ────────────────────────────────────────────────────────────────
         public string ToCSharp()
         {
-            // When there are no records, return an empty GlobalRecords class definition
             if (Records == null || Records.Count == 0)
-            {
-                return "public static class GlobalRecords {}";
-            }
+                return "public static class GlobalWorkstor { }   // no RECORD tags";
 
-            var sb = new System.Text.StringBuilder();
-            sb.AppendLine("#region GLOBAL RECORDS");
-            // Define the GlobalRecords container class
-            sb.AppendLine(CSharpUtils.Indent(1) + "public static class GlobalRecords");
-            sb.AppendLine(CSharpUtils.Indent(1) + "{");
-            foreach (var record in Records)
+            var sb = new StringBuilder();
+
+            // local helper --------------------------------------------------
+            void EmitContainer(string className, IEnumerable<RecordTag> recs)
             {
-                // Each record becomes its own nested static class
-                var recordClassName = CSharpUtils.CleanUnderscore(record.Name);
-                sb.AppendLine(CSharpUtils.Indent(2) + $"public static class {recordClassName}");
-                sb.AppendLine(CSharpUtils.Indent(2) + "{");
-                // Emit fields for all items defined in the record
-                foreach (var item in record.Items)
+                string pad1 = CSharpUtils.Indent(1);
+                string pad2 = CSharpUtils.Indent(2);
+                string pad3 = CSharpUtils.Indent(3);
+                string pad4 = CSharpUtils.Indent(4);
+
+                sb.AppendLine($"{pad1}public static class {className}");
+                sb.AppendLine($"{pad1}{{");
+
+                foreach (var rec in recs)
                 {
-                    var csType = CSharpUtils.MapCsType(item.Type.ToString(), item.Decimals);
-                    var fieldName = CSharpUtils.CleanUnderscore(item.Name);
-                    if (!string.IsNullOrWhiteSpace(item.Description))
+                    string recCls = CSharpUtils.CleanName(rec.Name);
+                    sb.AppendLine($"{pad2}public static class {recCls}");
+                    sb.AppendLine($"{pad2}{{");
+
+                    // ── field declarations ──────────────────────────────
+                    foreach (var itm in rec.Items)
                     {
-                        sb.AppendLine(CSharpUtils.Indent(3) + "/// <summary>");
-                        sb.AppendLine(CSharpUtils.Indent(3) + $"/// {item.Description}");
-                        sb.AppendLine(CSharpUtils.Indent(3) + "/// </summary>");
+                        if (itm.Name == "*")               // virtual filler
+                        {
+                            sb.AppendLine($"{pad3}// * virtual filler, ignored");
+                            continue;
+                        }
+
+                        string csType = CSharpUtils.MapCsType(itm.Type.ToString(), itm.Decimals);
+                        string fieldName = CSharpUtils.CleanName(itm.Name);
+                        bool isArray = int.TryParse(itm.Occurs, out var occ) && occ > 1;
+
+                        // XML doc
+                        if (!string.IsNullOrWhiteSpace(itm.Description))
+                        {
+                            sb.AppendLine($"{pad3}/// <summary>");
+                            sb.AppendLine($"{pad3}/// {itm.Description}");
+                            sb.AppendLine($"{pad3}/// </summary>");
+                        }
+
+                        if (isArray)
+                        {
+                            sb.AppendLine($"{pad3}public static {csType}[] {fieldName} = new {csType}[{occ}];");
+                        }
+                        else
+                        {
+                            sb.AppendLine($"{pad3}public static {csType} {fieldName};");
+                        }
                     }
-                    if (fieldName == "_*")
-                        sb.AppendLine(CSharpUtils.Indent(3) + $"// public static {csType} {fieldName}; // VIRTUAL FILLER");
-                    else
-                        sb.AppendLine(CSharpUtils.Indent(3) + $"public static {csType} {fieldName};");
+
+                    // ── SetEmpty() helper ───────────────────────────────
+                    sb.AppendLine();
+                    sb.AppendLine($"{pad3}/// <summary>Reset all fields to default values.</summary>");
+                    sb.AppendLine($"{pad3}public static void SetEmpty()");
+                    sb.AppendLine($"{pad3}{{");
+
+                    foreach (var itm in rec.Items)
+                    {
+                        if (itm.Name == "*") continue;   // skip fillers
+
+                        string baseType = CSharpUtils.MapCsType(itm.Type.ToString(), itm.Decimals);
+                        string fld = CSharpUtils.CleanName(itm.Name);
+                        bool isArray = int.TryParse(itm.Occurs, out var occ) && occ > 1;
+
+                        if (isArray)
+                            sb.AppendLine($"{pad4}{fld} = new {baseType}[{itm.Occurs}];");
+                        else
+                            sb.AppendLine($"{pad4}{fld} = default({baseType});");
+                    }
+
+                    sb.AppendLine($"{pad3}}}");
+                    sb.AppendLine($"{pad2}}}");
+                    sb.AppendLine();
                 }
 
-                // TODO: ADD SQLTABLE NAME AS Property
-
-                sb.AppendLine(CSharpUtils.Indent(2) + "}");
+                sb.AppendLine($"{pad1}}}");
                 sb.AppendLine();
             }
-            sb.AppendLine(CSharpUtils.Indent(1) + "}");
-            sb.AppendLine("#endregion");
-            return sb.ToString();
+
+            // split by organisation ---------------------------------------
+            var workstorRecs = Records
+                .Where(r => r.Org.Equals("WORKSTOR", StringComparison.OrdinalIgnoreCase));
+            var sqlrowRecs = Records
+                .Where(r => r.Org.Equals("SQLROW", StringComparison.OrdinalIgnoreCase));
+
+            if (workstorRecs.Any())
+                EmitContainer("GlobalWorkstor", workstorRecs);
+
+            if (sqlrowRecs.Any())
+                EmitContainer("GlobalSqlRow", sqlrowRecs);
+
+
+            var r = sb.ToString();
+            return r;
         }
     }
 }

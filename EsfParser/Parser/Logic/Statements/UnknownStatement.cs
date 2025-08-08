@@ -7,6 +7,8 @@
         public int LineNumber { get; set; }
         public int NestingLevel { get; set; } = 0;
 
+        public string Error { get; set; } = string.Empty;
+
         public string ToCSharp()
         {
             return " // throw new NotImplementedException();" + this.ToString();

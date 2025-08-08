@@ -1,24 +1,52 @@
-﻿namespace EsfParser.Parser.Logic.Statements
+﻿using System.Text;
+using EsfParser.CodeGen;
+
+namespace EsfParser.Parser.Logic.Statements
 {
     public class DxfrStatement : IStatement
     {
         public StatementType Type => StatementType.Dxfr;
+
         public string OriginalCode { get; set; } = string.Empty;
-        public string ProgramName { get; set; } = string.Empty;
-        public string ProgramStartScreen { get; set; } = string.Empty;
-        public string RecordName { get; set; } = string.Empty;
-        public string SourceApp { get; set; } = string.Empty;
+        public string ProgramName { get; set; } = string.Empty;   // NEWAPP1  /  EZEAPP
+        public string ProgramStartScreen { get; set; } = string.Empty; // rarely used in practice
+        public string RecordName { get; set; } = string.Empty;   // WORKSTOR record to pass
+        public string SourceApp { get; set; } = string.Empty;   // rarely used in batch
+
         public int LineNumber { get; set; }
-        public int NestingLevel { get; set; } = 0;
+        public int NestingLevel { get; set; }
 
-        public override string ToString()
-        {
-            return $"DxfrStatement: {ProgramName}.{ProgramStartScreen}.{RecordName} <- {SourceApp} (Line: {LineNumber}, Nesting: {NestingLevel})";
-        }
+        public override string ToString() =>
+            $"DxfrStatement: {ProgramName}.{ProgramStartScreen}.{RecordName} <- {SourceApp} " +
+            $"(Line {LineNumber}, Nest {NestingLevel})";
 
+        // ────────────────────────────────────────────────────────────────
+        //  Emit C#
+        // ────────────────────────────────────────────────────────────────
         public string ToCSharp()
         {
-            return " // throw new NotImplementedException();" + this.ToString();
+            string indent = CSharpUtils.Indent(NestingLevel);
+            var sb = new StringBuilder();
+
+            // 1️⃣  Target program expression
+            string progExpr = ProgramName.Trim().Equals("EZEAPP", System.StringComparison.OrdinalIgnoreCase)
+                                ? "EzFunctions.EZEAPP"
+                                : $"\"{ProgramName}\"";
+
+            // 2️⃣  Optional record to pass
+            string recExpr = string.IsNullOrWhiteSpace(RecordName)
+                                ? "null"
+                                : CSharpUtils.ConvertOperand(RecordName.Trim());
+
+            // 3️⃣  Start-screen rarely used; we still honour if supplied
+            string screenExpr = string.IsNullOrWhiteSpace(ProgramStartScreen)
+                                ? "null"
+                                : $"\"{ProgramStartScreen}\"";
+
+            sb.AppendLine($"{indent}RuntimeServices.Dxfr({progExpr}, {screenExpr}, {recExpr});");
+            sb.AppendLine($"{indent}return;   // DXFR terminates current routine");
+
+            return sb.ToString().TrimEnd() + $" // Org: {OriginalCode}";
         }
     }
 }

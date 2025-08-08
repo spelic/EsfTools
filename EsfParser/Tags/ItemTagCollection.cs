@@ -33,14 +33,13 @@ namespace EsfParser.Tags
                 return "public static class GlobalItems {}";
             }
             var sb = new System.Text.StringBuilder();
-            sb.AppendLine("#region GLOBAL ITEMS");
             // GlobalItems class
             sb.AppendLine(CSharpUtils.Indent(1) + "public static class GlobalItems");
             sb.AppendLine(CSharpUtils.Indent(1) + "{");
             foreach (var fld in Items)
             {
                 var csType = CSharpUtils.MapCsType(fld.Type.ToString(), fld.Decimals);
-                var name = CSharpUtils.CleanUnderscore(fld.Name);
+                var name = CSharpUtils.CleanName(fld.Name);
                 if (!string.IsNullOrWhiteSpace(fld.Description))
                 {
                     sb.AppendLine(CSharpUtils.Indent(2) + "/// <summary>");
@@ -51,8 +50,8 @@ namespace EsfParser.Tags
                 sb.AppendLine();
             }
             sb.AppendLine(CSharpUtils.Indent(1) + "}");
-            sb.AppendLine("#endregion");
-            return sb.ToString();
+            var code = sb.ToString();
+            return code;
         }
     }
 }

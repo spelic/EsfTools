@@ -2,37 +2,63 @@
 using EsfParser;
 using EsfParser.Analytics;
 using EsfParser.Builder;
+using EsfParser.CodeGen;
 using EsfParser.Parser;
 using EsfParser.Parser.Logic;
 using EsfParser.Parser.Logic.Statements;
 using System;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 
-// EsfProgramFunctions.LoadFunctionsFromJson("esf_functions.json");
 
-//foreach (var func in EsfProgramFunctions.Functions)
-//{
+void SaveStatementsToFile(IEnumerable<IStatement> statements, StatementType stype)
+{
+    var sb = new StringBuilder();
 
-//    var preprocessedLines = EsfLogicPreprocessor.Preprocess(func.Lines);
+    var stmt = statements.Where(s => s.Type == stype).ToList();
 
-//    VisualAgeLogicParser vageLogicParser = new VisualAgeLogicParser(preprocessedLines);
-//    var tree = vageLogicParser.Parse();
-//    var allStatements = EsfProgramAnalytics.GetAllStatementsRecursive(tree);
-//    var unknowns = allStatements.Where(s => s.Type == StatementType.Move).ToList();
+    foreach (var statement in stmt)
+    {
+        sb.AppendLine($"{statement.OriginalCode.PadRight(60)} -> {statement.ToCSharp()}");
+    }
+    File.WriteAllText($"{stype.ToString()}_Statements.txt", sb.ToString());
+}
 
-//    if (unknowns.Count > 0)
-//    {
-//        foreach (var unknown in unknowns)
-//        {
-//            Console.WriteLine($"{unknown.OriginalCode.PadRight(60)} -> {unknown.ToCSharp()}");
-            
-//        }   
-//    }
-//}
+EsfProgramFunctions.LoadFunctionsFromJson("esf_functions.json");
+//var allallStatements = System.Text.Json.JsonSerializer.Deserialize<List<IStatement>>(File.ReadAllText("all_statements.json"));
+var allallStatements = new List<IStatement>();
 
-//return;
+foreach (var func in EsfProgramFunctions.Functions)
+{
+
+    var preprocessedLines = EsfLogicPreprocessor.Preprocess(func.Lines);
+
+    VisualAgeLogicParser vageLogicParser = new VisualAgeLogicParser(preprocessedLines);
+    var tree = vageLogicParser.Parse();
+    var allStatements = EsfProgramAnalytics.GetAllStatementsRecursive(tree);
+
+    allallStatements.AddRange(allStatements);
+}
+
+// save all statements to a json file
+File.WriteAllText("all_statements.json", System.Text.Json.JsonSerializer.Serialize(allallStatements, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
+
+
+SaveStatementsToFile(allallStatements, StatementType.Call);
+SaveStatementsToFile(allallStatements, StatementType.Dxfr);
+SaveStatementsToFile(allallStatements, StatementType.Move);
+SaveStatementsToFile(allallStatements, StatementType.MoveA);
+SaveStatementsToFile(allallStatements, StatementType.Retr);
+SaveStatementsToFile(allallStatements, StatementType.Set);
+SaveStatementsToFile(allallStatements, StatementType.SystemFunction);
+SaveStatementsToFile(allallStatements, StatementType.Test);
+SaveStatementsToFile(allallStatements, StatementType.Unknown);
+
+
+
+return;
 Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 string path = args.Length > 0 ? args[0] : "D133A-V68.esf";
 
@@ -47,10 +73,29 @@ path = "D133A-V68.esf";
     var lines = File.ReadAllLines(path, Encoding.GetEncoding(1250));
     Console.OutputEncoding = Encoding.UTF8;
 
+    
     var nodes = MyEsfParser.Parse(lines);
-    var program = EsfProgramBuilder.GenerateEsfProgram(nodes);
 
-    string name = path.ToLower().Replace(".esf", "").Replace("-", "_").ToUpper();
-    program.ExportToSingleProgramFile(@"..\..\..\..\" + name + ".Console.cs", name + "_ConsoleApp");
 
-    Console.WriteLine("Done.");
+var program = EsfProgramBuilder.GenerateEsfProgram(nodes);
+CSharpUtils.Program = program;
+string name = path.ToLower().Replace(".esf", "").Replace("-", "_").ToUpper();
+program.ExportToSingleProgramFile(@"C:\Users\denis.spelic\source\repos\Test\Test\Program.cs", name + "_ConsoleApp");
+program.RoslynExportToSingleProgramFile(@"C:\Users\denis.spelic\source\repos\Test\Test\ProgramR.cs", name + "_ConsoleAppRoslyn");
+
+Console.WriteLine("Done.");
+
+
+
+var nodes2 = ChatGptEsfParser.Parse(lines);
+foreach (var node in nodes2)
+{
+    Console.WriteLine(node.TagName.ToUpperInvariant());
+}
+
+if (TagNodeComparer.EqualTrees(nodes, nodes2, out var diff))
+    Console.WriteLine("✅ Parsers produce identical trees.");
+else
+    Console.WriteLine("❌ Difference found:\n" + diff);
+
+Console.ReadLine();

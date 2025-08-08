@@ -11,6 +11,7 @@ namespace EsfParser.Tags
         public List<TagNode> Children { get; } = new();
         public int StartLine { get; }
         public int EndLine { get; set; }
+        public List<string> Errors { get; } = new List<string>();
 
         public TagNode(string tagName, int startLine)
         {

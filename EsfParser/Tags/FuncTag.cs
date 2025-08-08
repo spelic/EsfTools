@@ -151,8 +151,9 @@ namespace EsfParser.Tags
         /// Requires EsfLogicToCs.Configure(...) to have been called first.
         /// </summary>
         /// <param name="indentSpaces">How many spaces to indent each line.</param>
-        public string GenerateCSharpBody(int indentSpaces = 6)
+        public string ToCSharp()
         {
+            int indentSpaces = 0;
             var sb = new StringBuilder();
             var indent = new string(' ', indentSpaces);
 
@@ -170,15 +171,7 @@ namespace EsfParser.Tags
                 {
                     case "SELECT":
                         sb.Append(indent)
-                          .Append("string sql = $@\" SELECT ")
-                          .Append(SqlClauses[0].Text.Replace("\n", " "))
-                          .Append(" ")
-                          .Append(SqlClauses[2].Text)
-                          .Append(" ");
-                        if (!SqlClauses[3].Text.StartsWith("/*"))
-                            sb.Append(SqlClauses[3].Text).Append(" ");
-                        sb.AppendLine("\";");
-                        sb.AppendLine(indent + $"// {SqlClauses[1].Text} = SQL RESULT");
+                          .Append($"string sql = $@\" SELECT {SqlClauses[0].Text.Replace("\n", " ")} \";");
                         break;
                     default:
                         sb.AppendLine(indent + $"// UNSUPPORTED {SqlClauses[0].ClauseType}");

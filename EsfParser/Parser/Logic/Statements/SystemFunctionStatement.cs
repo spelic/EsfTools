@@ -11,7 +11,7 @@ public class SystemFunctionStatement : IStatement
 
     public string ToCSharp()
     {
-        throw new NotImplementedException();
+        return " // SystemFunction: throw new NotImplementedException();";
     }
 
     // tostring pretty print   

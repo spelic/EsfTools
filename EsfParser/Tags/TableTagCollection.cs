@@ -52,7 +52,7 @@ namespace EsfParser.Tags
             foreach (var table in Tables)
             {
                 // Derive a valid C# class name from the table name
-                var tableClassName = CSharpUtils.CleanUnderscore(table.Name);
+                var tableClassName = CSharpUtils.CleanName(table.Name);
                 sb.AppendLine(CSharpUtils.Indent(2) + $"public static class {tableClassName}");
                 sb.AppendLine(CSharpUtils.Indent(2) + "{");
 

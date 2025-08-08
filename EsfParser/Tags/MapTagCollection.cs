@@ -72,7 +72,6 @@ namespace EsfParser.Tags
 
             var sb = new StringBuilder();
 
-            sb.AppendLine("#region MAPS");
             WriteCfieldTag(sb);
             WriteVfieldTag(sb);
             sb.AppendLine(CSharpUtils.Indent(0) + "public static class GlobalMaps");
@@ -91,8 +90,8 @@ namespace EsfParser.Tags
                 sb.AppendLine(CSharpUtils.Indent(1) + "}");
             }
             sb.AppendLine(CSharpUtils.Indent(0) + "}");
-            sb.AppendLine("#endregion");
-            return sb.ToString();
+            var r = sb.ToString();
+            return r;
         }
 
         private void WriteCfieldTag(StringBuilder sb)
@@ -134,6 +133,7 @@ namespace EsfParser.Tags
             sb.AppendLine("        public void SetBright() => Intensity = \"BRIGHT\";");
             sb.AppendLine("        public void SetNormal() => Intensity = \"NORMAL\";");
             sb.AppendLine("        public void SetCursor() => OnCursor?.Invoke(this);");
+            sb.AppendLine("        public void Defined()  { /* later logic */ }");
             sb.AppendLine("        public override string ToString() =>");
             sb.AppendLine("            $\"VFIELD [{Row},{Column}] {Name}/{Type}/{Bytes}B: '{Value}' (MDT={IsModified}, Intensity={Intensity})\";");
             sb.AppendLine("    }");
@@ -176,14 +176,15 @@ namespace EsfParser.Tags
                 var count = list.Count;
                 var safe = name.Replace('-', '_');
                 var esfType = list[0].Type.ToString().ToUpperInvariant();
-                var csType = esfType switch
+                var csType = "string";
+
+                if (list[0].Type.ToString() == "NUM")
                 {
-                    "BIN" => "int",
-                    "NUM" => "string",
-                    "PACK" or "PACF" => "int",
-                    "CHA" or "DBCS" or "MIX" => "string",
-                    _ => "string"
-                };
+                    if (list[0].Decimals > 0)
+                        csType = "decimal";
+                    else
+                        csType = "int";
+                }
 
                 sb.AppendLine($"        /// <summary>Variable field '{name}'{(count > 1 ? " (multiple)" : "")}</summary>");
                 if (count == 1)
@@ -211,9 +212,18 @@ namespace EsfParser.Tags
 
                     sb.AppendLine("            get");
                     sb.AppendLine("            {");
-                    sb.AppendLine(csType == "string"
-                      ? $"                return _vfieldsByName[\"{name}\"].Select(t=>t.Value).ToArray();"
-                      : $"                return _vfieldsByName[\"{name}\"].Select(t=>int.TryParse(t.Value,out var v)?v:default).ToArray();");
+                    if (csType == "string")
+                    {
+
+                        sb.AppendLine("                return _vfieldsByName[\"{name}\"].Select(t=>t.Value).ToArray();");
+                    } else if (csType == "decimal")
+                    {
+                        sb.AppendLine("                return _vfieldsByName[\"{name}\"].Select(t=>decimal.TryParse(t.Value,out var v)?v:default).ToArray();");
+                    } else if (csType == "int")
+                    {
+                        sb.AppendLine($"                return _vfieldsByName[\"{name}\"].Select(t=>int.TryParse(t.Value,out var v)?v:default).ToArray();");
+                    }
+                      
                     sb.AppendLine("            }");
                     sb.AppendLine("            set");
                     sb.AppendLine("            {");
@@ -270,6 +280,7 @@ namespace EsfParser.Tags
                 sb.AppendLine(line);
             }
         }
+
 
         private void WriteCopyFrom(StringBuilder sb)
         {

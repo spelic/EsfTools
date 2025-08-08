@@ -34,7 +34,7 @@ namespace EsfParser.Analytics
 
         public static List<IStatement> GetStatementsByFunctionName(EsfProgram program, string functionName)
         {
-            var func = program.Funcs.Functions.FirstOrDefault(f =>
+            var func = program.Functions.Functions.FirstOrDefault(f =>
                 string.Equals(f.Name, functionName, StringComparison.OrdinalIgnoreCase));
 
             return func == null ? new() : GetAllStatementsRecursive(func);
@@ -42,7 +42,7 @@ namespace EsfParser.Analytics
 
         public static List<IStatement> GetStatementsByFunctionPrefix(EsfProgram program, string prefix)
         {
-            return program.Funcs.Functions
+            return program.Functions.Functions
                 .Where(f => f.Name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
                 .SelectMany(GetAllStatementsRecursive)
                 .ToList();
@@ -73,7 +73,7 @@ namespace EsfParser.Analytics
 
             int count = 1;
 
-            foreach (var func in program.Funcs.Functions)
+            foreach (var func in program.Functions.Functions)
             {
                 var parsedStatements = EsfProgramAnalytics.GetAllStatementsRecursive(func);
                 var unknowns = parsedStatements.Where(s => s.Type == StatementType.Unknown).ToList();
@@ -103,7 +103,7 @@ namespace EsfParser.Analytics
         public static bool PrintUnknownToConsole(EsfProgram program)
         {
             bool hasUnknowns = false;
-            foreach (var func in program.Funcs.Functions)
+            foreach (var func in program.Functions.Functions)
             {
                 var parsedStatements = EsfProgramAnalytics.GetAllStatementsRecursive(func);
                 var unknowns = parsedStatements.Where(s => s.Type == StatementType.Unknown).ToList();
@@ -136,7 +136,7 @@ namespace EsfParser.Analytics
             Console.WriteLine("==== AFTER LOGIC STATEMENTS ====");
             Console.ResetColor();
 
-            foreach (var func in program.Funcs.Functions)
+            foreach (var func in program.Functions.Functions)
             {
                 if (func.AfterLogicStatements == null || func.AfterLogicStatements.Count == 0)
                     continue;
@@ -163,7 +163,7 @@ namespace EsfParser.Analytics
 
         public static List<IStatement> GetAllStatementsRecursive(EsfProgram program)
         {
-            return program.Funcs.Functions
+            return program.Functions.Functions
                 .SelectMany(GetAllStatementsRecursive)
                 .ToList();
         }

@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
+using System.Linq;
 
 namespace D133A_V68_ConsoleApp
 {
@@ -2559,10 +2561,10 @@ public static class GlobalMaps
         /// <summary>Variable field 'DELNAL'</summary>
         public static VfieldTag DELNALTag => _vfieldsByName["DELNAL"][0];
 
-        public static string DELNAL
+        public static int DELNAL
         {
-            get => DELNALTag.Value;
-            set => DELNALTag.Value = value;
+            get => int.TryParse(DELNALTag.Value,out var v)?v:default;
+            set => DELNALTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'VARDELN'</summary>
@@ -2577,19 +2579,19 @@ public static class GlobalMaps
         /// <summary>Variable field 'DELNALK'</summary>
         public static VfieldTag DELNALKTag => _vfieldsByName["DELNALK"][0];
 
-        public static string DELNALK
+        public static int DELNALK
         {
-            get => DELNALKTag.Value;
-            set => DELNALKTag.Value = value;
+            get => int.TryParse(DELNALKTag.Value,out var v)?v:default;
+            set => DELNALKTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'DELNALZ'</summary>
         public static VfieldTag DELNALZTag => _vfieldsByName["DELNALZ"][0];
 
-        public static string DELNALZ
+        public static int DELNALZ
         {
-            get => DELNALZTag.Value;
-            set => DELNALZTag.Value = value;
+            get => int.TryParse(DELNALZTag.Value,out var v)?v:default;
+            set => DELNALZTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'VARDELNZ'</summary>
@@ -2613,10 +2615,10 @@ public static class GlobalMaps
         /// <summary>Variable field 'DNPF'</summary>
         public static VfieldTag DNPFTag => _vfieldsByName["DNPF"][0];
 
-        public static string DNPF
+        public static decimal DNPF
         {
-            get => DNPFTag.Value;
-            set => DNPFTag.Value = value;
+            get => int.TryParse(DNPFTag.Value,out var v)?v:default;
+            set => DNPFTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'LB3'</summary>
@@ -2631,37 +2633,37 @@ public static class GlobalMaps
         /// <summary>Variable field 'ZACETNTE'</summary>
         public static VfieldTag ZACETNTETag => _vfieldsByName["ZACETNTE"][0];
 
-        public static string ZACETNTE
+        public static int ZACETNTE
         {
-            get => ZACETNTETag.Value;
-            set => ZACETNTETag.Value = value;
+            get => int.TryParse(ZACETNTETag.Value,out var v)?v:default;
+            set => ZACETNTETag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'KONCNATE'</summary>
         public static VfieldTag KONCNATETag => _vfieldsByName["KONCNATE"][0];
 
-        public static string KONCNATE
+        public static int KONCNATE
         {
-            get => KONCNATETag.Value;
-            set => KONCNATETag.Value = value;
+            get => int.TryParse(KONCNATETag.Value,out var v)?v:default;
+            set => KONCNATETag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'DNKOLIC'</summary>
         public static VfieldTag DNKOLICTag => _vfieldsByName["DNKOLIC"][0];
 
-        public static string DNKOLIC
+        public static decimal DNKOLIC
         {
-            get => DNKOLICTag.Value;
-            set => DNKOLICTag.Value = value;
+            get => int.TryParse(DNKOLICTag.Value,out var v)?v:default;
+            set => DNKOLICTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'DNKOMAD'</summary>
         public static VfieldTag DNKOMADTag => _vfieldsByName["DNKOMAD"][0];
 
-        public static string DNKOMAD
+        public static int DNKOMAD
         {
-            get => DNKOMADTag.Value;
-            set => DNKOMADTag.Value = value;
+            get => int.TryParse(DNKOMADTag.Value,out var v)?v:default;
+            set => DNKOMADTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'LB4'</summary>
@@ -2676,28 +2678,28 @@ public static class GlobalMaps
         /// <summary>Variable field 'STNAROC1'</summary>
         public static VfieldTag STNAROC1Tag => _vfieldsByName["STNAROC1"][0];
 
-        public static string STNAROC1
+        public static int STNAROC1
         {
-            get => STNAROC1Tag.Value;
-            set => STNAROC1Tag.Value = value;
+            get => int.TryParse(STNAROC1Tag.Value,out var v)?v:default;
+            set => STNAROC1Tag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'POZNARO1'</summary>
         public static VfieldTag POZNARO1Tag => _vfieldsByName["POZNARO1"][0];
 
-        public static string POZNARO1
+        public static int POZNARO1
         {
-            get => POZNARO1Tag.Value;
-            set => POZNARO1Tag.Value = value;
+            get => int.TryParse(POZNARO1Tag.Value,out var v)?v:default;
+            set => POZNARO1Tag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'STEVPOG1'</summary>
         public static VfieldTag STEVPOG1Tag => _vfieldsByName["STEVPOG1"][0];
 
-        public static string STEVPOG1
+        public static int STEVPOG1
         {
-            get => STEVPOG1Tag.Value;
-            set => STEVPOG1Tag.Value = value;
+            get => int.TryParse(STEVPOG1Tag.Value,out var v)?v:default;
+            set => STEVPOG1Tag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'KRNAZ'</summary>
@@ -2712,19 +2714,19 @@ public static class GlobalMaps
         /// <summary>Variable field 'NARKOL1'</summary>
         public static VfieldTag NARKOL1Tag => _vfieldsByName["NARKOL1"][0];
 
-        public static string NARKOL1
+        public static decimal NARKOL1
         {
-            get => NARKOL1Tag.Value;
-            set => NARKOL1Tag.Value = value;
+            get => int.TryParse(NARKOL1Tag.Value,out var v)?v:default;
+            set => NARKOL1Tag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'NOVI_ROK1'</summary>
         public static VfieldTag NOVI_ROK1Tag => _vfieldsByName["NOVI_ROK1"][0];
 
-        public static string NOVI_ROK1
+        public static int NOVI_ROK1
         {
-            get => NOVI_ROK1Tag.Value;
-            set => NOVI_ROK1Tag.Value = value;
+            get => int.TryParse(NOVI_ROK1Tag.Value,out var v)?v:default;
+            set => NOVI_ROK1Tag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'LB5'</summary>
@@ -2739,28 +2741,28 @@ public static class GlobalMaps
         /// <summary>Variable field 'STNAROC2'</summary>
         public static VfieldTag STNAROC2Tag => _vfieldsByName["STNAROC2"][0];
 
-        public static string STNAROC2
+        public static int STNAROC2
         {
-            get => STNAROC2Tag.Value;
-            set => STNAROC2Tag.Value = value;
+            get => int.TryParse(STNAROC2Tag.Value,out var v)?v:default;
+            set => STNAROC2Tag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'POZNARO2'</summary>
         public static VfieldTag POZNARO2Tag => _vfieldsByName["POZNARO2"][0];
 
-        public static string POZNARO2
+        public static int POZNARO2
         {
-            get => POZNARO2Tag.Value;
-            set => POZNARO2Tag.Value = value;
+            get => int.TryParse(POZNARO2Tag.Value,out var v)?v:default;
+            set => POZNARO2Tag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'STEVPOG2'</summary>
         public static VfieldTag STEVPOG2Tag => _vfieldsByName["STEVPOG2"][0];
 
-        public static string STEVPOG2
+        public static int STEVPOG2
         {
-            get => STEVPOG2Tag.Value;
-            set => STEVPOG2Tag.Value = value;
+            get => int.TryParse(STEVPOG2Tag.Value,out var v)?v:default;
+            set => STEVPOG2Tag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'KRNAZ2'</summary>
@@ -2775,19 +2777,19 @@ public static class GlobalMaps
         /// <summary>Variable field 'NARKOL2'</summary>
         public static VfieldTag NARKOL2Tag => _vfieldsByName["NARKOL2"][0];
 
-        public static string NARKOL2
+        public static decimal NARKOL2
         {
-            get => NARKOL2Tag.Value;
-            set => NARKOL2Tag.Value = value;
+            get => int.TryParse(NARKOL2Tag.Value,out var v)?v:default;
+            set => NARKOL2Tag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'NOVI_ROK2'</summary>
         public static VfieldTag NOVI_ROK2Tag => _vfieldsByName["NOVI_ROK2"][0];
 
-        public static string NOVI_ROK2
+        public static int NOVI_ROK2
         {
-            get => NOVI_ROK2Tag.Value;
-            set => NOVI_ROK2Tag.Value = value;
+            get => int.TryParse(NOVI_ROK2Tag.Value,out var v)?v:default;
+            set => NOVI_ROK2Tag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'LB6'</summary>
@@ -2802,28 +2804,28 @@ public static class GlobalMaps
         /// <summary>Variable field 'STNAROC3'</summary>
         public static VfieldTag STNAROC3Tag => _vfieldsByName["STNAROC3"][0];
 
-        public static string STNAROC3
+        public static int STNAROC3
         {
-            get => STNAROC3Tag.Value;
-            set => STNAROC3Tag.Value = value;
+            get => int.TryParse(STNAROC3Tag.Value,out var v)?v:default;
+            set => STNAROC3Tag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'POZNARO3'</summary>
         public static VfieldTag POZNARO3Tag => _vfieldsByName["POZNARO3"][0];
 
-        public static string POZNARO3
+        public static int POZNARO3
         {
-            get => POZNARO3Tag.Value;
-            set => POZNARO3Tag.Value = value;
+            get => int.TryParse(POZNARO3Tag.Value,out var v)?v:default;
+            set => POZNARO3Tag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'STEVPOG3'</summary>
         public static VfieldTag STEVPOG3Tag => _vfieldsByName["STEVPOG3"][0];
 
-        public static string STEVPOG3
+        public static int STEVPOG3
         {
-            get => STEVPOG3Tag.Value;
-            set => STEVPOG3Tag.Value = value;
+            get => int.TryParse(STEVPOG3Tag.Value,out var v)?v:default;
+            set => STEVPOG3Tag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'KRNAZ3'</summary>
@@ -2838,19 +2840,19 @@ public static class GlobalMaps
         /// <summary>Variable field 'NARKOL3'</summary>
         public static VfieldTag NARKOL3Tag => _vfieldsByName["NARKOL3"][0];
 
-        public static string NARKOL3
+        public static decimal NARKOL3
         {
-            get => NARKOL3Tag.Value;
-            set => NARKOL3Tag.Value = value;
+            get => int.TryParse(NARKOL3Tag.Value,out var v)?v:default;
+            set => NARKOL3Tag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'NOVI_ROK3'</summary>
         public static VfieldTag NOVI_ROK3Tag => _vfieldsByName["NOVI_ROK3"][0];
 
-        public static string NOVI_ROK3
+        public static int NOVI_ROK3
         {
-            get => NOVI_ROK3Tag.Value;
-            set => NOVI_ROK3Tag.Value = value;
+            get => int.TryParse(NOVI_ROK3Tag.Value,out var v)?v:default;
+            set => NOVI_ROK3Tag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'LB24'</summary>
@@ -2865,10 +2867,10 @@ public static class GlobalMaps
         /// <summary>Variable field 'DELNAL_NOSILNI'</summary>
         public static VfieldTag DELNAL_NOSILNITag => _vfieldsByName["DELNAL_NOSILNI"][0];
 
-        public static string DELNAL_NOSILNI
+        public static int DELNAL_NOSILNI
         {
-            get => DELNAL_NOSILNITag.Value;
-            set => DELNAL_NOSILNITag.Value = value;
+            get => int.TryParse(DELNAL_NOSILNITag.Value,out var v)?v:default;
+            set => DELNAL_NOSILNITag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'OPOMBA'</summary>
@@ -2883,10 +2885,10 @@ public static class GlobalMaps
         /// <summary>Variable field 'IDENT'</summary>
         public static VfieldTag IDENTTag => _vfieldsByName["IDENT"][0];
 
-        public static string IDENT
+        public static int IDENT
         {
-            get => IDENTTag.Value;
-            set => IDENTTag.Value = value;
+            get => int.TryParse(IDENTTag.Value,out var v)?v:default;
+            set => IDENTTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'KLASIFI1'</summary>
@@ -2973,19 +2975,19 @@ public static class GlobalMaps
         /// <summary>Variable field 'VERKZ'</summary>
         public static VfieldTag VERKZTag => _vfieldsByName["VERKZ"][0];
 
-        public static string VERKZ
+        public static int VERKZ
         {
-            get => VERKZTag.Value;
-            set => VERKZTag.Value = value;
+            get => int.TryParse(VERKZTag.Value,out var v)?v:default;
+            set => VERKZTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'STEVKZ'</summary>
         public static VfieldTag STEVKZTag => _vfieldsByName["STEVKZ"][0];
 
-        public static string STEVKZ
+        public static int STEVKZ
         {
-            get => STEVKZTag.Value;
-            set => STEVKZTag.Value = value;
+            get => int.TryParse(STEVKZTag.Value,out var v)?v:default;
+            set => STEVKZTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'STMASIF'</summary>
@@ -3054,10 +3056,10 @@ public static class GlobalMaps
         /// <summary>Variable field 'TOL_DOL_PL'</summary>
         public static VfieldTag TOL_DOL_PLTag => _vfieldsByName["TOL_DOL_PL"][0];
 
-        public static string TOL_DOL_PL
+        public static int TOL_DOL_PL
         {
-            get => TOL_DOL_PLTag.Value;
-            set => TOL_DOL_PLTag.Value = value;
+            get => int.TryParse(TOL_DOL_PLTag.Value,out var v)?v:default;
+            set => TOL_DOL_PLTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'LAB_DOL2'</summary>
@@ -3072,10 +3074,10 @@ public static class GlobalMaps
         /// <summary>Variable field 'TOL_DOL_MI'</summary>
         public static VfieldTag TOL_DOL_MITag => _vfieldsByName["TOL_DOL_MI"][0];
 
-        public static string TOL_DOL_MI
+        public static int TOL_DOL_MI
         {
-            get => TOL_DOL_MITag.Value;
-            set => TOL_DOL_MITag.Value = value;
+            get => int.TryParse(TOL_DOL_MITag.Value,out var v)?v:default;
+            set => TOL_DOL_MITag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'TOLERMI'</summary>
@@ -3090,10 +3092,10 @@ public static class GlobalMaps
         /// <summary>Variable field 'NAMEN'</summary>
         public static VfieldTag NAMENTag => _vfieldsByName["NAMEN"][0];
 
-        public static string NAMEN
+        public static int NAMEN
         {
-            get => NAMENTag.Value;
-            set => NAMENTag.Value = value;
+            get => int.TryParse(NAMENTag.Value,out var v)?v:default;
+            set => NAMENTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'ATRIBUT'</summary>
@@ -3189,10 +3191,10 @@ public static class GlobalMaps
         /// <summary>Variable field 'IDENTSUR'</summary>
         public static VfieldTag IDENTSURTag => _vfieldsByName["IDENTSUR"][0];
 
-        public static string IDENTSUR
+        public static int IDENTSUR
         {
-            get => IDENTSURTag.Value;
-            set => IDENTSURTag.Value = value;
+            get => int.TryParse(IDENTSURTag.Value,out var v)?v:default;
+            set => IDENTSURTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'DIMENZVH'</summary>
@@ -3252,10 +3254,10 @@ public static class GlobalMaps
         /// <summary>Variable field 'POTSURKG'</summary>
         public static VfieldTag POTSURKGTag => _vfieldsByName["POTSURKG"][0];
 
-        public static string POTSURKG
+        public static int POTSURKG
         {
-            get => POTSURKGTag.Value;
-            set => POTSURKGTag.Value = value;
+            get => int.TryParse(POTSURKGTag.Value,out var v)?v:default;
+            set => POTSURKGTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'LB12'</summary>
@@ -3270,10 +3272,10 @@ public static class GlobalMaps
         /// <summary>Variable field 'IZDKOL'</summary>
         public static VfieldTag IZDKOLTag => _vfieldsByName["IZDKOL"][0];
 
-        public static string IZDKOL
+        public static int IZDKOL
         {
-            get => IZDKOLTag.Value;
-            set => IZDKOLTag.Value = value;
+            get => int.TryParse(IZDKOLTag.Value,out var v)?v:default;
+            set => IZDKOLTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'LB15'</summary>
@@ -3288,10 +3290,10 @@ public static class GlobalMaps
         /// <summary>Variable field 'MOTNJKOL'</summary>
         public static VfieldTag MOTNJKOLTag => _vfieldsByName["MOTNJKOL"][0];
 
-        public static string MOTNJKOL
+        public static int MOTNJKOL
         {
-            get => MOTNJKOLTag.Value;
-            set => MOTNJKOLTag.Value = value;
+            get => int.TryParse(MOTNJKOLTag.Value,out var v)?v:default;
+            set => MOTNJKOLTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'LB10'</summary>
@@ -3306,10 +3308,10 @@ public static class GlobalMaps
         /// <summary>Variable field 'LANSIRKG'</summary>
         public static VfieldTag LANSIRKGTag => _vfieldsByName["LANSIRKG"][0];
 
-        public static string LANSIRKG
+        public static int LANSIRKG
         {
-            get => LANSIRKGTag.Value;
-            set => LANSIRKGTag.Value = value;
+            get => int.TryParse(LANSIRKGTag.Value,out var v)?v:default;
+            set => LANSIRKGTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'LB13'</summary>
@@ -3324,10 +3326,10 @@ public static class GlobalMaps
         /// <summary>Variable field 'ODPADKOL'</summary>
         public static VfieldTag ODPADKOLTag => _vfieldsByName["ODPADKOL"][0];
 
-        public static string ODPADKOL
+        public static int ODPADKOL
         {
-            get => ODPADKOLTag.Value;
-            set => ODPADKOLTag.Value = value;
+            get => int.TryParse(ODPADKOLTag.Value,out var v)?v:default;
+            set => ODPADKOLTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'LB16'</summary>
@@ -3342,10 +3344,10 @@ public static class GlobalMaps
         /// <summary>Variable field 'ODPADMOT'</summary>
         public static VfieldTag ODPADMOTTag => _vfieldsByName["ODPADMOT"][0];
 
-        public static string ODPADMOT
+        public static int ODPADMOT
         {
-            get => ODPADMOTTag.Value;
-            set => ODPADMOTTag.Value = value;
+            get => int.TryParse(ODPADMOTTag.Value,out var v)?v:default;
+            set => ODPADMOTTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'LB11'</summary>
@@ -3360,10 +3362,10 @@ public static class GlobalMaps
         /// <summary>Variable field 'RAZLIKG'</summary>
         public static VfieldTag RAZLIKGTag => _vfieldsByName["RAZLIKG"][0];
 
-        public static string RAZLIKG
+        public static int RAZLIKG
         {
-            get => RAZLIKGTag.Value;
-            set => RAZLIKGTag.Value = value;
+            get => int.TryParse(RAZLIKGTag.Value,out var v)?v:default;
+            set => RAZLIKGTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'LB14'</summary>
@@ -3378,10 +3380,10 @@ public static class GlobalMaps
         /// <summary>Variable field 'STANJEKG'</summary>
         public static VfieldTag STANJEKGTag => _vfieldsByName["STANJEKG"][0];
 
-        public static string STANJEKG
+        public static int STANJEKG
         {
-            get => STANJEKGTag.Value;
-            set => STANJEKGTag.Value = value;
+            get => int.TryParse(STANJEKGTag.Value,out var v)?v:default;
+            set => STANJEKGTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'LB17'</summary>
@@ -3396,10 +3398,10 @@ public static class GlobalMaps
         /// <summary>Variable field 'VISEKG'</summary>
         public static VfieldTag VISEKGTag => _vfieldsByName["VISEKG"][0];
 
-        public static string VISEKG
+        public static int VISEKG
         {
-            get => VISEKGTag.Value;
-            set => VISEKGTag.Value = value;
+            get => int.TryParse(VISEKGTag.Value,out var v)?v:default;
+            set => VISEKGTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'EZEMSG'</summary>
@@ -3853,19 +3855,19 @@ public static class GlobalMaps
         /// <summary>Variable field 'LETODN'</summary>
         public static VfieldTag LETODNTag => _vfieldsByName["LETODN"][0];
 
-        public static string LETODN
+        public static int LETODN
         {
-            get => LETODNTag.Value;
-            set => LETODNTag.Value = value;
+            get => int.TryParse(LETODNTag.Value,out var v)?v:default;
+            set => LETODNTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'DELNAL'</summary>
         public static VfieldTag DELNALTag => _vfieldsByName["DELNAL"][0];
 
-        public static string DELNAL
+        public static int DELNAL
         {
-            get => DELNALTag.Value;
-            set => DELNALTag.Value = value;
+            get => int.TryParse(DELNALTag.Value,out var v)?v:default;
+            set => DELNALTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'VARDELN'</summary>
@@ -3880,10 +3882,10 @@ public static class GlobalMaps
         /// <summary>Variable field 'DELNALK'</summary>
         public static VfieldTag DELNALKTag => _vfieldsByName["DELNALK"][0];
 
-        public static string DELNALK
+        public static int DELNALK
         {
-            get => DELNALKTag.Value;
-            set => DELNALKTag.Value = value;
+            get => int.TryParse(DELNALKTag.Value,out var v)?v:default;
+            set => DELNALKTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'VARDELNK'</summary>
@@ -3898,10 +3900,10 @@ public static class GlobalMaps
         /// <summary>Variable field 'DELNALZ'</summary>
         public static VfieldTag DELNALZTag => _vfieldsByName["DELNALZ"][0];
 
-        public static string DELNALZ
+        public static int DELNALZ
         {
-            get => DELNALZTag.Value;
-            set => DELNALZTag.Value = value;
+            get => int.TryParse(DELNALZTag.Value,out var v)?v:default;
+            set => DELNALZTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'VARDELNZ'</summary>
@@ -3925,10 +3927,10 @@ public static class GlobalMaps
         /// <summary>Variable field 'NAMEN'</summary>
         public static VfieldTag NAMENTag => _vfieldsByName["NAMEN"][0];
 
-        public static string NAMEN
+        public static int NAMEN
         {
-            get => NAMENTag.Value;
-            set => NAMENTag.Value = value;
+            get => int.TryParse(NAMENTag.Value,out var v)?v:default;
+            set => NAMENTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'LB3'</summary>
@@ -3943,37 +3945,37 @@ public static class GlobalMaps
         /// <summary>Variable field 'ZACETNTE'</summary>
         public static VfieldTag ZACETNTETag => _vfieldsByName["ZACETNTE"][0];
 
-        public static string ZACETNTE
+        public static int ZACETNTE
         {
-            get => ZACETNTETag.Value;
-            set => ZACETNTETag.Value = value;
+            get => int.TryParse(ZACETNTETag.Value,out var v)?v:default;
+            set => ZACETNTETag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'KONCNATE'</summary>
         public static VfieldTag KONCNATETag => _vfieldsByName["KONCNATE"][0];
 
-        public static string KONCNATE
+        public static int KONCNATE
         {
-            get => KONCNATETag.Value;
-            set => KONCNATETag.Value = value;
+            get => int.TryParse(KONCNATETag.Value,out var v)?v:default;
+            set => KONCNATETag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'DNKOLIC'</summary>
         public static VfieldTag DNKOLICTag => _vfieldsByName["DNKOLIC"][0];
 
-        public static string DNKOLIC
+        public static decimal DNKOLIC
         {
-            get => DNKOLICTag.Value;
-            set => DNKOLICTag.Value = value;
+            get => int.TryParse(DNKOLICTag.Value,out var v)?v:default;
+            set => DNKOLICTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'DNKOMAD'</summary>
         public static VfieldTag DNKOMADTag => _vfieldsByName["DNKOMAD"][0];
 
-        public static string DNKOMAD
+        public static int DNKOMAD
         {
-            get => DNKOMADTag.Value;
-            set => DNKOMADTag.Value = value;
+            get => int.TryParse(DNKOMADTag.Value,out var v)?v:default;
+            set => DNKOMADTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'LB9'</summary>
@@ -3988,10 +3990,10 @@ public static class GlobalMaps
         /// <summary>Variable field 'IDENT'</summary>
         public static VfieldTag IDENTTag => _vfieldsByName["IDENT"][0];
 
-        public static string IDENT
+        public static int IDENT
         {
-            get => IDENTTag.Value;
-            set => IDENTTag.Value = value;
+            get => int.TryParse(IDENTTag.Value,out var v)?v:default;
+            set => IDENTTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'KZORG'</summary>
@@ -4006,19 +4008,19 @@ public static class GlobalMaps
         /// <summary>Variable field 'VERKZ'</summary>
         public static VfieldTag VERKZTag => _vfieldsByName["VERKZ"][0];
 
-        public static string VERKZ
+        public static int VERKZ
         {
-            get => VERKZTag.Value;
-            set => VERKZTag.Value = value;
+            get => int.TryParse(VERKZTag.Value,out var v)?v:default;
+            set => VERKZTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'STEVKZ'</summary>
         public static VfieldTag STEVKZTag => _vfieldsByName["STEVKZ"][0];
 
-        public static string STEVKZ
+        public static int STEVKZ
         {
-            get => STEVKZTag.Value;
-            set => STEVKZTag.Value = value;
+            get => int.TryParse(STEVKZTag.Value,out var v)?v:default;
+            set => STEVKZTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'ZLITINA'</summary>
@@ -4096,55 +4098,55 @@ public static class GlobalMaps
         /// <summary>Variable field 'SIGMABSP'</summary>
         public static VfieldTag SIGMABSPTag => _vfieldsByName["SIGMABSP"][0];
 
-        public static string SIGMABSP
+        public static int SIGMABSP
         {
-            get => SIGMABSPTag.Value;
-            set => SIGMABSPTag.Value = value;
+            get => int.TryParse(SIGMABSPTag.Value,out var v)?v:default;
+            set => SIGMABSPTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'SIGMABZG'</summary>
         public static VfieldTag SIGMABZGTag => _vfieldsByName["SIGMABZG"][0];
 
-        public static string SIGMABZG
+        public static int SIGMABZG
         {
-            get => SIGMABZGTag.Value;
-            set => SIGMABZGTag.Value = value;
+            get => int.TryParse(SIGMABZGTag.Value,out var v)?v:default;
+            set => SIGMABZGTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'SIG02SP'</summary>
         public static VfieldTag SIG02SPTag => _vfieldsByName["SIG02SP"][0];
 
-        public static string SIG02SP
+        public static int SIG02SP
         {
-            get => SIG02SPTag.Value;
-            set => SIG02SPTag.Value = value;
+            get => int.TryParse(SIG02SPTag.Value,out var v)?v:default;
+            set => SIG02SPTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'SIG02ZG'</summary>
         public static VfieldTag SIG02ZGTag => _vfieldsByName["SIG02ZG"][0];
 
-        public static string SIG02ZG
+        public static int SIG02ZG
         {
-            get => SIG02ZGTag.Value;
-            set => SIG02ZGTag.Value = value;
+            get => int.TryParse(SIG02ZGTag.Value,out var v)?v:default;
+            set => SIG02ZGTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'HBSPOD'</summary>
         public static VfieldTag HBSPODTag => _vfieldsByName["HBSPOD"][0];
 
-        public static string HBSPOD
+        public static int HBSPOD
         {
-            get => HBSPODTag.Value;
-            set => HBSPODTag.Value = value;
+            get => int.TryParse(HBSPODTag.Value,out var v)?v:default;
+            set => HBSPODTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'HBZGOR'</summary>
         public static VfieldTag HBZGORTag => _vfieldsByName["HBZGOR"][0];
 
-        public static string HBZGOR
+        public static int HBZGOR
         {
-            get => HBZGORTag.Value;
-            set => HBZGORTag.Value = value;
+            get => int.TryParse(HBZGORTag.Value,out var v)?v:default;
+            set => HBZGORTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'DELTATIP'</summary>
@@ -4159,37 +4161,37 @@ public static class GlobalMaps
         /// <summary>Variable field 'DELVRSP'</summary>
         public static VfieldTag DELVRSPTag => _vfieldsByName["DELVRSP"][0];
 
-        public static string DELVRSP
+        public static decimal DELVRSP
         {
-            get => DELVRSPTag.Value;
-            set => DELVRSPTag.Value = value;
+            get => int.TryParse(DELVRSPTag.Value,out var v)?v:default;
+            set => DELVRSPTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'DELVRZG'</summary>
         public static VfieldTag DELVRZGTag => _vfieldsByName["DELVRZG"][0];
 
-        public static string DELVRZG
+        public static decimal DELVRZG
         {
-            get => DELVRZGTag.Value;
-            set => DELVRZGTag.Value = value;
+            get => int.TryParse(DELVRZGTag.Value,out var v)?v:default;
+            set => DELVRZGTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'UMAX'</summary>
         public static VfieldTag UMAXTag => _vfieldsByName["UMAX"][0];
 
-        public static string UMAX
+        public static decimal UMAX
         {
-            get => UMAXTag.Value;
-            set => UMAXTag.Value = value;
+            get => int.TryParse(UMAXTag.Value,out var v)?v:default;
+            set => UMAXTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'IEMIN'</summary>
         public static VfieldTag IEMINTag => _vfieldsByName["IEMIN"][0];
 
-        public static string IEMIN
+        public static decimal IEMIN
         {
-            get => IEMINTag.Value;
-            set => IEMINTag.Value = value;
+            get => int.TryParse(IEMINTag.Value,out var v)?v:default;
+            set => IEMINTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'UPA'</summary>
@@ -4328,17 +4330,17 @@ public static class GlobalMaps
         }
 
         /// <summary>Variable field 'STEVILOP' (multiple)</summary>
-        public static string[] STEVILOP
+        public static int[] STEVILOP
         {
             get
             {
-                return _vfieldsByName["STEVILOP"].Select(t=>t.Value).ToArray();
+                return _vfieldsByName["STEVILOP"].Select(t=>int.TryParse(t.Value,out var v)?v:default).ToArray();
             }
             set
             {
                 var list = _vfieldsByName["{name}"];
                 for(int i=0;i<list.Count && i<value.Length;i++)
-                    list[i].Value = value[i];
+                    list[i].Value = value[i].ToString();
             }
         }
 
@@ -4347,7 +4349,7 @@ public static class GlobalMaps
         {
             get
             {
-                return _vfieldsByName["ZNAK-KZ"].Select(t=>t.Value).ToArray();
+                return _vfieldsByName["{name}"].Select(t=>t.Value).ToArray();
             }
             set
             {
@@ -4362,7 +4364,7 @@ public static class GlobalMaps
         {
             get
             {
-                return _vfieldsByName["STEVSTRO"].Select(t=>t.Value).ToArray();
+                return _vfieldsByName["{name}"].Select(t=>t.Value).ToArray();
             }
             set
             {
@@ -4377,7 +4379,7 @@ public static class GlobalMaps
         {
             get
             {
-                return _vfieldsByName["NAZSTRKR"].Select(t=>t.Value).ToArray();
+                return _vfieldsByName["{name}"].Select(t=>t.Value).ToArray();
             }
             set
             {
@@ -4388,32 +4390,32 @@ public static class GlobalMaps
         }
 
         /// <summary>Variable field 'IZDKOL' (multiple)</summary>
-        public static string[] IZDKOL
+        public static decimal[] IZDKOL
         {
             get
             {
-                return _vfieldsByName["IZDKOL"].Select(t=>t.Value).ToArray();
+                return _vfieldsByName["{name}"].Select(t=>decimal.TryParse(t.Value,out var v)?v:default).ToArray();
             }
             set
             {
                 var list = _vfieldsByName["{name}"];
                 for(int i=0;i<list.Count && i<value.Length;i++)
-                    list[i].Value = value[i];
+                    list[i].Value = value[i].ToString();
             }
         }
 
         /// <summary>Variable field 'IZDKOM' (multiple)</summary>
-        public static string[] IZDKOM
+        public static int[] IZDKOM
         {
             get
             {
-                return _vfieldsByName["IZDKOM"].Select(t=>t.Value).ToArray();
+                return _vfieldsByName["IZDKOM"].Select(t=>int.TryParse(t.Value,out var v)?v:default).ToArray();
             }
             set
             {
                 var list = _vfieldsByName["{name}"];
                 for(int i=0;i<list.Count && i<value.Length;i++)
-                    list[i].Value = value[i];
+                    list[i].Value = value[i].ToString();
             }
         }
 
@@ -4422,7 +4424,7 @@ public static class GlobalMaps
         {
             get
             {
-                return _vfieldsByName["DELVNOS"].Select(t=>t.Value).ToArray();
+                return _vfieldsByName["{name}"].Select(t=>t.Value).ToArray();
             }
             set
             {
@@ -4437,7 +4439,7 @@ public static class GlobalMaps
         {
             get
             {
-                return _vfieldsByName["DATSPRE"].Select(t=>t.Value).ToArray();
+                return _vfieldsByName["{name}"].Select(t=>t.Value).ToArray();
             }
             set
             {
@@ -4832,7 +4834,7 @@ public static class GlobalMaps
         {
             get
             {
-                return _vfieldsByName["SIFNAP"].Select(t=>t.Value).ToArray();
+                return _vfieldsByName["{name}"].Select(t=>t.Value).ToArray();
             }
             set
             {
@@ -4847,7 +4849,7 @@ public static class GlobalMaps
         {
             get
             {
-                return _vfieldsByName["OPISMOT"].Select(t=>t.Value).ToArray();
+                return _vfieldsByName["{name}"].Select(t=>t.Value).ToArray();
             }
             set
             {
@@ -4862,7 +4864,7 @@ public static class GlobalMaps
         {
             get
             {
-                return _vfieldsByName["DATUMPR"].Select(t=>t.Value).ToArray();
+                return _vfieldsByName["{name}"].Select(t=>t.Value).ToArray();
             }
             set
             {
@@ -5240,10 +5242,10 @@ public static class GlobalMaps
         /// <summary>Variable field 'DELNAL'</summary>
         public static VfieldTag DELNALTag => _vfieldsByName["DELNAL"][0];
 
-        public static string DELNAL
+        public static int DELNAL
         {
-            get => DELNALTag.Value;
-            set => DELNALTag.Value = value;
+            get => int.TryParse(DELNALTag.Value,out var v)?v:default;
+            set => DELNALTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'VARDELN'</summary>
@@ -5258,10 +5260,10 @@ public static class GlobalMaps
         /// <summary>Variable field 'DELNALK'</summary>
         public static VfieldTag DELNALKTag => _vfieldsByName["DELNALK"][0];
 
-        public static string DELNALK
+        public static int DELNALK
         {
-            get => DELNALKTag.Value;
-            set => DELNALKTag.Value = value;
+            get => int.TryParse(DELNALKTag.Value,out var v)?v:default;
+            set => DELNALKTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'VARDELNK'</summary>
@@ -5276,10 +5278,10 @@ public static class GlobalMaps
         /// <summary>Variable field 'DELNALZ'</summary>
         public static VfieldTag DELNALZTag => _vfieldsByName["DELNALZ"][0];
 
-        public static string DELNALZ
+        public static int DELNALZ
         {
-            get => DELNALZTag.Value;
-            set => DELNALZTag.Value = value;
+            get => int.TryParse(DELNALZTag.Value,out var v)?v:default;
+            set => DELNALZTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'VARDELNZ'</summary>
@@ -5303,19 +5305,19 @@ public static class GlobalMaps
         /// <summary>Variable field 'VERKZ'</summary>
         public static VfieldTag VERKZTag => _vfieldsByName["VERKZ"][0];
 
-        public static string VERKZ
+        public static int VERKZ
         {
-            get => VERKZTag.Value;
-            set => VERKZTag.Value = value;
+            get => int.TryParse(VERKZTag.Value,out var v)?v:default;
+            set => VERKZTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'STEVKZ'</summary>
         public static VfieldTag STEVKZTag => _vfieldsByName["STEVKZ"][0];
 
-        public static string STEVKZ
+        public static int STEVKZ
         {
-            get => STEVKZTag.Value;
-            set => STEVKZTag.Value = value;
+            get => int.TryParse(STEVKZTag.Value,out var v)?v:default;
+            set => STEVKZTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'LB3'</summary>
@@ -5330,19 +5332,19 @@ public static class GlobalMaps
         /// <summary>Variable field 'DNKOLIC'</summary>
         public static VfieldTag DNKOLICTag => _vfieldsByName["DNKOLIC"][0];
 
-        public static string DNKOLIC
+        public static decimal DNKOLIC
         {
-            get => DNKOLICTag.Value;
-            set => DNKOLICTag.Value = value;
+            get => int.TryParse(DNKOLICTag.Value,out var v)?v:default;
+            set => DNKOLICTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'DNKOMAD'</summary>
         public static VfieldTag DNKOMADTag => _vfieldsByName["DNKOMAD"][0];
 
-        public static string DNKOMAD
+        public static int DNKOMAD
         {
-            get => DNKOMADTag.Value;
-            set => DNKOMADTag.Value = value;
+            get => int.TryParse(DNKOMADTag.Value,out var v)?v:default;
+            set => DNKOMADTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'LB7'</summary>
@@ -5357,10 +5359,10 @@ public static class GlobalMaps
         /// <summary>Variable field 'ZACETNTE'</summary>
         public static VfieldTag ZACETNTETag => _vfieldsByName["ZACETNTE"][0];
 
-        public static string ZACETNTE
+        public static int ZACETNTE
         {
-            get => ZACETNTETag.Value;
-            set => ZACETNTETag.Value = value;
+            get => int.TryParse(ZACETNTETag.Value,out var v)?v:default;
+            set => ZACETNTETag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'LB8'</summary>
@@ -5375,10 +5377,10 @@ public static class GlobalMaps
         /// <summary>Variable field 'KONCNATE'</summary>
         public static VfieldTag KONCNATETag => _vfieldsByName["KONCNATE"][0];
 
-        public static string KONCNATE
+        public static int KONCNATE
         {
-            get => KONCNATETag.Value;
-            set => KONCNATETag.Value = value;
+            get => int.TryParse(KONCNATETag.Value,out var v)?v:default;
+            set => KONCNATETag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'LB4'</summary>
@@ -5393,10 +5395,10 @@ public static class GlobalMaps
         /// <summary>Variable field 'IDENT'</summary>
         public static VfieldTag IDENTTag => _vfieldsByName["IDENT"][0];
 
-        public static string IDENT
+        public static int IDENT
         {
-            get => IDENTTag.Value;
-            set => IDENTTag.Value = value;
+            get => int.TryParse(IDENTTag.Value,out var v)?v:default;
+            set => IDENTTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'POREKLO'</summary>
@@ -5411,10 +5413,10 @@ public static class GlobalMaps
         /// <summary>Variable field 'NAMEN'</summary>
         public static VfieldTag NAMENTag => _vfieldsByName["NAMEN"][0];
 
-        public static string NAMEN
+        public static int NAMEN
         {
-            get => NAMENTag.Value;
-            set => NAMENTag.Value = value;
+            get => int.TryParse(NAMENTag.Value,out var v)?v:default;
+            set => NAMENTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'ZLITINA'</summary>
@@ -5492,10 +5494,10 @@ public static class GlobalMaps
         /// <summary>Variable field 'STEVILOP'</summary>
         public static VfieldTag STEVILOPTag => _vfieldsByName["STEVILOP"][0];
 
-        public static string STEVILOP
+        public static int STEVILOP
         {
-            get => STEVILOPTag.Value;
-            set => STEVILOPTag.Value = value;
+            get => int.TryParse(STEVILOPTag.Value,out var v)?v:default;
+            set => STEVILOPTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'STEVSTRO'</summary>
@@ -5519,19 +5521,19 @@ public static class GlobalMaps
         /// <summary>Variable field 'IZDKOL'</summary>
         public static VfieldTag IZDKOLTag => _vfieldsByName["IZDKOL"][0];
 
-        public static string IZDKOL
+        public static decimal IZDKOL
         {
-            get => IZDKOLTag.Value;
-            set => IZDKOLTag.Value = value;
+            get => int.TryParse(IZDKOLTag.Value,out var v)?v:default;
+            set => IZDKOLTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'IZDKOM'</summary>
         public static VfieldTag IZDKOMTag => _vfieldsByName["IZDKOM"][0];
 
-        public static string IZDKOM
+        public static int IZDKOM
         {
-            get => IZDKOMTag.Value;
-            set => IZDKOMTag.Value = value;
+            get => int.TryParse(IZDKOMTag.Value,out var v)?v:default;
+            set => IZDKOMTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'DELVNOS'</summary>
@@ -5562,17 +5564,17 @@ public static class GlobalMaps
         }
 
         /// <summary>Variable field 'TRAN_ENOTA' (multiple)</summary>
-        public static string[] TRAN_ENOTA
+        public static int[] TRAN_ENOTA
         {
             get
             {
-                return _vfieldsByName["TRAN_ENOTA"].Select(t=>t.Value).ToArray();
+                return _vfieldsByName["TRAN_ENOTA"].Select(t=>int.TryParse(t.Value,out var v)?v:default).ToArray();
             }
             set
             {
                 var list = _vfieldsByName["{name}"];
                 for(int i=0;i<list.Count && i<value.Length;i++)
-                    list[i].Value = value[i];
+                    list[i].Value = value[i].ToString();
             }
         }
 
@@ -5581,7 +5583,7 @@ public static class GlobalMaps
         {
             get
             {
-                return _vfieldsByName["SARZA"].Select(t=>t.Value).ToArray();
+                return _vfieldsByName["{name}"].Select(t=>t.Value).ToArray();
             }
             set
             {
@@ -5592,47 +5594,47 @@ public static class GlobalMaps
         }
 
         /// <summary>Variable field 'IDSARZA' (multiple)</summary>
-        public static string[] IDSARZA
+        public static int[] IDSARZA
         {
             get
             {
-                return _vfieldsByName["IDSARZA"].Select(t=>t.Value).ToArray();
+                return _vfieldsByName["IDSARZA"].Select(t=>int.TryParse(t.Value,out var v)?v:default).ToArray();
             }
             set
             {
                 var list = _vfieldsByName["{name}"];
                 for(int i=0;i<list.Count && i<value.Length;i++)
-                    list[i].Value = value[i];
+                    list[i].Value = value[i].ToString();
             }
         }
 
         /// <summary>Variable field 'IZDKOL-TRE' (multiple)</summary>
-        public static string[] IZDKOL_TRE
+        public static int[] IZDKOL_TRE
         {
             get
             {
-                return _vfieldsByName["IZDKOL-TRE"].Select(t=>t.Value).ToArray();
+                return _vfieldsByName["IZDKOL-TRE"].Select(t=>int.TryParse(t.Value,out var v)?v:default).ToArray();
             }
             set
             {
                 var list = _vfieldsByName["{name}"];
                 for(int i=0;i<list.Count && i<value.Length;i++)
-                    list[i].Value = value[i];
+                    list[i].Value = value[i].ToString();
             }
         }
 
         /// <summary>Variable field 'IZDKOMTRE' (multiple)</summary>
-        public static string[] IZDKOMTRE
+        public static int[] IZDKOMTRE
         {
             get
             {
-                return _vfieldsByName["IZDKOMTRE"].Select(t=>t.Value).ToArray();
+                return _vfieldsByName["IZDKOMTRE"].Select(t=>int.TryParse(t.Value,out var v)?v:default).ToArray();
             }
             set
             {
                 var list = _vfieldsByName["{name}"];
                 for(int i=0;i<list.Count && i<value.Length;i++)
-                    list[i].Value = value[i];
+                    list[i].Value = value[i].ToString();
             }
         }
 
@@ -5641,7 +5643,7 @@ public static class GlobalMaps
         {
             get
             {
-                return _vfieldsByName["VZOREC"].Select(t=>t.Value).ToArray();
+                return _vfieldsByName["{name}"].Select(t=>t.Value).ToArray();
             }
             set
             {
@@ -5656,7 +5658,7 @@ public static class GlobalMaps
         {
             get
             {
-                return _vfieldsByName["USTREZA"].Select(t=>t.Value).ToArray();
+                return _vfieldsByName["{name}"].Select(t=>t.Value).ToArray();
             }
             set
             {
@@ -5671,7 +5673,7 @@ public static class GlobalMaps
         {
             get
             {
-                return _vfieldsByName["USTREZA-KZ"].Select(t=>t.Value).ToArray();
+                return _vfieldsByName["{name}"].Select(t=>t.Value).ToArray();
             }
             set
             {
@@ -5686,7 +5688,7 @@ public static class GlobalMaps
         {
             get
             {
-                return _vfieldsByName["KOM"].Select(t=>t.Value).ToArray();
+                return _vfieldsByName["{name}"].Select(t=>t.Value).ToArray();
             }
             set
             {
@@ -5701,7 +5703,7 @@ public static class GlobalMaps
         {
             get
             {
-                return _vfieldsByName["STATSUD"].Select(t=>t.Value).ToArray();
+                return _vfieldsByName["{name}"].Select(t=>t.Value).ToArray();
             }
             set
             {
@@ -5716,7 +5718,7 @@ public static class GlobalMaps
         {
             get
             {
-                return _vfieldsByName["L1"].Select(t=>t.Value).ToArray();
+                return _vfieldsByName["{name}"].Select(t=>t.Value).ToArray();
             }
             set
             {
@@ -5727,47 +5729,47 @@ public static class GlobalMaps
         }
 
         /// <summary>Variable field 'L2' (multiple)</summary>
-        public static string[] L2
+        public static int[] L2
         {
             get
             {
-                return _vfieldsByName["L2"].Select(t=>t.Value).ToArray();
+                return _vfieldsByName["L2"].Select(t=>int.TryParse(t.Value,out var v)?v:default).ToArray();
             }
             set
             {
                 var list = _vfieldsByName["{name}"];
                 for(int i=0;i<list.Count && i<value.Length;i++)
-                    list[i].Value = value[i];
+                    list[i].Value = value[i].ToString();
             }
         }
 
         /// <summary>Variable field 'L3' (multiple)</summary>
-        public static string[] L3
+        public static int[] L3
         {
             get
             {
-                return _vfieldsByName["L3"].Select(t=>t.Value).ToArray();
+                return _vfieldsByName["L3"].Select(t=>int.TryParse(t.Value,out var v)?v:default).ToArray();
             }
             set
             {
                 var list = _vfieldsByName["{name}"];
                 for(int i=0;i<list.Count && i<value.Length;i++)
-                    list[i].Value = value[i];
+                    list[i].Value = value[i].ToString();
             }
         }
 
         /// <summary>Variable field 'L4' (multiple)</summary>
-        public static string[] L4
+        public static int[] L4
         {
             get
             {
-                return _vfieldsByName["L4"].Select(t=>t.Value).ToArray();
+                return _vfieldsByName["L4"].Select(t=>int.TryParse(t.Value,out var v)?v:default).ToArray();
             }
             set
             {
                 var list = _vfieldsByName["{name}"];
                 for(int i=0;i<list.Count && i<value.Length;i++)
-                    list[i].Value = value[i];
+                    list[i].Value = value[i].ToString();
             }
         }
 
@@ -6156,28 +6158,28 @@ public static class GlobalMaps
         /// <summary>Variable field 'LETONA1'</summary>
         public static VfieldTag LETONA1Tag => _vfieldsByName["LETONA1"][0];
 
-        public static string LETONA1
+        public static int LETONA1
         {
-            get => LETONA1Tag.Value;
-            set => LETONA1Tag.Value = value;
+            get => int.TryParse(LETONA1Tag.Value,out var v)?v:default;
+            set => LETONA1Tag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'STNAROC1'</summary>
         public static VfieldTag STNAROC1Tag => _vfieldsByName["STNAROC1"][0];
 
-        public static string STNAROC1
+        public static int STNAROC1
         {
-            get => STNAROC1Tag.Value;
-            set => STNAROC1Tag.Value = value;
+            get => int.TryParse(STNAROC1Tag.Value,out var v)?v:default;
+            set => STNAROC1Tag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'POZNARO1'</summary>
         public static VfieldTag POZNARO1Tag => _vfieldsByName["POZNARO1"][0];
 
-        public static string POZNARO1
+        public static int POZNARO1
         {
-            get => POZNARO1Tag.Value;
-            set => POZNARO1Tag.Value = value;
+            get => int.TryParse(POZNARO1Tag.Value,out var v)?v:default;
+            set => POZNARO1Tag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'LB3'</summary>
@@ -6192,10 +6194,10 @@ public static class GlobalMaps
         /// <summary>Variable field 'NARKOLPR1'</summary>
         public static VfieldTag NARKOLPR1Tag => _vfieldsByName["NARKOLPR1"][0];
 
-        public static string NARKOLPR1
+        public static int NARKOLPR1
         {
-            get => NARKOLPR1Tag.Value;
-            set => NARKOLPR1Tag.Value = value;
+            get => int.TryParse(NARKOLPR1Tag.Value,out var v)?v:default;
+            set => NARKOLPR1Tag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'LB4'</summary>
@@ -6210,10 +6212,10 @@ public static class GlobalMaps
         /// <summary>Variable field 'IZDKOL1'</summary>
         public static VfieldTag IZDKOL1Tag => _vfieldsByName["IZDKOL1"][0];
 
-        public static string IZDKOL1
+        public static int IZDKOL1
         {
-            get => IZDKOL1Tag.Value;
-            set => IZDKOL1Tag.Value = value;
+            get => int.TryParse(IZDKOL1Tag.Value,out var v)?v:default;
+            set => IZDKOL1Tag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'KOLICINA_TOL1'</summary>
@@ -6237,19 +6239,19 @@ public static class GlobalMaps
         /// <summary>Variable field 'TOL_KOL_PL1'</summary>
         public static VfieldTag TOL_KOL_PL1Tag => _vfieldsByName["TOL_KOL_PL1"][0];
 
-        public static string TOL_KOL_PL1
+        public static int TOL_KOL_PL1
         {
-            get => TOL_KOL_PL1Tag.Value;
-            set => TOL_KOL_PL1Tag.Value = value;
+            get => int.TryParse(TOL_KOL_PL1Tag.Value,out var v)?v:default;
+            set => TOL_KOL_PL1Tag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'TOL_KOL_MI1'</summary>
         public static VfieldTag TOL_KOL_MI1Tag => _vfieldsByName["TOL_KOL_MI1"][0];
 
-        public static string TOL_KOL_MI1
+        public static int TOL_KOL_MI1
         {
-            get => TOL_KOL_MI1Tag.Value;
-            set => TOL_KOL_MI1Tag.Value = value;
+            get => int.TryParse(TOL_KOL_MI1Tag.Value,out var v)?v:default;
+            set => TOL_KOL_MI1Tag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'KRNAZEM1'</summary>
@@ -6273,28 +6275,28 @@ public static class GlobalMaps
         /// <summary>Variable field 'LETONA2'</summary>
         public static VfieldTag LETONA2Tag => _vfieldsByName["LETONA2"][0];
 
-        public static string LETONA2
+        public static int LETONA2
         {
-            get => LETONA2Tag.Value;
-            set => LETONA2Tag.Value = value;
+            get => int.TryParse(LETONA2Tag.Value,out var v)?v:default;
+            set => LETONA2Tag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'STNAROC2'</summary>
         public static VfieldTag STNAROC2Tag => _vfieldsByName["STNAROC2"][0];
 
-        public static string STNAROC2
+        public static int STNAROC2
         {
-            get => STNAROC2Tag.Value;
-            set => STNAROC2Tag.Value = value;
+            get => int.TryParse(STNAROC2Tag.Value,out var v)?v:default;
+            set => STNAROC2Tag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'POZNARO2'</summary>
         public static VfieldTag POZNARO2Tag => _vfieldsByName["POZNARO2"][0];
 
-        public static string POZNARO2
+        public static int POZNARO2
         {
-            get => POZNARO2Tag.Value;
-            set => POZNARO2Tag.Value = value;
+            get => int.TryParse(POZNARO2Tag.Value,out var v)?v:default;
+            set => POZNARO2Tag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'LB3_2'</summary>
@@ -6309,10 +6311,10 @@ public static class GlobalMaps
         /// <summary>Variable field 'NARKOLPR2'</summary>
         public static VfieldTag NARKOLPR2Tag => _vfieldsByName["NARKOLPR2"][0];
 
-        public static string NARKOLPR2
+        public static int NARKOLPR2
         {
-            get => NARKOLPR2Tag.Value;
-            set => NARKOLPR2Tag.Value = value;
+            get => int.TryParse(NARKOLPR2Tag.Value,out var v)?v:default;
+            set => NARKOLPR2Tag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'LB4_2'</summary>
@@ -6327,10 +6329,10 @@ public static class GlobalMaps
         /// <summary>Variable field 'IZDKOL2'</summary>
         public static VfieldTag IZDKOL2Tag => _vfieldsByName["IZDKOL2"][0];
 
-        public static string IZDKOL2
+        public static int IZDKOL2
         {
-            get => IZDKOL2Tag.Value;
-            set => IZDKOL2Tag.Value = value;
+            get => int.TryParse(IZDKOL2Tag.Value,out var v)?v:default;
+            set => IZDKOL2Tag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'KOLICINA_TOL2'</summary>
@@ -6354,19 +6356,19 @@ public static class GlobalMaps
         /// <summary>Variable field 'TOL_KOL_PL2'</summary>
         public static VfieldTag TOL_KOL_PL2Tag => _vfieldsByName["TOL_KOL_PL2"][0];
 
-        public static string TOL_KOL_PL2
+        public static int TOL_KOL_PL2
         {
-            get => TOL_KOL_PL2Tag.Value;
-            set => TOL_KOL_PL2Tag.Value = value;
+            get => int.TryParse(TOL_KOL_PL2Tag.Value,out var v)?v:default;
+            set => TOL_KOL_PL2Tag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'TOL_KOL_MI2'</summary>
         public static VfieldTag TOL_KOL_MI2Tag => _vfieldsByName["TOL_KOL_MI2"][0];
 
-        public static string TOL_KOL_MI2
+        public static int TOL_KOL_MI2
         {
-            get => TOL_KOL_MI2Tag.Value;
-            set => TOL_KOL_MI2Tag.Value = value;
+            get => int.TryParse(TOL_KOL_MI2Tag.Value,out var v)?v:default;
+            set => TOL_KOL_MI2Tag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'KRNAZEM2'</summary>
@@ -6390,28 +6392,28 @@ public static class GlobalMaps
         /// <summary>Variable field 'LETONA3'</summary>
         public static VfieldTag LETONA3Tag => _vfieldsByName["LETONA3"][0];
 
-        public static string LETONA3
+        public static int LETONA3
         {
-            get => LETONA3Tag.Value;
-            set => LETONA3Tag.Value = value;
+            get => int.TryParse(LETONA3Tag.Value,out var v)?v:default;
+            set => LETONA3Tag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'STNAROC3'</summary>
         public static VfieldTag STNAROC3Tag => _vfieldsByName["STNAROC3"][0];
 
-        public static string STNAROC3
+        public static int STNAROC3
         {
-            get => STNAROC3Tag.Value;
-            set => STNAROC3Tag.Value = value;
+            get => int.TryParse(STNAROC3Tag.Value,out var v)?v:default;
+            set => STNAROC3Tag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'POZNARO3'</summary>
         public static VfieldTag POZNARO3Tag => _vfieldsByName["POZNARO3"][0];
 
-        public static string POZNARO3
+        public static int POZNARO3
         {
-            get => POZNARO3Tag.Value;
-            set => POZNARO3Tag.Value = value;
+            get => int.TryParse(POZNARO3Tag.Value,out var v)?v:default;
+            set => POZNARO3Tag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'LB3_3'</summary>
@@ -6426,10 +6428,10 @@ public static class GlobalMaps
         /// <summary>Variable field 'NARKOLPR3'</summary>
         public static VfieldTag NARKOLPR3Tag => _vfieldsByName["NARKOLPR3"][0];
 
-        public static string NARKOLPR3
+        public static int NARKOLPR3
         {
-            get => NARKOLPR3Tag.Value;
-            set => NARKOLPR3Tag.Value = value;
+            get => int.TryParse(NARKOLPR3Tag.Value,out var v)?v:default;
+            set => NARKOLPR3Tag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'LB4_3'</summary>
@@ -6444,10 +6446,10 @@ public static class GlobalMaps
         /// <summary>Variable field 'IZDKOL3'</summary>
         public static VfieldTag IZDKOL3Tag => _vfieldsByName["IZDKOL3"][0];
 
-        public static string IZDKOL3
+        public static int IZDKOL3
         {
-            get => IZDKOL3Tag.Value;
-            set => IZDKOL3Tag.Value = value;
+            get => int.TryParse(IZDKOL3Tag.Value,out var v)?v:default;
+            set => IZDKOL3Tag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'KOLICINA_TOL3'</summary>
@@ -6471,19 +6473,19 @@ public static class GlobalMaps
         /// <summary>Variable field 'TOL_KOL_PL3'</summary>
         public static VfieldTag TOL_KOL_PL3Tag => _vfieldsByName["TOL_KOL_PL3"][0];
 
-        public static string TOL_KOL_PL3
+        public static int TOL_KOL_PL3
         {
-            get => TOL_KOL_PL3Tag.Value;
-            set => TOL_KOL_PL3Tag.Value = value;
+            get => int.TryParse(TOL_KOL_PL3Tag.Value,out var v)?v:default;
+            set => TOL_KOL_PL3Tag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'TOL_KOL_MI3'</summary>
         public static VfieldTag TOL_KOL_MI3Tag => _vfieldsByName["TOL_KOL_MI3"][0];
 
-        public static string TOL_KOL_MI3
+        public static int TOL_KOL_MI3
         {
-            get => TOL_KOL_MI3Tag.Value;
-            set => TOL_KOL_MI3Tag.Value = value;
+            get => int.TryParse(TOL_KOL_MI3Tag.Value,out var v)?v:default;
+            set => TOL_KOL_MI3Tag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'KRNAZEM3'</summary>
@@ -6784,10 +6786,10 @@ public static class GlobalMaps
         /// <summary>Variable field 'DELNAL'</summary>
         public static VfieldTag DELNALTag => _vfieldsByName["DELNAL"][0];
 
-        public static string DELNAL
+        public static int DELNAL
         {
-            get => DELNALTag.Value;
-            set => DELNALTag.Value = value;
+            get => int.TryParse(DELNALTag.Value,out var v)?v:default;
+            set => DELNALTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'VARDELN'</summary>
@@ -6802,10 +6804,10 @@ public static class GlobalMaps
         /// <summary>Variable field 'IDENT'</summary>
         public static VfieldTag IDENTTag => _vfieldsByName["IDENT"][0];
 
-        public static string IDENT
+        public static int IDENT
         {
-            get => IDENTTag.Value;
-            set => IDENTTag.Value = value;
+            get => int.TryParse(IDENTTag.Value,out var v)?v:default;
+            set => IDENTTag.Value = value.ToString();
         }
 
         /// <summary>Variable field 'DIMENZ40_DN'</summary>
@@ -6818,17 +6820,17 @@ public static class GlobalMaps
         }
 
         /// <summary>Variable field 'OZNAKA' (multiple)</summary>
-        public static string[] OZNAKA
+        public static int[] OZNAKA
         {
             get
             {
-                return _vfieldsByName["OZNAKA"].Select(t=>t.Value).ToArray();
+                return _vfieldsByName["OZNAKA"].Select(t=>int.TryParse(t.Value,out var v)?v:default).ToArray();
             }
             set
             {
                 var list = _vfieldsByName["{name}"];
                 for(int i=0;i<list.Count && i<value.Length;i++)
-                    list[i].Value = value[i];
+                    list[i].Value = value[i].ToString();
             }
         }
 
@@ -6837,7 +6839,7 @@ public static class GlobalMaps
         {
             get
             {
-                return _vfieldsByName["SARZA"].Select(t=>t.Value).ToArray();
+                return _vfieldsByName["{name}"].Select(t=>t.Value).ToArray();
             }
             set
             {
@@ -6848,17 +6850,17 @@ public static class GlobalMaps
         }
 
         /// <summary>Variable field 'KOLICINA' (multiple)</summary>
-        public static string[] KOLICINA
+        public static int[] KOLICINA
         {
             get
             {
-                return _vfieldsByName["KOLICINA"].Select(t=>t.Value).ToArray();
+                return _vfieldsByName["KOLICINA"].Select(t=>int.TryParse(t.Value,out var v)?v:default).ToArray();
             }
             set
             {
                 var list = _vfieldsByName["{name}"];
                 for(int i=0;i<list.Count && i<value.Length;i++)
-                    list[i].Value = value[i];
+                    list[i].Value = value[i].ToString();
             }
         }
 
@@ -6867,7 +6869,7 @@ public static class GlobalMaps
         {
             get
             {
-                return _vfieldsByName["DIMENZ40"].Select(t=>t.Value).ToArray();
+                return _vfieldsByName["{name}"].Select(t=>t.Value).ToArray();
             }
             set
             {
@@ -7107,6 +7109,1656 @@ public static class GlobalMaps
     }
 }
 #endregion
+
+    public static class GlobalFunctions
+    {
+        /// <summary>
+        /// 'F11 - novi rok'
+        /// </summary>
+        public static void D13342()
+        {
+            // -- BEFORE logic --
+             // throw new NotImplementedException();AssignStatement: NASEL5 = 'NE' (Line: 2, Nesting: 1)
+             // throw new NotImplementedException();If: D133M01.STNAROC1 IS CURSOR (Line: 4, Nesting: 1) If:2 E:0
+             // throw new NotImplementedException();If: NASEL5 = 'NE' (Line: 40, Nesting: 1) If:2 E:0
+             // throw new NotImplementedException();If: NASEL5 = 'NE' (Line: 76, Nesting: 1) If:2 E:0
+             // throw new NotImplementedException();If: NASEL5 = 'NE' (Line: 110, Nesting: 1) If:3 E:0
+
+        }
+
+        /// <summary>
+        /// 'Preverja KZ rezultat'
+        /// </summary>
+        public static void D133F01()
+        {
+            // -- BEFORE logic --
+             // throw new NotImplementedException();AssignStatement: D133M04.USTREZA-KZ[CTRLINIJ] = ' ' (Line: 2, Nesting: 1)
+             // throw new NotImplementedException();AssignStatement: D133W04.STIMA = 'D' (Line: 3, Nesting: 1)
+             // throw new NotImplementedException();Comment: število vzorcev 8/2023 SIR-1662 ************************ (Line: 5, Nesting: 1)
+             // throw new NotImplementedException();SetStatement: D133R26 with attributes [EMPTY] (Line: 6, Nesting: 1)
+             // throw new NotImplementedException();Comment: 6: kzrelacija + poszahteva (Line: 6, Nesting: 1)
+            D133R26.STEVKZ = D133M04.STEVKZ;
+            D133R26.VERKZ = D133M04.VERKZ;
+             // throw new NotImplementedException();CallStatement: D133F66() (Line: 9, Nesting: 1)
+             // throw new NotImplementedException();Comment: 9: bere, če obstaja zahteva za število meh vzorcev - SIFZAH IN (53, 59, 60, 61, 64, 65) (Line: 9, Nesting: 1)
+             // throw new NotImplementedException();If: EZESQCOD = 0 (Line: 10, Nesting: 1) If:2 E:0
+             // throw new NotImplementedException();If: D133W04.STIMA = 'D' (Line: 22, Nesting: 1) If:18 E:0
+             // throw new NotImplementedException();Comment: 22: če je še ok (Line: 22, Nesting: 1)
+
+        }
+
+        /// <summary>
+        /// 'inq KZREZULTAT - N'
+        /// </summary>
+        public static void D133F02()
+        {
+            // SQL Clauses:
+            string sql = $@" SELECT STPOSZAHT,USTREZA WHERE LETODN =?LETODN AND DELNAL =?DELNAL AND VARDELN =?VARDELN AND STEVKZ =?STEVKZ AND VERKZ =?VERKZ AND TRAN_ENOTA =?TRAN_ENOTA
+            AND (USTREZA = 'N'  OR USTREZA = 'Z')
+            AND STPOSZAHT =?STPOSZAHT
+            /*
+            /*ORDER BY
+            /*<add ORDER BY  statements here>  ";
+            // ?STPOSZAHT, ?USTREZA = SQL RESULT
+
+        }
+
+        /// <summary>
+        /// 'inq KZREZULTAT - D'
+        /// </summary>
+        public static void D133F03()
+        {
+            // SQL Clauses:
+            string sql = $@" SELECT STPOSZAHT,USTREZA WHERE LETODN =?LETODN AND DELNAL =?DELNAL AND VARDELN =?VARDELN AND STEVKZ =?STEVKZ AND VERKZ =?VERKZ AND TRAN_ENOTA =?TRAN_ENOTA
+            AND USTREZA = 'D' AND STPOSZAHT =?STPOSZAHT
+            /*
+            /*ORDER BY
+            /*<add ORDER BY  statements here>  ";
+            // ?STPOSZAHT, ?USTREZA = SQL RESULT
+
+        }
+
+        /// <summary>
+        /// 'setinq KZREZULTAT'
+        /// </summary>
+        public static void D133F04()
+        {
+            // SQL Clauses:
+            string sql = $@" SELECT STPOSZAHT, T2.FREKVENCA, T1.PE WHERE
+            T1.STEVKZ = T2.STEVKZ  AND T1.PE = T2.PE AND T1.STPOSZAHT = T2.STPOSZAHT AND T1.VERPOSZAHT = T2.VERPOSZAHT AND
+            T1.LETODN =?LETODN AND T1.DELNAL =?DELNAL AND T1.VARDELN =?VARDELN AND T1.STEVKZ =?STEVKZ AND T1.VERKZ =?VERKZ AND T1.TRAN_ENOTA =?TRAN_ENOTA
+            GROUP BY T1.STPOSZAHT, T2.FREKVENCA, T1.PE
+            /*
+            /*ORDER BY
+            /*<add ORDER BY  statements here>  ";
+            // ?STPOSZAHT, ?FREKVENCA, ?PE = SQL RESULT
+
+        }
+
+        /// <summary>
+        /// 'scan KZREZULTAT'
+        /// </summary>
+        public static void D133F05()
+        {
+            // SCAN 'scan KZREZULTAT'
+            // in D133R14
+
+        }
+
+        /// <summary>
+        /// 'close kurzorja'
+        /// </summary>
+        public static void D133F06()
+        {
+            // CLOSE 'close kurzorja'
+            // in D133R14
+
+        }
+
+        /// <summary>
+        /// 'Glavni za M2'
+        /// </summary>
+        public static void D133F07()
+        {
+            // -- BEFORE logic --
+             // throw new NotImplementedException();CallStatement: D133F42() (Line: 3, Nesting: 1)
+             // throw new NotImplementedException();Comment: 3: bere mehanske iz sklopa 10/2018 (Line: 3, Nesting: 1)
+             // throw new NotImplementedException();WhileStatement: 1 = 1 (Line: 5, Nesting: 1) with body lines: [26]
+
+        }
+
+        /// <summary>
+        /// 'Mapa 4 - prikaz TRE'
+        /// </summary>
+        public static void D133F08()
+        {
+            // -- BEFORE logic --
+             // throw new NotImplementedException();CallStatement: D133F09() (Line: 2, Nesting: 1)
+             // throw new NotImplementedException();Comment: 2: prvo branje TRE (Line: 2, Nesting: 1)
+             // throw new NotImplementedException();WhileStatement: 1 = 1 (Line: 5, Nesting: 1) with body lines: [36]
+
+        }
+
+        /// <summary>
+        /// 'Prvo branje TRE'
+        /// </summary>
+        public static void D133F09()
+        {
+            // -- BEFORE logic --
+             // throw new NotImplementedException();SetStatement: D133M04 with attributes [CLEAR] (Line: 3, Nesting: 1)
+             // throw new NotImplementedException();AssignStatement: D133M04 = D133M02 (Line: 4, Nesting: 1)
+             // throw new NotImplementedException();Comment: 4: prenos v mapo (Line: 4, Nesting: 1)
+             // throw new NotImplementedException();AssignStatement: D133R06 = D133R01 (Line: 5, Nesting: 1)
+             // throw new NotImplementedException();Comment: 5: v slog TRE (Line: 5, Nesting: 1)
+             // throw new NotImplementedException();Comment: če je KZ utripa ********************************* (Line: 7, Nesting: 1)
+             // throw new NotImplementedException();If: D133M04.KZORG NE ' ' AND D133M04.VERKZ > 0 (Line: 8, Nesting: 1) If:2 E:4
+             // throw new NotImplementedException();Comment: 8: 2/2005 Matej (Line: 8, Nesting: 1)
+             // throw new NotImplementedException();Comment: dodano 10/2011 matej ************************** (Line: 16, Nesting: 1)
+            D133M04.STEVILOP = D133W04.STEVILOP;
+            D133M04.STEVSTRO = D133W04.STEVSTRO;
+            D133M04.NAZSTRKR = D133W04.NAZSTRKR;
+            D133M04.IZDKOL = D133W04.IZDKOL;
+             // throw new NotImplementedException();Comment: 20: 11/2019 (Line: 20, Nesting: 1)
+             // throw new NotImplementedException();AssignStatement: D133R06.STEVILOP = D133W04.STEVILOP (Line: 23, Nesting: 1)
+             // throw new NotImplementedException();Comment: 23: prej hrani v WS (Line: 23, Nesting: 1)
+             // throw new NotImplementedException();AssignStatement: D133R06.STEVSTRO = D133W04.STEVSTRO (Line: 24, Nesting: 1)
+             // throw new NotImplementedException();Comment: 24: prej hrani v WS - dodano 8/2011 Matej (Line: 24, Nesting: 1)
+             // throw new NotImplementedException();AssignStatement: STEVEC = 10 (Line: 25, Nesting: 1)
+             // throw new NotImplementedException();Comment: 25: ger iz zanke (Line: 25, Nesting: 1)
+             // throw new NotImplementedException();CallStatement: D133P22() (Line: 27, Nesting: 1)
+             // throw new NotImplementedException();Comment: 27: SETINQ v t.KT_TRANSE (Line: 27, Nesting: 1)
+             // throw new NotImplementedException();CallStatement: D133P23() (Line: 28, Nesting: 1)
+             // throw new NotImplementedException();Comment: 28: SCAN v t.KT_TRANSE (Line: 28, Nesting: 1)
+             // throw new NotImplementedException();AssignStatement: CTRLINIJ = 1 (Line: 29, Nesting: 1)
+             // throw new NotImplementedException();WhileStatement: EZESQCOD = 0 AND CTRLINIJ <= 10 (Line: 31, Nesting: 1) with body lines: [93]
+
+        }
+
+        /// <summary>
+        /// 'Naslednje branje TRE'
+        /// </summary>
+        public static void D133F10()
+        {
+            // -- BEFORE logic --
+             // throw new NotImplementedException();SetStatement: D133M04 with attributes [CLEAR] (Line: 3, Nesting: 1)
+             // throw new NotImplementedException();AssignStatement: D133M04 = D133M02 (Line: 4, Nesting: 1)
+             // throw new NotImplementedException();Comment: 4: prenos v mapo (Line: 4, Nesting: 1)
+             // throw new NotImplementedException();Comment: dodano 10/2011 matej ************************** (Line: 6, Nesting: 1)
+            D133M04.STEVILOP = D133W04.STEVILOP;
+            D133M04.STEVSTRO = D133W04.STEVSTRO;
+            D133M04.NAZSTRKR = D133W04.NAZSTRKR;
+             // throw new NotImplementedException();Comment: če je KZ utripa ********************************* (Line: 12, Nesting: 1)
+             // throw new NotImplementedException();If: D133M04.KZORG NE ' ' AND D133M04.VERKZ > 0 (Line: 13, Nesting: 1) If:2 E:4
+             // throw new NotImplementedException();Comment: 13: 2/2005 Matej (Line: 13, Nesting: 1)
+             // throw new NotImplementedException();AssignStatement: D133R06.STEVSTRO = D133W04.STEVSTRO (Line: 21, Nesting: 1)
+             // throw new NotImplementedException();Comment: 21: prej hrani v WS - dodano 8/2011 Matej (Line: 21, Nesting: 1)
+             // throw new NotImplementedException();AssignStatement: D133R06.STEVSTRO = D133W04.STEVSTRO (Line: 22, Nesting: 1)
+             // throw new NotImplementedException();Comment: 22: prej hrani v WS - dodano 8/2011 Matej (Line: 22, Nesting: 1)
+             // throw new NotImplementedException();CallStatement: D133P221() (Line: 24, Nesting: 1)
+             // throw new NotImplementedException();Comment: 24: SETINQ v t.KT_TRANSE (Line: 24, Nesting: 1)
+             // throw new NotImplementedException();CallStatement: D133P23() (Line: 25, Nesting: 1)
+             // throw new NotImplementedException();Comment: 25: SCAN v t.KT_TRANSE (Line: 25, Nesting: 1)
+             // throw new NotImplementedException();AssignStatement: CTRLINIJ = 1 (Line: 27, Nesting: 1)
+             // throw new NotImplementedException();WhileStatement: EZESQCOD = 0 AND CTRLINIJ <= 10 (Line: 28, Nesting: 1) with body lines: [72]
+
+        }
+
+        /// <summary>
+        /// 'Bere sarže za PCP'
+        /// </summary>
+        public static void D133F11()
+        {
+            // -- BEFORE logic --
+             // throw new NotImplementedException();SetStatement: D133R17 with attributes [EMPTY] (Line: 2, Nesting: 1)
+             // throw new NotImplementedException();Comment: 2: tt_seznam_izdajnic (Line: 2, Nesting: 1)
+             // throw new NotImplementedException();AssignStatement: D133M01.KZ_SUR3 = ' ' (Line: 3, Nesting: 1)
+             // throw new NotImplementedException();Comment: 3: inic na mapi za print (Line: 3, Nesting: 1)
+             // throw new NotImplementedException();AssignStatement: D133W05.KZ_SUR3 = ' ' (Line: 4, Nesting: 1)
+             // throw new NotImplementedException();AssignStatement: STEV_SARZA = 1 (Line: 5, Nesting: 1)
+             // throw new NotImplementedException();Comment: 5: do 34 mest (Line: 5, Nesting: 1)
+             // throw new NotImplementedException();AssignStatement: D133W05.POLNI_SARZA = 'DA' (Line: 6, Nesting: 1)
+            D133R17.LETODN = D133R01.LETODN;
+             // throw new NotImplementedException();Comment: 8: iz delnal (Line: 8, Nesting: 1)
+            D133R17.DELNAL = D133R01.DELNAL;
+             // throw new NotImplementedException();Comment: 9: iz delnal (Line: 9, Nesting: 1)
+            D133R17.VARDELN = D133R01.VARDELN;
+             // throw new NotImplementedException();Comment: 10: iz delnal (Line: 10, Nesting: 1)
+             // throw new NotImplementedException();CallStatement: D133F12() (Line: 12, Nesting: 1)
+             // throw new NotImplementedException();Comment: 12: setinq tt_seznam_izdajnic (Line: 12, Nesting: 1)
+             // throw new NotImplementedException();If: EZESQCOD = 0 (Line: 13, Nesting: 1) If:4 E:3
+             // throw new NotImplementedException();CallStatement: D133F16() (Line: 34, Nesting: 1)
+             // throw new NotImplementedException();Comment: 34: close (Line: 34, Nesting: 1)
+             // throw new NotImplementedException();If: D133W05.KZ_SUR3 NE ' ' (Line: 36, Nesting: 1) If:3 E:0
+             // throw new NotImplementedException();Comment: 36: ima vsebino (Line: 36, Nesting: 1)
+
+        }
+
+        /// <summary>
+        /// 'setinq tt_seznam_izdajnic'
+        /// </summary>
+        public static void D133F12()
+        {
+            // SQL Clauses:
+            string sql = $@" SELECT ZAPST_SEZNAMIZD, ZAPST_PCP, FIRMA, IDENT, ORGEN, NAMEN, POREKLO, LETODN, DELNAL, VARDELN, KOLICINA, KOMADI, DATUM_ZAHTEVE, DATUM_REALIZAC, STATUS, VILICARIST, DATURA, VNESEL, STIZDAJ WHERE FIRMA = '03' AND LETODN =?LETODN AND DELNAL =?DELNAL AND
+            VARDELN =?VARDELN AND ZAPST_PCP > 0 ";
+            // ?ZAPST_SEZNAMIZD, ?ZAPST_PCP, ?FIRMA, ?IDENT, ?ORGEN, ?NAMEN, ?POREKLO, ?LETODN, ?DELNAL, ?VARDELN, ?KOLICINA, ?KOMADI, ?DATUM_ZAHTEVE, ?DATUM_REALIZAC, ?STATUS, ?VILICARIST, ?DATURA, ?VNESEL, ?STIZDAJ = SQL RESULT
+
+        }
+
+        /// <summary>
+        /// 'F7 - call d292'
+        /// </summary>
+        public static void D133F123()
+        {
+            // -- BEFORE logic --
+             // throw new NotImplementedException();If: D133R01.LETODN > 0 AND D133R01.DELNAL > 0 (Line: 2, Nesting: 1) If:11 E:3
+
+        }
+
+        /// <summary>
+        /// 'Preverja atribute za 3150'
+        /// </summary>
+        public static void D133F124()
+        {
+            // -- BEFORE logic --
+             // throw new NotImplementedException();SetStatement: D133M02.ATRIBUT with attributes [DEFINED] (Line: 2, Nesting: 1)
+            D133R58.LETODN = D133R01.LETODN;
+            D133R58.DELNAL = D133R01.DELNAL;
+            D133R58.VARDELN = D133R01.VARDELN;
+             // throw new NotImplementedException();If: D133R01.PROGENOT = '021' (Line: 8, Nesting: 1) If:1 E:3
+             // throw new NotImplementedException();CallStatement: D133F125() (Line: 13, Nesting: 1)
+             // throw new NotImplementedException();Comment: 13: inq IMP.VALP_TEHN_DN_STROJ_ATRIBUT (Line: 13, Nesting: 1)
+             // throw new NotImplementedException();If: EZESQCOD = 0 (Line: 14, Nesting: 1) If:2 E:4
+
+        }
+
+        /// <summary>
+        /// 'preverja atribute'
+        /// </summary>
+        public static void D133F125()
+        {
+            // SQL Clauses:
+            string sql = $@" SELECT ID_VALP_TEHN_DN_STROJ_ATRIBUT, FIRMA, LETODN, DELNAL, VARDELN, TRAN_ENOTA WHERE  LETODN =?LETODN AND DELNAL =?DELNAL AND VARDELN =?VARDELN
+            AND STANJE_ZADNJE_SPREMEMBE = 'A' AND ID_VALP_TEHN_STROJI_P_ATRIBUT =?ID_VALP_TEHN_STROJI_P_ATRIBUT ";
+            // ?ID_VALP_TEHN_DN_STROJ_ATRIBUT, ?FIRMA, ?LETODN, ?DELNAL, ?VARDELN, ?TRAN_ENOTA = SQL RESULT
+
+        }
+
+        /// <summary>
+        /// 'inq dntehnop'
+        /// </summary>
+        public static void D133F126()
+        {
+            // SQL Clauses:
+            string sql = $@" SELECT DELNAL, VARDELN, IDENT, STEVILOP, STEVSTRO, TEHNAVO1, TEHNAVO2, TEHNAVO3, STEVIDEL, TPZ, T1, T2, PFO, KVALODPD, PFDOOPER, DATURA WHERE DELNAL =?DELNAL AND VARDELN =?VARDELN AND IDENT =?IDENT AND STEVSTRO =?STEVSTRO ";
+            // ?DELNAL, ?VARDELN, ?IDENT, ?STEVILOP, ?STEVSTRO, ?TEHNAVO1, ?TEHNAVO2, ?TEHNAVO3, ?STEVIDEL, ?TPZ, ?T1, ?T2, ?PFO, ?KVALODPD, ?PFDOOPER, ?DATURA = SQL RESULT
+
+        }
+
+        /// <summary>
+        /// 'F9 - pregled lansiranega na DN'
+        /// </summary>
+        public static void D133F128()
+        {
+            // -- BEFORE logic --
+             // throw new NotImplementedException();SetStatement: D133M13 with attributes [EMPTY] (Line: 2, Nesting: 1)
+            D133M13.DELNAL = D133M01.DELNAL;
+            D133M13.VARDELN = D133M01.VARDELN;
+            D133M13.IDENT = D133M01.IDENT;
+            D133M13.DIMENZ40_DN = D133M01.DIMENZ40;
+             // throw new NotImplementedException();CallStatement: D133F129() (Line: 9, Nesting: 1)
+             // throw new NotImplementedException();Comment: 9: bere podatke (Line: 9, Nesting: 1)
+             // throw new NotImplementedException();WhileStatement: 1 = 1 (Line: 11, Nesting: 1) with body lines: [7]
+
+        }
+
+        /// <summary>
+        /// 'Bere podatke'
+        /// </summary>
+        public static void D133F129()
+        {
+            // -- BEFORE logic --
+             // throw new NotImplementedException();SetStatement: D133R55 with attributes [EMPTY] (Line: 2, Nesting: 1)
+             // throw new NotImplementedException();Comment: 2: tt_lansirr_poz + tt_skladsur_ost + tt_izdelki (Line: 2, Nesting: 1)
+             // throw new NotImplementedException();AssignStatement: NASEL6 = 'NE' (Line: 3, Nesting: 1)
+             // throw new NotImplementedException();AssignStatement: STEVEC = 0 (Line: 4, Nesting: 1)
+            D133R55.LETODN = D133R01.LETODN;
+            D133R55.DELNAL = D133R01.DELNAL;
+            D133R55.VARDELN = D133R01.VARDELN;
+             // throw new NotImplementedException();CallStatement: D133F130() (Line: 10, Nesting: 1)
+             // throw new NotImplementedException();Comment: 10: setinq (Line: 10, Nesting: 1)
+             // throw new NotImplementedException();If: EZESQCOD = 0 (Line: 11, Nesting: 1) If:3 E:6
+             // throw new NotImplementedException();CallStatement: D133F132() (Line: 46, Nesting: 1)
+             // throw new NotImplementedException();Comment: 46: close (Line: 46, Nesting: 1)
+             // throw new NotImplementedException();Comment: če je mogoče lansirano iz medfaze 1/2018   - bere kt_transe ***************** (Line: 48, Nesting: 1)
+             // throw new NotImplementedException();If: NASEL6 = 'NE' AND STEVEC = 0 (Line: 49, Nesting: 1) If:11 E:0
+             // throw new NotImplementedException();Comment: 49: ; (Line: 49, Nesting: 1)
+
+        }
+
+        /// <summary>
+        /// 'scan tt_seznam_izdajnic'
+        /// </summary>
+        public static void D133F13()
+        {
+            // SCAN 'scan tt_seznam_izdajnic'
+            // in D133R17
+
+        }
+
+        /// <summary>
+        /// 'setinq joina'
+        /// </summary>
+        public static void D133F130()
+        {
+            // SQL Clauses:
+            string sql = $@" SELECT KOLICINA,T2.SARZA,  T3.DIMENZ40, T2.OZNAKA WHERE
+            T1.LETODN =?LETODN AND T1.DELNAL =?DELNAL AND T1.VARDELN =?VARDELN AND
+            T1.STANJE_ZADNJE_SPREMEMBE = 'A' AND
+            T1.ID_TT_SKLADSUR_OST = T2.ID_TT_SKLADSUR_OST
+            AND T2.IDENT = T3.IDENT ";
+            // ?KOLICINA,  ?SARZA,  ?DIMENZ40,  ?OZNAKA = SQL RESULT
+
+        }
+
+        /// <summary>
+        /// 'scan joina'
+        /// </summary>
+        public static void D133F131()
+        {
+            // SCAN 'scan joina'
+            // in D133R55
+
+        }
+
+        /// <summary>
+        /// 'close joina'
+        /// </summary>
+        public static void D133F132()
+        {
+            // CLOSE 'close joina'
+            // in D133R55
+
+        }
+
+        /// <summary>
+        /// 'setinq kt_transe'
+        /// </summary>
+        public static void D133F133()
+        {
+            // SQL Clauses:
+            string sql = $@" SELECT SARZA, CAST(TRAN_ENOTA AS CHAR (10)), SUM(IZDKOL) WHERE DELNAL =?DELNAL AND VARDELN =?VARDELN AND PROGENOT =?PROGENOT GROUP BY SARZA, TRAN_ENOTA ";
+            // ?SARZA, ?TRAN_ENOTA,  ?IZDKOL = SQL RESULT
+
+        }
+
+        /// <summary>
+        /// 'prikaz lansiranega'
+        /// </summary>
+        public static void D133F134()
+        {
+            // CONVERSE 'prikaz lansiranega'
+            // in D133M13
+
+        }
+
+        /// <summary>
+        /// 'scan kt_transe'
+        /// </summary>
+        public static void D133F135()
+        {
+            // SCAN 'scan kt_transe'
+            // in D133R56
+
+        }
+
+        /// <summary>
+        /// 'close kt_transe'
+        /// </summary>
+        public static void D133F136()
+        {
+            // CLOSE 'close kt_transe'
+            // in D133R56
+
+        }
+
+        /// <summary>
+        /// 'inq tt_skladsur_poz'
+        /// </summary>
+        public static void D133F137()
+        {
+            // SQL Clauses:
+            string sql = $@" SELECT LOK_OSN WHERE SARZA=?SARZA AND TRAN_ENOTA =?TRAN_ENOTA ";
+            // ?LOK_OSN = SQL RESULT
+
+        }
+
+        /// <summary>
+        /// 'F11 - tisk etikete'
+        /// </summary>
+        public static void D133F138()
+        {
+            // -- BEFORE logic --
+             // throw new NotImplementedException();SetStatement: CALL_D308 with attributes [EMPTY] (Line: 3, Nesting: 1)
+             // throw new NotImplementedException();Comment: 3: ws za komunikacijo (Line: 3, Nesting: 1)
+             // throw new NotImplementedException();AssignStatement: STEVEC = 0 (Line: 5, Nesting: 1)
+             // throw new NotImplementedException();AssignStatement: STEVEC5 = 0 (Line: 6, Nesting: 1)
+             // throw new NotImplementedException();AssignStatement: NASEL5 = 'NE' (Line: 7, Nesting: 1)
+             // throw new NotImplementedException();WhileStatement: STEVEC < 10 AND NASEL5 = 'NE' (Line: 9, Nesting: 1) with body lines: [3]
+             // throw new NotImplementedException();If: NASEL5 = 'NE' (Line: 23, Nesting: 1) If:2 E:9
+
+        }
+
+        /// <summary>
+        /// 'inq tt_skladsur_pcp - sarža'
+        /// </summary>
+        public static void D133F14()
+        {
+            // SQL Clauses:
+            string sql = $@" SELECT SARZA WHERE ZAPST_PCP =?ZAPST_PCP ";
+            // ?SARZA = SQL RESULT
+
+        }
+
+        /// <summary>
+        /// 'Bere motnje_NCR'
+        /// </summary>
+        public static void D133F140()
+        {
+            // -- BEFORE logic --
+            D133M01.NCR = " ";
+             // throw new NotImplementedException();SetStatement: D133M01.NCR with attributes [DEFINED] (Line: 3, Nesting: 1)
+            D133R06.DELNAL = D133R01.DELNAL;
+            D133R06.VARDELN = D133R01.VARDELN;
+            D133R06.PROGENOT = D133R01.PROGENOT;
+             // throw new NotImplementedException();CallStatement: D133F141() (Line: 9, Nesting: 1)
+             // throw new NotImplementedException();Comment: 9: setinq kt_transe (Line: 9, Nesting: 1)
+             // throw new NotImplementedException();CallStatement: D133F142() (Line: 10, Nesting: 1)
+             // throw new NotImplementedException();Comment: 10: scan kt_transe (Line: 10, Nesting: 1)
+             // throw new NotImplementedException();WhileStatement: EZESQCOD = 0 (Line: 11, Nesting: 1) with body lines: [8]
+
+        }
+
+        /// <summary>
+        /// 'setinq kt_transe'
+        /// </summary>
+        public static void D133F141()
+        {
+            // SQL Clauses:
+            string sql = $@" SELECT DELNAL, VARDELN, STEVSTRO, STEVILOP, SARZA, TRAN_ENOTA, DATSPRE, IZDKOL, IZDKOM, DELVNOS, DELIZDA, PROGENOT, DATURA, KOMENTAR, VZOREC, STATUSD, ZAPSTEV, SARZA_DOD WHERE DELNAL =?DELNAL AND VARDELN =?VARDELN AND PROGENOT =?PROGENOT ORDER BY
+            1, 2, 4   ASC ";
+            // ?DELNAL, ?VARDELN, ?STEVSTRO, ?STEVILOP, ?SARZA, ?TRAN_ENOTA, ?DATSPRE, ?IZDKOL, ?IZDKOM, ?DELVNOS, ?DELIZDA, ?PROGENOT, ?DATURA, ?KOMENTAR, ?VZOREC, ?STATUSD, ?ZAPSTEV, ?SARZA_DOD = SQL RESULT
+
+        }
+
+        /// <summary>
+        /// 'scan kt_transe'
+        /// </summary>
+        public static void D133F142()
+        {
+            // SCAN 'scan kt_transe'
+            // in D133R06
+
+        }
+
+        /// <summary>
+        /// 'inq motnje_ncr'
+        /// </summary>
+        public static void D133F143()
+        {
+            // SQL Clauses:
+            string sql = $@" SELECT SIFMOT WHERE
+            LETODN >= YEAR(CURRENT DATE) - 3 AND
+            TRAN_ENOTA_NOVA =?TRAN_ENOTA_NOVA AND
+            SARZA_NOVA =?SARZA_NOVA
+            AND SIFMOT <> '00' ";
+            // ?SIFMOT = SQL RESULT
+
+        }
+
+        /// <summary>
+        /// 'Sestavlja polje za saržo'
+        /// </summary>
+        public static void D133F15()
+        {
+            // -- BEFORE logic --
+             // throw new NotImplementedException();Comment: polje d133M01.KZ_SUR3 = 46 znakov (Line: 2, Nesting: 1)
+             // throw new NotImplementedException();If: STEV_SARZA < 37 (Line: 4, Nesting: 1) If:20 E:5
+             // throw new NotImplementedException();Comment: 4: recimo, da lahko da še eno saržo (Line: 4, Nesting: 1)
+
+        }
+
+        /// <summary>
+        /// 'close tt_seznam_izdajnic'
+        /// </summary>
+        public static void D133F16()
+        {
+            // CLOSE 'close tt_seznam_izdajnic'
+            // in D133R17
+
+        }
+
+        /// <summary>
+        /// 'inq nsarze'
+        /// </summary>
+        public static void D133F17()
+        {
+            // SQL Clauses:
+            string sql = $@" SELECT SARZA, IDSARZA WHERE SARZA =?SARZA ";
+            // ?SARZA, ?IDSARZA = SQL RESULT
+
+        }
+
+        /// <summary>
+        /// 'Preverja motnjo 12/2012'
+        /// </summary>
+        public static void D133F18()
+        {
+            // -- BEFORE logic --
+             // throw new NotImplementedException();SetStatement: D133R21 with attributes [EMPTY] (Line: 2, Nesting: 1)
+             // throw new NotImplementedException();Comment: 2: motnje gl (Line: 2, Nesting: 1)
+            D133R21.DELNAL = D133R01.DELNAL;
+            D133R21.VARDELN = D133R01.VARDELN;
+            D133R21.IDENT = D133R01.IDENT;
+             // throw new NotImplementedException();CallStatement: D133F19() (Line: 8, Nesting: 1)
+             // throw new NotImplementedException();Comment: 8: inq motnje_gl (Line: 8, Nesting: 1)
+             // throw new NotImplementedException();If: EZESQCOD = 0 (Line: 10, Nesting: 1) If:4 E:4
+
+        }
+
+        /// <summary>
+        /// 'inq motnje_gl'
+        /// </summary>
+        public static void D133F19()
+        {
+            // SQL Clauses:
+            string sql = $@" SELECT DATUM, SIFNAP, DELNAL, VARDELN WHERE
+            DATUM >= (CURRENT DATE - 1 YEARS) AND DELNAL =?DELNAL AND VARDELN =?VARDELN AND IDENT =?IDENT ";
+            // ?DATUM, ?SIFNAP, ?DELNAL, ?VARDELN = SQL RESULT
+
+        }
+
+        /// <summary>
+        /// 'Preverja ukrep'
+        /// </summary>
+        public static void D133F20()
+        {
+            // -- BEFORE logic --
+             // throw new NotImplementedException();SetStatement: D133R22 with attributes [EMPTY] (Line: 2, Nesting: 1)
+             // throw new NotImplementedException();Comment: 2: imp.slepmotnja_res (Line: 2, Nesting: 1)
+            D133R22.DELNAL = D133R01.DELNAL;
+            D133R22.VARDELN = D133R01.VARDELN;
+            D133R22.IDENT = D133R01.IDENT;
+             // throw new NotImplementedException();CallStatement: D133F21() (Line: 7, Nesting: 1)
+             // throw new NotImplementedException();Comment: 7: setinq  imp.slepmotnja_res (Line: 7, Nesting: 1)
+             // throw new NotImplementedException();CallStatement: D133F22() (Line: 8, Nesting: 1)
+             // throw new NotImplementedException();Comment: 8: scan  imp.slepmotnja_res (Line: 8, Nesting: 1)
+             // throw new NotImplementedException();If: EZESQCOD = 0 (Line: 10, Nesting: 1) If:3 E:5
+
+        }
+
+        /// <summary>
+        /// 'setinq ukrepov'
+        /// </summary>
+        public static void D133F21()
+        {
+            // SQL Clauses:
+            string sql = $@" SELECT ID_SLEPMOTNJA_RES, DATUM, SIFNAP, DELNAL, VARDELN, IDENT, UKREP, VPISAL_UKR, DATUM_UKR, RESITEV WHERE DATUM >= (CURRENT DATE - 1 YEARS)  AND DELNAL =?DELNAL AND VARDELN =?VARDELN
+            AND IDENT =?IDENT AND STANJE_ZADNJE_SPREMEMBE = 'A' ";
+            // ?ID_SLEPMOTNJA_RES, ?DATUM, ?SIFNAP, ?DELNAL, ?VARDELN, ?IDENT, ?UKREP, ?VPISAL_UKR, ?DATUM_UKR, ?RESITEV = SQL RESULT
+
+        }
+
+        /// <summary>
+        /// 'scan ukrepov'
+        /// </summary>
+        public static void D133F22()
+        {
+            // SCAN 'scan ukrepov'
+            // in D133R22
+
+        }
+
+        /// <summary>
+        /// 'Preverja imp.slepmotnja_skl'
+        /// </summary>
+        public static void D133F25()
+        {
+            // -- BEFORE logic --
+             // throw new NotImplementedException();SetStatement: D133R16 with attributes [EMPTY] (Line: 2, Nesting: 1)
+             // throw new NotImplementedException();Comment: 2: imp.slepmotnja_skl (Line: 2, Nesting: 1)
+            D133R16.LETODN = D133R01.LETODN;
+            D133R16.DELNAL = D133R01.DELNAL;
+            D133R16.VARDELN = D133R01.VARDELN;
+             // throw new NotImplementedException();CallStatement: D133F26() (Line: 8, Nesting: 1)
+             // throw new NotImplementedException();Comment: 8: inq (Line: 8, Nesting: 1)
+             // throw new NotImplementedException();If: EZESQCOD = 0 (Line: 9, Nesting: 1) If:1 E:0
+
+        }
+
+        /// <summary>
+        /// 'inq zac skl.'
+        /// </summary>
+        public static void D133F26()
+        {
+            // SQL Clauses:
+            string sql = $@" SELECT SUM(KOL_SKL) WHERE LETODN =?LETODN AND DELNAL =?DELNAL AND VARDELN =?VARDELN ";
+            // ?KOL_SKL = SQL RESULT
+
+        }
+
+        /// <summary>
+        /// 'F12 - zahteve kupca'
+        /// </summary>
+        public static void D133F27()
+        {
+            // -- BEFORE logic --
+             // throw new NotImplementedException();AssignStatement: NASEL = 'N' (Line: 2, Nesting: 1)
+             // throw new NotImplementedException();AssignStatement: INDIK = 0 (Line: 3, Nesting: 1)
+             // throw new NotImplementedException();SetStatement: D133R23 with attributes [EMPTY] (Line: 4, Nesting: 1)
+             // throw new NotImplementedException();Comment: 4: naropozilme (Line: 4, Nesting: 1)
+             // throw new NotImplementedException();Comment: stnaroc 1 ************************************************** (Line: 6, Nesting: 1)
+             // throw new NotImplementedException();If: D133M01.STNAROC1 IS CURSOR AND D133M01.STNAROC1 > 0 (Line: 7, Nesting: 1) If:9 E:0
+             // throw new NotImplementedException();Comment: stnaroc 2 ************************************************** (Line: 34, Nesting: 1)
+             // throw new NotImplementedException();If: NASEL = 'N' AND INDIK = 0 (Line: 35, Nesting: 1) If:2 E:0
+             // throw new NotImplementedException();Comment: stnaroc 3 ************************************************** (Line: 64, Nesting: 1)
+             // throw new NotImplementedException();If: NASEL = 'N' AND INDIK = 0 (Line: 65, Nesting: 1) If:2 E:0
+             // throw new NotImplementedException();If: NASEL = 'N' (Line: 95, Nesting: 1) If:3 E:0
+
+        }
+
+        /// <summary>
+        /// 'inq tt_naropozilme - bere skl'
+        /// </summary>
+        public static void D133F28()
+        {
+            // SQL Clauses:
+            string sql = $@" SELECT LETONA, T1.STNAROC, T1.POZNARO, T1.ID_SKUPPZ_KEM_NML WHERE
+            T1.FIRMA =?FIRMA AND
+            T1.LETONA >= YEAR(CURRENT DATE) - 1
+            AND T1.STNAROC =?STNAROC AND T1.POZNARO =?POZNARO
+            AND T1.LETONA = T2.LETONA AND T1.STNAROC = T2.STNAROC
+            AND T1.POZNARO = T2.POZNARO AND T1.FIRMA = T2.FIRMA ";
+            // ?LETONA, ?STNAROC, ?POZNARO, ?ID_SKUPPZ_KEM_NML = SQL RESULT
+
+        }
+
+        /// <summary>
+        /// 'inq dimenzije izdelka za FT'
+        /// </summary>
+        public static void D133F30()
+        {
+            // SQL Clauses:
+            string sql = $@" SELECT ID_SKUPTT_IZD_P_DIM_TIP, IDENT, ID_SKUSDIMENZIJA_TIP, VREDNOST, TOLERANCA_MIN, TOLERANCA_MAX, OVALNOST_MIN, OVALNOST_MAX WHERE IDENT =?IDENT AND
+            ID_SKUSDIMENZIJA_TIP =?ID_SKUSDIMENZIJA_TIP
+            AND STANJE_ZADNJE_SPREMEMBE =?STANJE_ZADNJE_SPREMEMBE ";
+            // ?ID_SKUPTT_IZD_P_DIM_TIP, ?IDENT, ?ID_SKUSDIMENZIJA_TIP, ?VREDNOST, ?TOLERANCA_MIN, ?TOLERANCA_MAX, ?OVALNOST_MIN, ?OVALNOST_MAX = SQL RESULT
+
+        }
+
+        /// <summary>
+        /// 'Bere novi rok'
+        /// </summary>
+        public static void D133F31()
+        {
+            // -- BEFORE logic --
+             // throw new NotImplementedException();SetStatement: D133R24 with attributes [EMPTY] (Line: 2, Nesting: 1)
+             // throw new NotImplementedException();Comment: 2: NAROCILO_NOVI_ROK (Line: 2, Nesting: 1)
+             // throw new NotImplementedException();SetStatement: D133M01.NOVI_ROK1 with attributes [DEFINED] (Line: 3, Nesting: 1)
+             // throw new NotImplementedException();SetStatement: D133M01.NOVI_ROK2 with attributes [DEFINED] (Line: 4, Nesting: 1)
+             // throw new NotImplementedException();SetStatement: D133M01.NOVI_ROK2 with attributes [DEFINED] (Line: 5, Nesting: 1)
+            D133R24.LETONA = D133R02.LETONA;
+             // throw new NotImplementedException();Comment: 7: iz naropozilme (Line: 7, Nesting: 1)
+            D133R24.STNAROC = D133R02.STNAROC;
+            D133R24.POZNARO = D133R02.POZNARO;
+             // throw new NotImplementedException();CallStatement: D133F40() (Line: 10, Nesting: 1)
+             // throw new NotImplementedException();Comment: 10: inq max id (Line: 10, Nesting: 1)
+             // throw new NotImplementedException();If: EZESQCOD = 0 (Line: 11, Nesting: 1) If:3 E:0
+
+        }
+
+        /// <summary>
+        /// 'inq max ID'
+        /// </summary>
+        public static void D133F40()
+        {
+            // SQL Clauses:
+            string sql = $@" SELECT MAX(ID_NAROCILO_NOVI_ROK) WHERE LETONA =?LETONA AND STNAROC =?STNAROC AND POZNARO =?POZNARO
+            AND STATUS = 'A' ";
+            // ?ID_NAROCILO_NOVI_ROK = SQL RESULT
+
+        }
+
+        /// <summary>
+        /// 'inq nova terminska'
+        /// </summary>
+        public static void D133F41()
+        {
+            // SQL Clauses:
+            string sql = $@" SELECT NOVA_TE WHERE ID_NAROCILO_NOVI_ROK =?ID_NAROCILO_NOVI_ROK ";
+            // ?NOVA_TE = SQL RESULT
+
+        }
+
+        /// <summary>
+        /// 'Preverja upogib 3/2015'
+        /// </summary>
+        public static void D133F42()
+        {
+            // -- BEFORE logic --
+             // throw new NotImplementedException();AssignStatement: D133M02.UPA = ' ' (Line: 2, Nesting: 1)
+             // throw new NotImplementedException();AssignStatement: D133M02.UPB = ' ' (Line: 3, Nesting: 1)
+             // throw new NotImplementedException();AssignStatement: D133M02.UPC = ' ' (Line: 4, Nesting: 1)
+             // throw new NotImplementedException();SetStatement: D133M02.UPA with attributes [DEFINED] (Line: 5, Nesting: 1)
+             // throw new NotImplementedException();SetStatement: D133M02.UPB with attributes [DEFINED] (Line: 6, Nesting: 1)
+             // throw new NotImplementedException();SetStatement: D133M02.UPC with attributes [DEFINED] (Line: 7, Nesting: 1)
+             // throw new NotImplementedException();If: D133M01.STNAROC1 > 0 (Line: 10, Nesting: 1) If:7 E:9
+             // throw new NotImplementedException();Comment: 10: naročilo 1 (Line: 10, Nesting: 1)
+             // throw new NotImplementedException();Comment: IF D133M01.STNAROC2 > 0;         /* naročilo 2 (Line: 42, Nesting: 1)
+             // throw new NotImplementedException();Comment: MOVE D133W04.FIRMA_VH TO D133R23.FIRMA; /* 6/2016 (Line: 43, Nesting: 1)
+             // throw new NotImplementedException();Comment: MOVE D133M01.STNAROC2 TO D133R23.STNAROC; (Line: 44, Nesting: 1)
+             // throw new NotImplementedException();Comment: MOVE D133M01.POZNARO2 TO D133R23.POZNARO; (Line: 45, Nesting: 1)
+             // throw new NotImplementedException();Comment: D133F28();                     /* inq naropozilme (Line: 46, Nesting: 1)
+             // throw new NotImplementedException();Comment: IF EZESQCOD = 0; (Line: 47, Nesting: 1)
+             // throw new NotImplementedException();Comment: IF D133R23.ID_SKUPPZ_KEM_NML > 0; /* če je sklop (Line: 48, Nesting: 1)
+             // throw new NotImplementedException();Comment: SET D133R25 EMPTY;         /* join za mehanske (Line: 50, Nesting: 1)
+             // throw new NotImplementedException();Comment: MOVE D133R23.ID_SKUPPZ_KEM_NML TO D133R25.ID_SKUPPZ_KEM_NML; (Line: 51, Nesting: 1)
+             // throw new NotImplementedException();Comment: D133F43(); (Line: 52, Nesting: 1)
+             // throw new NotImplementedException();Comment: END; (Line: 54, Nesting: 1)
+             // throw new NotImplementedException();Comment: END; (Line: 55, Nesting: 1)
+             // throw new NotImplementedException();Comment: END; (Line: 56, Nesting: 1)
+             // throw new NotImplementedException();Comment: IF D133M01.STNAROC3 > 0;         /* naročilo 3 (Line: 58, Nesting: 1)
+             // throw new NotImplementedException();Comment: MOVE D133W04.FIRMA_VH TO D133R23.FIRMA; /* 6/2016 (Line: 59, Nesting: 1)
+             // throw new NotImplementedException();Comment: MOVE D133M01.STNAROC3 TO D133R23.STNAROC; (Line: 60, Nesting: 1)
+             // throw new NotImplementedException();Comment: MOVE D133M01.POZNARO3 TO D133R23.POZNARO; (Line: 61, Nesting: 1)
+             // throw new NotImplementedException();Comment: D133F28();                     /* inq naropozilme (Line: 62, Nesting: 1)
+             // throw new NotImplementedException();Comment: IF EZESQCOD = 0; (Line: 63, Nesting: 1)
+             // throw new NotImplementedException();Comment: IF D133R23.ID_SKUPPZ_KEM_NML > 0; /* če je sklop (Line: 64, Nesting: 1)
+             // throw new NotImplementedException();Comment: SET D133R25 EMPTY;         /* join za mehanske (Line: 66, Nesting: 1)
+             // throw new NotImplementedException();Comment: MOVE D133R23.ID_SKUPPZ_KEM_NML TO D133R25.ID_SKUPPZ_KEM_NML; (Line: 67, Nesting: 1)
+             // throw new NotImplementedException();Comment: D133F43(); (Line: 68, Nesting: 1)
+             // throw new NotImplementedException();Comment: END; (Line: 70, Nesting: 1)
+             // throw new NotImplementedException();Comment: END; (Line: 71, Nesting: 1)
+             // throw new NotImplementedException();Comment: END; (Line: 72, Nesting: 1)
+
+        }
+
+        /// <summary>
+        /// 'Preverja frekvenco 4'
+        /// </summary>
+        public static void D133F47()
+        {
+            // -- BEFORE logic --
+             // throw new NotImplementedException();AssignStatement: D133W04.SUMA_VZORCEV = 0 (Line: 2, Nesting: 1)
+             // throw new NotImplementedException();AssignStatement: D133W04.SUMA_REZULTATOV = 0 (Line: 3, Nesting: 1)
+            D133R38.LETODN = D133R01.LETODN;
+             // throw new NotImplementedException();Comment: 6: rec DELNALOG (Line: 6, Nesting: 1)
+            D133R38.DELNAL = D133R01.DELNAL;
+            D133R38.OBDSARZA = D133M04.TRAN_ENOTA[CTRLINIJ];
+             // throw new NotImplementedException();CallStatement: D133F48_A() (Line: 10, Nesting: 1)
+             // throw new NotImplementedException();Comment: 10: inq max serija za tre - 4/2022 (Line: 10, Nesting: 1)
+             // throw new NotImplementedException();CallStatement: D133F48() (Line: 14, Nesting: 1)
+             // throw new NotImplementedException();Comment: 14: inq sum vzorcipoz (Line: 14, Nesting: 1)
+             // throw new NotImplementedException();If: EZESQCOD = 0 (Line: 15, Nesting: 1) If:16 E:0
+
+        }
+
+        /// <summary>
+        /// 'inq suma prijavljenih vzorcev'
+        /// </summary>
+        public static void D133F48()
+        {
+            // SQL Clauses:
+            string sql = $@" SELECT COUNT(*) WHERE LETO >= YEAR(CURRENT DATE) - 3
+            AND LETODN =?LETODN AND DELNAL =?DELNAL AND OBDSARZA =?OBDSARZA
+            AND ZAPSTPREIZ <> 99 AND SERIJA =?SERIJA ";
+            // SUMA_VZORCEV = SQL RESULT
+
+        }
+
+        /// <summary>
+        /// 'inq max serija za TRE'
+        /// </summary>
+        public static void D133F48_A()
+        {
+            // SQL Clauses:
+            string sql = $@" SELECT MAX(SERIJA) WHERE LETO >= YEAR(CURRENT DATE) - 3
+            AND LETODN =?LETODN AND DELNAL =?DELNAL
+            AND ZAPSTPREIZ <> 99 AND OBDSARZA =?OBDSARZA ";
+            // ?SERIJA = SQL RESULT
+
+        }
+
+        /// <summary>
+        /// 'inq suma KZrezultatov'
+        /// </summary>
+        public static void D133F49()
+        {
+            // SQL Clauses:
+            string sql = $@" SELECT COUNT(*) WHERE LETODN =?LETODN AND  DELNAL =?DELNAL AND
+            VARDELN =?VARDELN
+            AND  STEVKZ =?STEVKZ AND  VERKZ =?VERKZ AND  PE =?PE
+            AND STPOSZAHT =?STPOSZAHT
+            AND USTREZA = 'D'
+            AND TRAN_ENOTA =?TRAN_ENOTA ";
+            // SUMA_REZULTATOV = SQL RESULT
+
+        }
+
+        /// <summary>
+        /// 'F2  -vpis komentarja'
+        /// </summary>
+        public static void D133F50()
+        {
+            // -- BEFORE logic --
+             // throw new NotImplementedException();If: D133R01.LETODN < 1 OR D133R01.DELNAL < 1 (Line: 2, Nesting: 1) If:4 E:0
+            D133R07.LETODN = D133R01.LETODN;
+            D133R07.DELNAL = D133R01.DELNAL;
+            D133R07.VARDELN = D133R01.VARDELN;
+            D133R07.POSZAHT1 = D133M01.POSZAHT1;
+            D133R07.POSZAHT2 = D133M01.POSZAHT2;
+             // throw new NotImplementedException();CallStatement: D133F51() (Line: 19, Nesting: 1)
+             // throw new NotImplementedException();Comment: 19: sqlexec (Line: 19, Nesting: 1)
+             // throw new NotImplementedException();If: EZESQCOD = 0 (Line: 21, Nesting: 1) If:5 E:9
+
+        }
+
+        /// <summary>
+        /// 'ažurira komentar'
+        /// </summary>
+        public static void D133F51()
+        {
+            // SQL Clauses:
+            // UNSUPPORTED SQLEXEC
+
+        }
+
+        /// <summary>
+        /// 'Obarva TRE za 051 - staranje'
+        /// </summary>
+        public static void D133F58()
+        {
+            // -- BEFORE logic --
+             // throw new NotImplementedException();SetStatement: D133R30 with attributes [EMPTY] (Line: 2, Nesting: 1)
+             // throw new NotImplementedException();Comment: 2: IMP.SKUP_DELNALOG_TRE_ATES (Line: 2, Nesting: 1)
+             // throw new NotImplementedException();AssignStatement: D133W04.IND_STARANJA = 0 (Line: 4, Nesting: 1)
+            D133R30.LETODN = D133R01.LETODN;
+            D133R30.DELNAL = D133R01.DELNAL;
+            D133R30.TRAN_ENOTA = D133M04.TRAN_ENOTA[CTRLINIJ];
+             // throw new NotImplementedException();CallStatement: D133F59() (Line: 11, Nesting: 1)
+             // throw new NotImplementedException();Comment: 11: inq (Line: 11, Nesting: 1)
+             // throw new NotImplementedException();If: EZESQCOD = 0 (Line: 13, Nesting: 1) If:3 E:0
+
+        }
+
+        /// <summary>
+        /// 'išče indikator staranja'
+        /// </summary>
+        public static void D133F59()
+        {
+            // SQL Clauses:
+            string sql = $@" SELECT MAX(IND_STARANJA) WHERE
+            LETODN =?LETODN AND DELNAL =?DELNAL AND
+            TRAN_ENOTA =?TRAN_ENOTA AND
+            STANJE_ZADNJE_SPREMEMBE = 'A' ";
+            // IND_STARANJA = SQL RESULT
+
+        }
+
+        /// <summary>
+        /// 'F8 - tolerance'
+        /// </summary>
+        public static void D133F60()
+        {
+            // -- BEFORE logic --
+             // throw new NotImplementedException();SetStatement: D133M05 with attributes [CLEAR] (Line: 3, Nesting: 1)
+             // throw new NotImplementedException();CallStatement: D133F61() (Line: 5, Nesting: 1)
+             // throw new NotImplementedException();Comment: 5: bere nar in tol (Line: 5, Nesting: 1)
+             // throw new NotImplementedException();WhileStatement: 1 = 1 (Line: 8, Nesting: 1) with body lines: [4]
+
+        }
+
+        /// <summary>
+        /// 'Pregled toleranc'
+        /// </summary>
+        public static void D133F61()
+        {
+            // -- BEFORE logic --
+             // throw new NotImplementedException();AssignStatement: D133W04.TOL1_PL = 0 (Line: 2, Nesting: 1)
+             // throw new NotImplementedException();AssignStatement: D133W04.TOL1_MI = 0 (Line: 3, Nesting: 1)
+             // throw new NotImplementedException();AssignStatement: D133W04.TOL2_PL = 0 (Line: 4, Nesting: 1)
+             // throw new NotImplementedException();AssignStatement: D133W04.TOL2_MI = 0 (Line: 5, Nesting: 1)
+             // throw new NotImplementedException();AssignStatement: D133W04.TOL3_PL = 0 (Line: 6, Nesting: 1)
+             // throw new NotImplementedException();AssignStatement: D133W04.TOL3_MI = 0 (Line: 7, Nesting: 1)
+             // throw new NotImplementedException();Comment:  (Line: 11, Nesting: 1)
+             // throw new NotImplementedException();Comment: naročilo 1 (Line: 12, Nesting: 1)
+             // throw new NotImplementedException();Comment:  (Line: 13, Nesting: 1)
+             // throw new NotImplementedException();If: D133R01.STNAROC1 > 0 (Line: 14, Nesting: 1) If:11 E:0
+             // throw new NotImplementedException();Comment: 14: Če je na nalogu (Line: 14, Nesting: 1)
+             // throw new NotImplementedException();Comment:  (Line: 118, Nesting: 1)
+             // throw new NotImplementedException();Comment: naročilo 2 (Line: 119, Nesting: 1)
+             // throw new NotImplementedException();Comment:  (Line: 120, Nesting: 1)
+             // throw new NotImplementedException();If: D133R01.STNAROC2 > 0 (Line: 121, Nesting: 1) If:11 E:0
+             // throw new NotImplementedException();Comment: 121: Če je na nalogu (Line: 121, Nesting: 1)
+             // throw new NotImplementedException();Comment:  (Line: 231, Nesting: 1)
+             // throw new NotImplementedException();Comment: naročilo 3 (Line: 232, Nesting: 1)
+             // throw new NotImplementedException();Comment:  (Line: 233, Nesting: 1)
+             // throw new NotImplementedException();If: D133R01.STNAROC3 > 0 (Line: 234, Nesting: 1) If:11 E:0
+             // throw new NotImplementedException();Comment: 234: Če je na nalogu (Line: 234, Nesting: 1)
+
+        }
+
+        /// <summary>
+        /// 'inq enotame'
+        /// </summary>
+        public static void D133F62()
+        {
+            // SQL Clauses:
+            string sql = $@" SELECT SIFRAEM, KRNAZEM, POLNAZEM, DATURA WHERE SIFRAEM =?SIFRAEM ";
+            // ?SIFRAEM, ?KRNAZEM, ?POLNAZEM, ?DATURA = SQL RESULT
+
+        }
+
+        /// <summary>
+        /// 'inq izdelki'
+        /// </summary>
+        public static void D133F63()
+        {
+            // SQL Clauses:
+            string sql = $@" SELECT IDENT, STTP, DIMENZ40, NAZIZDEL, ZLITINA, STMASIF, STPOSIF, KLASIFI1, KLASIFI2, KLASIFI3, KLASIFI4, KLASIFI5, KLASIFI6, TOLERPL, TOLERMI, METKG, KVMETKG, KOMADKG WHERE IDENT =?IDENT ";
+            // ?IDENT, ?STTP, ?DIMENZ40, ?NAZIZDEL, ?ZLITINA, ?STMASIF, ?STPOSIF, ?KLASIFI1, ?KLASIFI2, ?KLASIFI3, ?KLASIFI4, ?KLASIFI5, ?KLASIFI6, ?TOLERPL, ?TOLERMI, ?METKG, ?KVMETKG, ?KOMADKG = SQL RESULT
+
+        }
+
+        /// <summary>
+        /// 'Mapa za tolerance'
+        /// </summary>
+        public static void D133F64()
+        {
+            // -- BEFORE logic --
+            D133M01.DATUM = EZEDTELC;
+             // throw new NotImplementedException();If: D133W01.FIRMA = '13' (Line: 4, Nesting: 1) If:2 E:4
+             // throw new NotImplementedException();Comment: 4: tlm (Line: 4, Nesting: 1)
+             // throw new NotImplementedException();CallStatement: PREVOD_D133M05() (Line: 9, Nesting: 1)
+
+        }
+
+        /// <summary>
+        /// 'bere max sklop za ident'
+        /// </summary>
+        public static void D133F65()
+        {
+            // SQL Clauses:
+            string sql = $@" SELECT MAX(ID_SKUPPZ_KEM_NML) WHERE IDENT =?IDENT AND
+            STANJE_ZADNJE_SPREMEMBE = 'A' ";
+            // ?ID_SKUPPZ_KEM_NML = SQL RESULT
+
+        }
+
+        /// <summary>
+        /// 'inq joina SIFZAH - št. vzorcev'
+        /// </summary>
+        public static void D133F66()
+        {
+            // SQL Clauses:
+            string sql = $@" SELECT STEVKZ, T1.VERKZ, T1.PE, T1.VERPE, T1.STPOSZAHT, T1.VERPOSZAHT, T2.STEVKZ, T2.AKCIJA, T2.JEZIK, T2.IZPIS, T2.FREKVENCA, T2.SIFZAH WHERE
+            T1.STEVKZ =?STEVKZ AND T1.VERKZ =?VERKZ
+            AND T1.STEVKZ = T2.STEVKZ
+            AND T1.PE = T2.PE
+            AND T1.STPOSZAHT = T2.STPOSZAHT AND T1.VERPOSZAHT = T2.VERPOSZAHT
+            AND T2.SIFZAH IN (53, 59, 60, 61, 64, 65) ";
+            // ?STEVKZ, ?VERKZ, ?PE, ?VERPE, ?STPOSZAHT, ?VERPOSZAHT, ?STEVKZ1, ?AKCIJA, ?JEZIK, ?IZPIS, ?FREKVENCA, ?SIFZAH = SQL RESULT
+
+        }
+
+        /// <summary>
+        /// 'Suma vzorcev - SIFZAH'
+        /// </summary>
+        public static void D133F67()
+        {
+            // -- BEFORE logic --
+             // throw new NotImplementedException();AssignStatement: D133W04.SUMA_VZORCEV = 0 (Line: 2, Nesting: 1)
+             // throw new NotImplementedException();Comment: 2: - ustreznih (Line: 2, Nesting: 1)
+             // throw new NotImplementedException();SetStatement: D133R16 with attributes [EMPTY] (Line: 4, Nesting: 1)
+             // throw new NotImplementedException();Comment: 4: vzorcipoz (Line: 4, Nesting: 1)
+            D133R38.LETODN = D133R01.LETODN;
+            D133R38.DELNAL = D133R01.DELNAL;
+            D133R38.OBDSARZA = D133R06.TRAN_ENOTA;
+             // throw new NotImplementedException();If: D133R26.SIFZAH = 59 OR D133R26.SIFZAH = 60 OR D133R26.SIFZAH = 61 (Line: 9, Nesting: 1) If:4 E:0
+             // throw new NotImplementedException();Comment: zahteva 53 in 64 ********************************** (Line: 26, Nesting: 1)
+             // throw new NotImplementedException();If: D133R26.SIFZAH = 64 OR D133R26.SIFZAH = 53 OR D133R26.SIFZAH = 65 (Line: 27, Nesting: 1) If:8 E:0
+             // throw new NotImplementedException();Comment: 27: 2 ali 4 ali 6 rezultati na saržo in DN (Line: 27, Nesting: 1)
+
+        }
+
+        /// <summary>
+        /// 'inq suma vzorcev za TRE'
+        /// </summary>
+        public static void D133F68()
+        {
+            // SQL Clauses:
+            string sql = $@" SELECT COUNT(*) WHERE
+            LETODN =?LETODN AND DELNAL =?DELNAL AND OBDSARZA =?OBDSARZA
+            AND ZAPSTPREIZ <> 99 AND USTREZA = 'D'
+            AND ID_VRSTA_ODLOCITVE = 5 ";
+            // SUMA_VZORCEV = SQL RESULT
+
+        }
+
+        /// <summary>
+        /// 'suma ustr vzorcev za sarzo'
+        /// </summary>
+        public static void D133F71()
+        {
+            // SQL Clauses:
+            string sql = $@" SELECT COUNT(*) WHERE
+            LETODN =?LETODN AND DELNAL =?DELNAL AND STSARZE =?STSARZE
+            AND ZAPSTPREIZ <> 99 AND USTREZA = 'D'
+            AND ID_VRSTA_ODLOCITVE = 5 ";
+            // SUMA_VZORCEV = SQL RESULT
+
+        }
+
+        /// <summary>
+        /// 'inq delnalog'
+        /// </summary>
+        public static void D133F89()
+        {
+            // SQL Clauses:
+            string sql = $@" SELECT LETODN, DELNAL, VARDELN WHERE
+            LETODN >= YEAR(CURRENT DATE) - 1  AND DELNAL =?DELNAL AND VARDELN = 'A' AND PROGENOT =?PROGENOT
+            UNION ALL
+            (
+            SELECT
+            LETODN, DELNAL, VARDELN
+            FROM
+            SQLUSER.KONCNAL   T1
+            WHERE
+            LETODN >= YEAR(CURRENT DATE) - 1 AND DELNAL =?DELNAL AND VARDELN = 'A' AND PROGENOT =?PROGENOT
+            ) ";
+            // ?LETODN, ?DELNAL, ?VARDELN = SQL RESULT
+
+        }
+
+        /// <summary>
+        /// 'add nosilni nalog'
+        /// </summary>
+        public static void D133F91()
+        {
+            // SQL Clauses:
+            // UNSUPPORTED INSERTCOLNAME
+
+        }
+
+        /// <summary>
+        /// 'Išče nosilni DN'
+        /// </summary>
+        public static void D133F92()
+        {
+            // -- BEFORE logic --
+            D133M01.DELNAL_NOSILNI = 0;
+            D133M01.OPOMBA = " ";
+            D133R39.FIRMA = "01";
+             // throw new NotImplementedException();Comment: 5: 5/2024 (Line: 5, Nesting: 1)
+            D133R39.LETODN = D133R01.LETODN;
+            D133R39.DELNAL = D133R01.DELNAL;
+            D133R39.VARDELN = D133R01.VARDELN;
+             // throw new NotImplementedException();CallStatement: D133FF93() (Line: 9, Nesting: 1)
+             // throw new NotImplementedException();Comment: 9: bere nosilni dn max id (Line: 9, Nesting: 1)
+             // throw new NotImplementedException();If: EZESQCOD = 0 (Line: 10, Nesting: 1) If:4 E:2
+
+        }
+
+        /// <summary>
+        /// 'F7 - nosilni DN'
+        /// </summary>
+        public static void D133F93()
+        {
+            // -- BEFORE logic --
+             // throw new NotImplementedException();AssignStatement: INDIK = 0 (Line: 2, Nesting: 1)
+             // throw new NotImplementedException();If: D133M01.DELNAL_NOSILNI < 1 (Line: 4, Nesting: 1) If:4 E:0
+             // throw new NotImplementedException();If: INDIK = 0 (Line: 16, Nesting: 1) If:6 E:0
+             // throw new NotImplementedException();Comment: zapis ******************** (Line: 39, Nesting: 1)
+             // throw new NotImplementedException();If: INDIK = 0 (Line: 40, Nesting: 1) If:18 E:0
+
+        }
+
+        /// <summary>
+        /// 'update nosilni'
+        /// </summary>
+        public static void D133F94()
+        {
+            // SQL Clauses:
+            string sql = $@" SELECT ID_SKUP_NOSILNI_DELNAL, LETODN, DELNAL, VARDELN, LETODN_NOSILNI, DELNAL_NOSILNI, VARDELN_NOSILNI, DATUM_VNOSA, OPOMBA, STATUS_ZADNJE_SPREMEMBE, OSEBA_ZADNJE_SPREMEMBE, DATURA_ZADNJE_SPREMEMBE WHERE
+            FIRMA =?FIRMA AND
+            LETODN =?LETODN AND DELNAL =?DELNAL AND VARDELN =?VARDELN AND
+            LETODN_NOSILNI =?LETODN_NOSILNI AND
+            DELNAL_NOSILNI =?DELNAL_NOSILNI AND
+            VARDELN_NOSILNI =?VARDELN_NOSILNI ID_SKUP_NOSILNI_DELNAL, LETODN, DELNAL, VARDELN, LETODN_NOSILNI, DELNAL_NOSILNI, VARDELN_NOSILNI, DATUM_VNOSA, OPOMBA, STATUS_ZADNJE_SPREMEMBE, OSEBA_ZADNJE_SPREMEMBE, DATURA_ZADNJE_SPREMEMBE ";
+            // ?ID_SKUP_NOSILNI_DELNAL, ?LETODN, ?DELNAL, ?VARDELN, ?LETODN_NOSILNI, ?DELNAL_NOSILNI, ?VARDELN_NOSILNI, ?DATUM_VNOSA, ?OPOMBA, ?STATUS_ZADNJE_SPREMEMBE, ?OSEBA_ZADNJE_SPREMEMBE, ?DATURA_ZADNJE_SPREMEMBE = SQL RESULT
+
+        }
+
+        /// <summary>
+        /// 'replace nosilni'
+        /// </summary>
+        public static void D133F96()
+        {
+            // SQL Clauses:
+            // UNSUPPORTED SET
+
+        }
+
+        /// <summary>
+        /// 'inq max nosilni dn'
+        /// </summary>
+        public static void D133FF93()
+        {
+            // SQL Clauses:
+            string sql = $@" SELECT MAX(ID_SKUP_NOSILNI_DELNAL) WHERE LETODN =?LETODN AND DELNAL =?DELNAL AND VARDELN =?VARDELN
+            AND FIRMA =?FIRMA ";
+            // MAX_NOSILNI = SQL RESULT
+
+        }
+
+        /// <summary>
+        /// 'inq nosilni nalog'
+        /// </summary>
+        public static void D133FF94()
+        {
+            // SQL Clauses:
+            string sql = $@" SELECT ID_SKUP_NOSILNI_DELNAL, LETODN, DELNAL, VARDELN, LETODN_NOSILNI, DELNAL_NOSILNI, VARDELN_NOSILNI, DATUM_VNOSA, OPOMBA, STATUS_ZADNJE_SPREMEMBE, OSEBA_ZADNJE_SPREMEMBE, DATURA_ZADNJE_SPREMEMBE WHERE
+            ID_SKUP_NOSILNI_DELNAL =?ID_SKUP_NOSILNI_DELNAL ";
+            // ?ID_SKUP_NOSILNI_DELNAL, ?LETODN, ?DELNAL, ?VARDELN, ?LETODN_NOSILNI, ?DELNAL_NOSILNI, ?VARDELN_NOSILNI, ?DATUM_VNOSA, ?OPOMBA, ?STATUS_ZADNJE_SPREMEMBE, ?OSEBA_ZADNJE_SPREMEMBE, ?DATURA_ZADNJE_SPREMEMBE = SQL RESULT
+
+        }
+
+        /// <summary>
+        /// 'glavni proces pregleda'
+        /// </summary>
+        public static void D133P01()
+        {
+            // -- BEFORE logic --
+             // throw new NotImplementedException();Comment: To je glavni proces aplikacije D133a - Priprava DN     * (Line: 2, Nesting: 1)
+             // throw new NotImplementedException();Comment: * (Line: 3, Nesting: 1)
+             // throw new NotImplementedException();Comment: - postavijo se vrednosti standardnim sist. spremenlj. * (Line: 4, Nesting: 1)
+             // throw new NotImplementedException();Comment: in v skupni WS se postavi ime aplikacije            * (Line: 5, Nesting: 1)
+             // throw new NotImplementedException();Comment: * (Line: 6, Nesting: 1)
+             // throw new NotImplementedException();Comment: - glavna zanka aplikacije :                           * (Line: 7, Nesting: 1)
+             // throw new NotImplementedException();Comment: - prikaz mape za izbiro kriterijev - D133P02 za mapo* (Line: 8, Nesting: 1)
+             // throw new NotImplementedException();Comment: D133M01                                           * (Line: 9, Nesting: 1)
+             // throw new NotImplementedException();Comment: - test na tipke F3 in PA2                           * (Line: 10, Nesting: 1)
+             // throw new NotImplementedException();Comment: - test na tipko F6 in brisanje mape D133M01         * (Line: 11, Nesting: 1)
+             // throw new NotImplementedException();Comment: * (Line: 12, Nesting: 1)
+             // throw new NotImplementedException();Comment: - test na tipko F4 - detalj 2                       * (Line: 13, Nesting: 1)
+             // throw new NotImplementedException();Comment: * (Line: 14, Nesting: 1)
+             // throw new NotImplementedException();Comment: * (Line: 15, Nesting: 1)
+             // throw new NotImplementedException();Comment:  (Line: 16, Nesting: 1)
+            EZEFEC = 1;
+            EZESQISL = 1;
+            D133W04.SISTEM = EZESYS;
+             // throw new NotImplementedException();Comment: 21: preverja, če je v testu (Line: 21, Nesting: 1)
+             // throw new NotImplementedException();If: D133W04.SISTEM = 'ITF' AND D133W01.ZAPRIIM = ' ' (Line: 22, Nesting: 1) If:5 E:0
+             // throw new NotImplementedException();Comment: 22: dela v testu (Line: 22, Nesting: 1)
+             // throw new NotImplementedException();If: D133W01.FIRMA = '13' (Line: 29, Nesting: 1) If:1 E:3
+             // throw new NotImplementedException();Comment: 29: tlm - 6/2016 (Line: 29, Nesting: 1)
+             // throw new NotImplementedException();Comment:  (Line: 34, Nesting: 1)
+            D133W01.APPL[STEVAPPL] = "D133A";
+            D133M01.REFMPP = D133W01.ZAPRIIM;
+             // throw new NotImplementedException();Comment: 39: prenos na mapo (Line: 39, Nesting: 1)
+             // throw new NotImplementedException();Comment: -----Če je priŠel iz DL11A potem je D133W01.DELNAL > 0----- (Line: 41, Nesting: 1)
+             // throw new NotImplementedException();If: D133W01.DELNAL > 0 (Line: 42, Nesting: 1) If:8 E:4
+             // throw new NotImplementedException();Comment: 42: je iz DN11A ali DN80A-detalj (Line: 42, Nesting: 1)
+            FLOK = "DELAM";
+             // throw new NotImplementedException();Comment: 56: indikator zanke za prikaz mape (Line: 56, Nesting: 1)
+             // throw new NotImplementedException();Comment: ---------glavna zanka-------------------------------- (Line: 57, Nesting: 1)
+             // throw new NotImplementedException();WhileStatement: FLOK EQ 'DELAM' (Line: 58, Nesting: 1) with body lines: [57]
+             // throw new NotImplementedException();Comment: 58: dokler je pogoj (Line: 58, Nesting: 1)
+
+        }
+
+        /// <summary>
+        /// 'mapa D133M01'
+        /// </summary>
+        public static void D133P02()
+        {
+            // -- BEFORE logic --
+            D133M01.DATUM = EZEDTELC;
+             // throw new NotImplementedException();If: D133W01.FIRMA = '13' (Line: 4, Nesting: 1) If:2 E:4
+             // throw new NotImplementedException();Comment: 4: tlm (Line: 4, Nesting: 1)
+             // throw new NotImplementedException();CallStatement: PREVOD_D133M01() (Line: 9, Nesting: 1)
+
+        }
+
+        /// <summary>
+        /// 'Čitanje podatkov o nalogu'
+        /// </summary>
+        public static void D133P03()
+        {
+            // -- BEFORE logic --
+             // throw new NotImplementedException();Comment: Čitanje podatkov o nalogu !!!!!!! (Line: 2, Nesting: 1)
+             // throw new NotImplementedException();Comment: ------------------------------------------------------ (Line: 3, Nesting: 1)
+             // throw new NotImplementedException();CallStatement: D133P04() (Line: 5, Nesting: 1)
+             // throw new NotImplementedException();Comment: 5: INQUIRY v t.DELNALOG (Line: 5, Nesting: 1)
+             // throw new NotImplementedException();If: D133R01 IS ERR (Line: 7, Nesting: 1) If:4 E:75
+             // throw new NotImplementedException();Comment: 7: napaka (Line: 7, Nesting: 1)
+
+        }
+
+        /// <summary>
+        /// 'INQUIRY v t.DELNALOG'
+        /// </summary>
+        public static void D133P04()
+        {
+            // SQL Clauses:
+            string sql = $@" SELECT DELNAL, VARDELN, DELNALZ, VARDELNZ, KOLDELNZ, DELNALK, VARDELNK, KOLDELNK, STNAROC1, POZNARO1, STEVPOG1, NARKOL1, STNAROC2, POZNARO2, STEVPOG2, NARKOL2, STNAROC3, POZNARO3, STEVPOG3, NARKOL3, STPREJEM, KRNAZ, DNKOLIC, DNKOMAD, DNPF, IDENT, KLASIFI1, KLASIFI2, KLASIFI3, KLASIFI4, KLASIFI5, KLASIFI6, ZLITINA, STMASIF, STPOSIF, NAZIZDEL, DIMENZ40, TOLERPL, TOLERMI, STANDID, SIGMABSP, SIGMABZG, SIG02SP, SIG02ZG, HBSPOD, HBZGOR, DELTATIP, DELVRZG, DELVRSP, POSZAHT1, POSZAHT2, IDENTSUR, NAZVHOD, DIMENZVH, STMAVHOD, STPOVHOD, OPISVIS, INDIKVI, POTSURKG, POTSURKM, REZSURKG, REZSURKM, POTREBKG, POTREBKM, POTREBTE, LANSIRKG, LANSIRKM, RAZLIKG, RAZLIKOM, IZRAVNKG, STANJEKG, IZDKOL, ODPADKOL, MOTNJKOL, VISEKG, PROGENOT, ZACETNTE, KONCNATE, REFMPP, TERMINER, STATUSDN, DATSTAT0, DATSTAT1, DATSTAT2, DATSTAT3, DATSTAT4, DATSTAT5, DATSTAT6, DATURA, SPREMTEH, STEVKZ, VERKZ, KZORG, LETODN, STIZDAJ, STANKEMS, STANMEHL, STANDTOL, IZDKOL1, IZDKOL2, IZDKOL3, ST_TRE, ORGEN, Q_IND, UMAX, IEMIN WHERE
+            DELNAL=?DELNAL AND
+            VARDELN=?VARDELN
+            /*
+            /*ORDER BY
+            /*<add ORDER BY  statements here>  ";
+            // ?DELNAL, ?VARDELN, ?DELNALZ, ?VARDELNZ, ?KOLDELNZ, ?DELNALK, ?VARDELNK, ?KOLDELNK, ?STNAROC1, ?POZNARO1, ?STEVPOG1, ?NARKOL1, ?STNAROC2, ?POZNARO2, ?STEVPOG2, ?NARKOL2, ?STNAROC3, ?POZNARO3, ?STEVPOG3, ?NARKOL3, ?STPREJEM, ?KRNAZ, ?DNKOLIC, ?DNKOMAD, ?DNPF, ?IDENT, ?KLASIFI1, ?KLASIFI2, ?KLASIFI3, ?KLASIFI4, ?KLASIFI5, ?KLASIFI6, ?ZLITINA, ?STMASIF, ?STPOSIF, ?NAZIZDEL, ?DIMENZ40, ?TOLERPL, ?TOLERMI, ?STANDID, ?SIGMABSP, ?SIGMABZG, ?SIG02SP, ?SIG02ZG, ?HBSPOD, ?HBZGOR, ?DELTATIP, ?DELVRZG, ?DELVRSP, ?POSZAHT1, ?POSZAHT2, ?IDENTSUR, ?NAZVHOD, ?DIMENZVH, ?STMAVHOD, ?STPOVHOD, ?OPISVIS, ?INDIKVI, ?POTSURKG, ?POTSURKM, ?REZSURKG, ?REZSURKM, ?POTREBKG, ?POTREBKM, ?POTREBTE, ?LANSIRKG, ?LANSIRKM, ?RAZLIKG, ?RAZLIKOM, ?IZRAVNKG, ?STANJEKG, ?IZDKOL, ?ODPADKOL, ?MOTNJKOL, ?VISEKG, ?PROGENOT, ?ZACETNTE, ?KONCNATE, ?REFMPP, ?TERMINER, ?STATUSDN, ?DATSTAT0, ?DATSTAT1, ?DATSTAT2, ?DATSTAT3, ?DATSTAT4, ?DATSTAT5, ?DATSTAT6, ?DATURA, ?SPREMTEH, ?STEVKZ, ?VERKZ, ?KZORG, ?LETODN, ?STIZDAJ, ?STANKEMS, ?STANMEHL, ?STANDTOL, ?IZDKOL1, ?IZDKOL2, ?IZDKOL3, ?ST_TRE, ?ORGEN, ?Q_IND, ?UMAX, ?IEMIN = SQL RESULT
+
+        }
+
+        /// <summary>
+        /// 'mapa D133M02'
+        /// </summary>
+        public static void D133P05()
+        {
+            // -- BEFORE logic --
+             // throw new NotImplementedException();If: D133W01.FIRMA = '13' (Line: 3, Nesting: 1) If:2 E:4
+             // throw new NotImplementedException();Comment: 3: tlm (Line: 3, Nesting: 1)
+             // throw new NotImplementedException();CallStatement: PREVOD_D133M02() (Line: 8, Nesting: 1)
+
+        }
+
+        /// <summary>
+        /// 'INQUIRY v t.TT_NAROPOZI'
+        /// </summary>
+        public static void D133P06()
+        {
+            // SQL Clauses:
+            string sql = $@" SELECT STNAROC, POZNARO, STPREJEM, NAMEN, POREKLO, DIMENZOR, LETONA, KONCNATE, FIRMA, NAROKOL, EM, NARKOLPR, TOL_KOL_PL, TOL_KOL_MI, EM_TOL_KOL WHERE
+            FIRMA =?FIRMA AND
+            LETONA >= YEAR(CURRENT DATE) - 2 AND
+            STNAROC=?STNAROC AND
+            POZNARO=?POZNARO ";
+            // ?STNAROC, ?POZNARO, ?STPREJEM, ?NAMEN, ?POREKLO, ?DIMENZOR, ?LETONA, ?KONCNATE, ?FIRMA, ?NAROKOL, ?EM, ?NARKOLPR, ?TOL_KOL_PL, ?TOL_KOL_MI, ?EM_TOL_KOL = SQL RESULT
+
+        }
+
+        /// <summary>
+        /// 'INQUIRY v t.KOMITENT'
+        /// </summary>
+        public static void D133P07()
+        {
+            // INQUIRY 'INQUIRY v t.KOMITENT'
+            // in D133R03
+
+        }
+
+        /// <summary>
+        /// 'SETINQ v t.KTPROIZV'
+        /// </summary>
+        public static void D133P08()
+        {
+            // SQL Clauses:
+            string sql = $@" SELECT DELNAL, VARDELN, STEVSTRO, STEVILOP, NAZSTRKR, DATSPRE, IZDKOL, IZDKOM, DELVNOS, DELIZDA, PROGENOT, PFO, PFDOOPER, DATURA WHERE
+            DELNAL=?DELNAL and vardeln=?VARDELN order by stevilop ";
+            // ?DELNAL, ?VARDELN, ?STEVSTRO, ?STEVILOP, ?NAZSTRKR,
+            ?DATSPRE, ?IZDKOL, ?IZDKOM, ?DELVNOS, ?DELIZDA,
+            ?PROGENOT, ?PFO, ?PFDOOPER, ?DATURA = SQL RESULT
+
+        }
+
+        /// <summary>
+        /// 'SCAN v t.KTPROIZV'
+        /// </summary>
+        public static void D133P09()
+        {
+            // SCAN 'SCAN v t.KTPROIZV'
+            // in D133R04
+
+        }
+
+        /// <summary>
+        /// 'SETINQ v t.MOTNJE_GL'
+        /// </summary>
+        public static void D133P10()
+        {
+            // SQL Clauses:
+            string sql = $@" SELECT DATUM, SIFNAP, DELNAL, VARDELN, IDENT, NAZIZDEL, ZLITINA, STMASIF, STPOSIF, KLASIFI1, KLASIFI2, KLASIFI3, KLASIFI4, KLASIFI5, KLASIFI6, DIMENZ40, KOLICINA, OPISMOT, KTUGOT, KTNAST, NAZIVUGO, NAZIVNAS, PEUGOT, PENAST, KOLVISEK, KOLODPAD, POGPRE, OSEBA, POTRDIL, DATURA WHERE
+            DELNAL=?DELNAL AND  /*-----VARDELN=:VARDELN AND
+            DATUM >= ?DATUM   /* da ne kaže starih motenj ORDER BY  1 ";
+            // ?DATUM, ?SIFNAP, ?DELNAL, ?VARDELN, ?IDENT, ?NAZIZDEL, ?ZLITINA, ?STMASIF, ?STPOSIF, ?KLASIFI1, ?KLASIFI2, ?KLASIFI3, ?KLASIFI4, ?KLASIFI5, ?KLASIFI6, ?DIMENZ40, ?KOLICINA, ?OPISMOT, ?KTUGOT, ?KTNAST, ?NAZIVUGO, ?NAZIVNAS, ?PEUGOT, ?PENAST, ?KOLVISEK, ?KOLODPAD, ?POGPRE, ?OSEBA, ?POTRDIL, ?DATURA = SQL RESULT
+
+        }
+
+        /// <summary>
+        /// 'SETINQ v t.MOTNJE'
+        /// </summary>
+        public static void D133P101()
+        {
+            // SQL Clauses:
+            string sql = $@" SELECT SIFNAP, DELNAL, VARDELN, IDENT, NAZIZDEL, ZLITINA, STMASIF, STPOSIF, KLASIFI1, KLASIFI2, KLASIFI3, KLASIFI4, KLASIFI5, KLASIFI6, DIMENZ40, KOLICINA, OPISMOT, KTUGOT, KTNAST, NAZIVUGO, NAZIVNAS, PEUGOT, PENAST, KOLVISEK, KOLODPAD, PLANER, POTRDIL, DATUMPR, POGPRE WHERE
+            DELNAL=?DELNAL AND /*----VARDELN=:VARDELN AND
+            DATUMPR >= ?DATUMPR   /* da ne kaže starih motenj ORDER BY DATUMPR ";
+            // ?SIFNAP, ?DELNAL, ?VARDELN, ?IDENT, ?NAZIZDEL, ?ZLITINA, ?STMASIF, ?STPOSIF, ?KLASIFI1, ?KLASIFI2, ?KLASIFI3, ?KLASIFI4, ?KLASIFI5, ?KLASIFI6, ?DIMENZ40, ?KOLICINA, ?OPISMOT, ?KTUGOT, ?KTNAST, ?NAZIVUGO, ?NAZIVNAS, ?PEUGOT, ?PENAST, ?KOLVISEK, ?KOLODPAD, ?PLANER, ?POTRDIL, ?DATUMPR, ?POGPRE = SQL RESULT
+
+        }
+
+        /// <summary>
+        /// 'SCAN v t.MOTNJE_GL'
+        /// </summary>
+        public static void D133P11()
+        {
+            // SCAN 'SCAN v t.MOTNJE_GL'
+            // in D133R05
+
+        }
+
+        /// <summary>
+        /// 'SCAN v t.MOTNJE'
+        /// </summary>
+        public static void D133P111()
+        {
+            // SCAN 'SCAN v t.MOTNJE'
+            // in D133R101
+
+        }
+
+        /// <summary>
+        /// 'INQUIRY v t.VZORCIPOZ - D'
+        /// </summary>
+        public static void D133P12()
+        {
+            // SQL Clauses:
+            string sql = $@" SELECT SERIJA, LETO, OBDSARZA, ZAPSTSERIJA, ZAPSTPREIZ, STSARZE, DELNAL, PROGENOT, FIRMA, OBLIKA, STATUS, VPISAL, DATURA, USTREZA, NATTRD, DOGNAPT, RAZTEZ, ZOZANJE, ERICHSEN, USESENJE, UPOGPRE, TRDOTA, IDENT, TEHNOLOG, DAT_RESITVE, LETODN WHERE
+            OBDSARZA = ?OBDSARZA
+            AND STSARZE = ?STSARZE
+            AND DELNAL = ?DELNAL AND USTREZA = 'D'
+            AND (LETO >= (YEAR(CURRENT DATE) - 1) )       /*------- TEKOČE LETO-------
+            AND LETODN =?LETODN
+            /*
+            /*ORDER BY
+            /*<add ORDER BY  statements here>  ";
+            // ?SERIJA, ?LETO, ?OBDSARZA, ?ZAPSTSERIJA, ?ZAPSTPREIZ, ?STSARZE, ?DELNAL, ?PROGENOT, ?FIRMA, ?OBLIKA, ?STATUS, ?VPISAL, ?DATURA, ?USTREZA, ?NATTRD, ?DOGNAPT, ?RAZTEZ, ?ZOZANJE, ?ERICHSEN, ?USESENJE, ?UPOGPRE, ?TRDOTA, ?IDENT, ?TEHNOLOG, ?DAT_RESITVE, ?LETODN = SQL RESULT
+
+        }
+
+        /// <summary>
+        /// 'INQUIRY v t.VZORCIPOZ - N'
+        /// </summary>
+        public static void D133P13()
+        {
+            // SQL Clauses:
+            string sql = $@" SELECT SERIJA, LETO, OBDSARZA, ZAPSTSERIJA, ZAPSTPREIZ, STSARZE, DELNAL, PROGENOT, FIRMA, OBLIKA, STATUS, VPISAL, DATURA, USTREZA, NATTRD, DOGNAPT, RAZTEZ, ZOZANJE, ERICHSEN, USESENJE, UPOGPRE, TRDOTA, IDENT, TEHNOLOG, DAT_RESITVE, LETODN WHERE
+            OBDSARZA = ?OBDSARZA
+            AND STSARZE = ?STSARZE
+            AND DELNAL = ?DELNAL AND USTREZA = 'N'
+            AND (LETO >= (YEAR(CURRENT DATE) - 1) )       /*------- TEKOČE LETO-------
+            AND LETODN =?LETODN
+            /*
+            /*ORDER BY
+            /*<add ORDER BY  statements here>  ";
+            // ?SERIJA, ?LETO, ?OBDSARZA, ?ZAPSTSERIJA, ?ZAPSTPREIZ, ?STSARZE, ?DELNAL, ?PROGENOT, ?FIRMA, ?OBLIKA, ?STATUS, ?VPISAL, ?DATURA, ?USTREZA, ?NATTRD, ?DOGNAPT, ?RAZTEZ, ?ZOZANJE, ?ERICHSEN, ?USESENJE, ?UPOGPRE, ?TRDOTA, ?IDENT, ?TEHNOLOG, ?DAT_RESITVE, ?LETODN = SQL RESULT
+
+        }
+
+        /// <summary>
+        /// 'INQUIRY v t.VZORCIPOZ <> N,D'
+        /// </summary>
+        public static void D133P14()
+        {
+            // SQL Clauses:
+            string sql = $@" SELECT SERIJA, LETO, OBDSARZA, ZAPSTSERIJA, ZAPSTPREIZ, STSARZE, DELNAL, PROGENOT, FIRMA, OBLIKA, STATUS, VPISAL, DATURA, USTREZA, NATTRD, DOGNAPT, RAZTEZ, ZOZANJE, ERICHSEN, USESENJE, UPOGPRE, TRDOTA, IDENT, TEHNOLOG, DAT_RESITVE, LETODN WHERE
+            OBDSARZA = ?OBDSARZA
+            AND STSARZE = ?STSARZE
+            AND DELNAL = ?DELNAL  AND USTREZA NOT IN ('D', 'N')
+            AND (LETO >= (YEAR(CURRENT DATE) - 1))       /*------- TEKOČE LETO-------
+            AND LETODN =?LETODN
+            /*
+            /*ORDER BY
+            /*<add ORDER BY  statements here>  ";
+            // ?SERIJA, ?LETO, ?OBDSARZA, ?ZAPSTSERIJA, ?ZAPSTPREIZ, ?STSARZE, ?DELNAL, ?PROGENOT, ?FIRMA, ?OBLIKA, ?STATUS, ?VPISAL, ?DATURA, ?USTREZA, ?NATTRD, ?DOGNAPT, ?RAZTEZ, ?ZOZANJE, ?ERICHSEN, ?USESENJE, ?UPOGPRE, ?TRDOTA, ?IDENT, ?TEHNOLOG, ?DAT_RESITVE, ?LETODN = SQL RESULT
+
+        }
+
+        /// <summary>
+        /// 'INQUIRY v t.FT_REGALNO'
+        /// </summary>
+        public static void D133P16()
+        {
+            // INQUIRY 'INQUIRY v t.FT_REGALNO'
+            // in D133R20
+
+        }
+
+        /// <summary>
+        /// 'prikaz TRE'
+        /// </summary>
+        public static void D133P20()
+        {
+            // -- BEFORE logic --
+             // throw new NotImplementedException();If: D133W01.FIRMA = '13' (Line: 2, Nesting: 1) If:2 E:4
+             // throw new NotImplementedException();Comment: 2: tlm (Line: 2, Nesting: 1)
+             // throw new NotImplementedException();CallStatement: PREVOD_D133M04() (Line: 7, Nesting: 1)
+
+        }
+
+        /// <summary>
+        /// 'prikaz motenj'
+        /// </summary>
+        public static void D133P21()
+        {
+            // -- BEFORE logic --
+             // throw new NotImplementedException();SetStatement: D133M03 with attributes [CLEAR] (Line: 2, Nesting: 1)
+             // throw new NotImplementedException();Comment: 2: briše (Line: 2, Nesting: 1)
+             // throw new NotImplementedException();AssignStatement: D133R10 = D133R01 (Line: 4, Nesting: 1)
+             // throw new NotImplementedException();Comment: 4: v slog TRE (Line: 4, Nesting: 1)
+             // throw new NotImplementedException();CallStatement: D133P32() (Line: 6, Nesting: 1)
+             // throw new NotImplementedException();Comment: 6: SETINQ v t.MOTNJE_GL (Line: 6, Nesting: 1)
+             // throw new NotImplementedException();CallStatement: D133P33() (Line: 8, Nesting: 1)
+             // throw new NotImplementedException();Comment: 8: SCAN v t.MOTNJE_GL (Line: 8, Nesting: 1)
+             // throw new NotImplementedException();AssignStatement: CTRLINIJ = 1 (Line: 10, Nesting: 1)
+             // throw new NotImplementedException();WhileStatement: EZESQCOD = 0 AND CTRLINIJ <= 22 (Line: 11, Nesting: 1) with body lines: [10]
+             // throw new NotImplementedException();If: D133R01.MOTNJKOL > 0 (Line: 23, Nesting: 1) If:9 E:0
+             // throw new NotImplementedException();Comment: 23: Čita le Če je bila motnja (Line: 23, Nesting: 1)
+
+        }
+
+        /// <summary>
+        /// 'SETINQ v t.KT_TRANSE'
+        /// </summary>
+        public static void D133P22()
+        {
+            // SQL Clauses:
+            string sql = $@" SELECT DELNAL, VARDELN, STEVSTRO, STEVILOP, SARZA, TRAN_ENOTA, DATSPRE, IZDKOL, IZDKOM, DELVNOS, DELIZDA, PROGENOT, DATURA, KOMENTAR, VZOREC, STATUSD, SARZA_DOD, ZAPSTEV WHERE DELNAL=?DELNAL AND
+            VARDELN = ?VARDELN AND
+            STEVILOP = ?STEVILOP AND
+            STEVSTRO =?STEVSTRO
+            AND IZDKOL > 0 ORDER BY
+            6 ASC ";
+            // ?DELNAL, ?VARDELN, ?STEVSTRO, ?STEVILOP, ?SARZA, ?TRAN_ENOTA, ?DATSPRE, ?IZDKOL, ?IZDKOM, ?DELVNOS, ?DELIZDA, ?PROGENOT, ?DATURA, ?KOMENTAR, ?VZOREC, ?STATUSD, ?SARZA_DOD, ?ZAPSTEV = SQL RESULT
+
+        }
+
+        /// <summary>
+        /// 'SETINQ v t.KT_TRANSE'
+        /// </summary>
+        public static void D133P221()
+        {
+            // SQL Clauses:
+            string sql = $@" SELECT DELNAL, VARDELN, STEVSTRO, STEVILOP, SARZA, TRAN_ENOTA, DATSPRE, IZDKOL, IZDKOM, DELVNOS, DELIZDA, PROGENOT, DATURA, KOMENTAR, VZOREC, SARZA_DOD, ZAPSTEV WHERE DELNAL=?DELNAL AND
+            VARDELN = ?VARDELN AND
+            STEVILOP = ?STEVILOP AND
+            STEVSTRO =?STEVSTRO AND
+            TRAN_ENOTA >?TRAN_ENOTA
+            AND IZDKOL > 0 ORDER BY
+            6 ASC ";
+            // ?DELNAL, ?VARDELN, ?STEVSTRO, ?STEVILOP, ?SARZA, ?TRAN_ENOTA, ?DATSPRE, ?IZDKOL, ?IZDKOM, ?DELVNOS, ?DELIZDA, ?PROGENOT, ?DATURA, ?KOMENTAR, ?VZOREC, ?SARZA_DOD, ?ZAPSTEV = SQL RESULT
+
+        }
+
+        /// <summary>
+        /// 'SCAN v t.KT_TRANSE'
+        /// </summary>
+        public static void D133P23()
+        {
+            // SCAN 'SCAN v t.KT_TRANSE'
+            // in D133R06
+
+        }
+
+        /// <summary>
+        /// 'SETINQ v t.MOTNJE_GL'
+        /// </summary>
+        public static void D133P32()
+        {
+            // SQL Clauses:
+            string sql = $@" SELECT DATUM, SIFNAP, DELNAL, VARDELN, IDENT, NAZIZDEL, ZLITINA, STMASIF, STPOSIF, KLASIFI1, KLASIFI2, KLASIFI3, KLASIFI4, KLASIFI5, KLASIFI6, DIMENZ40, KOLICINA, OPISMOT, KTUGOT, KTNAST, NAZIVUGO, NAZIVNAS, PEUGOT, PENAST, KOLVISEK, KOLODPAD, POGPRE, OSEBA, POTRDIL, DATURA WHERE
+            DELNAL = ?DELNAL AND
+            (DATE(DATUM) >= CURRENT DATE - 365 DAYS) ORDER BY
+            1   ASC ";
+            // ?DATUM, ?SIFNAP, ?DELNAL, ?VARDELN, ?IDENT, ?NAZIZDEL, ?ZLITINA, ?STMASIF, ?STPOSIF, ?KLASIFI1, ?KLASIFI2, ?KLASIFI3, ?KLASIFI4, ?KLASIFI5, ?KLASIFI6, ?DIMENZ40, ?KOLICINA, ?OPISMOT, ?KTUGOT, ?KTNAST, ?NAZIVUGO, ?NAZIVNAS, ?PEUGOT, ?PENAST, ?KOLVISEK, ?KOLODPAD, ?POGPRE, ?OSEBA, ?POTRDIL, ?DATURA = SQL RESULT
+
+        }
+
+        /// <summary>
+        /// 'SCAN v t.MOTNJE_GL'
+        /// </summary>
+        public static void D133P33()
+        {
+            // SCAN 'SCAN v t.MOTNJE_GL'
+            // in D133R10
+
+        }
+
+        /// <summary>
+        /// 'inq DNKONTHOP'
+        /// </summary>
+        public static void D133P34()
+        {
+            // SQL Clauses:
+            string sql = $@" SELECT DELNAL /*
+            WHERE DELNAL =?DELNAL AND VARDELN =?VARDELN AND STEVSTRO =?STEVSTRO
+            AND STEVKZ =?STEVKZ AND VERKZ =?VERKZ
+            /*
+            /*ORDER BY
+            /*<add ORDER BY  statements here>  ";
+            // ?DELNAL = SQL RESULT
+
+        }
+
+        /// <summary>
+        /// 'Za sporoČila na ekran'
+        /// </summary>
+        public static void D133P99()
+        {
+            // -- BEFORE logic --
+             // throw new NotImplementedException();CallStatement: ER99P01() (Line: 2, Nesting: 1)
+             // throw new NotImplementedException();Comment: 2: dobi kodo napake (Line: 2, Nesting: 1)
+            D133M01.EZEMSG = MSG78;
+
+        }
+
+        /// <summary>
+        /// 'Rutina iz polja DELNAL'
+        /// </summary>
+        public static void D133S01()
+        {
+            // -- BEFORE logic --
+             // throw new NotImplementedException();Comment: Rutina iz polja DELNAL, ki gre v čitanje podatkov ali (Line: 2, Nesting: 1)
+             // throw new NotImplementedException();Comment: preskoČi v polje VARDELN, Če polje nima vsebine !!!! (Line: 3, Nesting: 1)
+             // throw new NotImplementedException();Comment: ------------------------------------------------------ (Line: 4, Nesting: 1)
+             // throw new NotImplementedException();If: D133M01.DELNAL > 0 (Line: 5, Nesting: 1) If:2 E:5
+             // throw new NotImplementedException();Comment: 5: pozitivno Število (Line: 5, Nesting: 1)
+
+        }
+
+        /// <summary>
+        /// 'Rutina iz polja VARDELN'
+        /// </summary>
+        public static void D133S02()
+        {
+            // -- BEFORE logic --
+             // throw new NotImplementedException();Comment: Rutina iz polja VARDELN, kjer mora biti vsebina in to je (Line: 2, Nesting: 1)
+             // throw new NotImplementedException();Comment: tudi pogoj za Čitanje podatkov o nalogu !!!! (Line: 3, Nesting: 1)
+             // throw new NotImplementedException();Comment: -------------------------------------------------------- (Line: 4, Nesting: 1)
+             // throw new NotImplementedException();If: D133M01.VARDELN NE ' ' AND D133M01.DELNAL > 0 (Line: 5, Nesting: 1) If:4 E:5
+             // throw new NotImplementedException();Comment: 5: ni blank; 6: Vpisan nalog (Line: 5, Nesting: 1)
+
+        }
+
+        /// <summary>
+        /// 'Za sporoČila o napakah na ekr.'
+        /// </summary>
+        public static void ER99P01()
+        {
+            // -- BEFORE logic --
+             // throw new NotImplementedException();Comment: To je proces, ki ga v aplikacijah vključimo v primeru napake (Line: 2, Nesting: 1)
+             // throw new NotImplementedException();Comment: in sicer je za to potrebno: (Line: 3, Nesting: 1)
+             // throw new NotImplementedException();Comment: - imeti v WS polja : (Line: 4, Nesting: 1)
+             // throw new NotImplementedException();Comment: - MSG78  cha/78 - celo sporoČilo, ki gre v EZEMSG (Line: 5, Nesting: 1)
+             // throw new NotImplementedException();Comment: - MSG64  cha/64 - za tekstualni del sporoČila (Line: 6, Nesting: 1)
+             // throw new NotImplementedException();Comment: - MSGCOD cha/11 - tekst EZESQCOD: - ali SQLCODE: - (Line: 7, Nesting: 1)
+             // throw new NotImplementedException();Comment: oz.   EZESQCOD: + ali SQLCODE: + (Line: 8, Nesting: 1)
+             // throw new NotImplementedException();Comment: - MSG3   num/3  - Številka napake (Line: 9, Nesting: 1)
+             // throw new NotImplementedException();Comment: Ko pride do napake : MOVE 'Text napake ...' TO WS.MSG64 (Line: 10, Nesting: 1)
+             // throw new NotImplementedException();Comment: in naredimo perform v ta proces, kjer sporoČilo dopolnimo (Line: 11, Nesting: 1)
+             // throw new NotImplementedException();Comment: s kodo in ga tu poŠljemo na ekran ali v procesu od koder (Line: 12, Nesting: 1)
+             // throw new NotImplementedException();Comment: smo sem priŠli. (Line: 13, Nesting: 1)
+             // throw new NotImplementedException();Comment: PriporoČljivo je v sporoČilo vkljuČiti tudi naziv tabele (Line: 14, Nesting: 1)
+             // throw new NotImplementedException();Comment: kjer je napaka nastala! (Line: 15, Nesting: 1)
+             // throw new NotImplementedException();Comment: ------------------------------------------------------------ (Line: 16, Nesting: 1)
+             // throw new NotImplementedException();If: EZESQCOD < 0 (Line: 17, Nesting: 1) If:2 E:5
+             // throw new NotImplementedException();Comment: 17: negativna napaka (Line: 17, Nesting: 1)
+
+        }
+
+        public static void PREVOD_D133M01()
+        {
+            // -- BEFORE logic --
+             // throw new NotImplementedException();If: D133W04.ID_JEZIK = 1 (Line: 2, Nesting: 1) If:22 E:0
+             // throw new NotImplementedException();Comment: 2: slo (Line: 2, Nesting: 1)
+             // throw new NotImplementedException();If: D133W04.ID_JEZIK = 5 (Line: 28, Nesting: 1) If:22 E:0
+             // throw new NotImplementedException();Comment: 28: hrv (Line: 28, Nesting: 1)
+
+        }
+
+        public static void PREVOD_D133M02()
+        {
+            // -- BEFORE logic --
+             // throw new NotImplementedException();If: D133W04.ID_JEZIK = 1 (Line: 2, Nesting: 1) If:12 E:0
+             // throw new NotImplementedException();Comment: 2: slo (Line: 2, Nesting: 1)
+             // throw new NotImplementedException();If: D133W04.ID_JEZIK = 5 (Line: 20, Nesting: 1) If:12 E:0
+             // throw new NotImplementedException();Comment: 20: hrv (Line: 20, Nesting: 1)
+
+        }
+
+        public static void PREVOD_D133M04()
+        {
+            // -- BEFORE logic --
+             // throw new NotImplementedException();If: D133W04.ID_JEZIK = 1 (Line: 2, Nesting: 1) If:12 E:0
+             // throw new NotImplementedException();Comment: 2: slo (Line: 2, Nesting: 1)
+             // throw new NotImplementedException();If: D133W04.ID_JEZIK = 5 (Line: 17, Nesting: 1) If:12 E:0
+             // throw new NotImplementedException();Comment: 17: hrv (Line: 17, Nesting: 1)
+
+        }
+
+        public static void PREVOD_D133M05()
+        {
+            // -- BEFORE logic --
+             // throw new NotImplementedException();If: D133W04.ID_JEZIK = 1 (Line: 2, Nesting: 1) If:15 E:0
+             // throw new NotImplementedException();Comment: 2: slo (Line: 2, Nesting: 1)
+             // throw new NotImplementedException();If: D133W04.ID_JEZIK = 5 (Line: 20, Nesting: 1) If:15 E:0
+             // throw new NotImplementedException();Comment: 20: hrv (Line: 20, Nesting: 1)
+
+        }
+
+    }
+
 
     public static class Program
     {

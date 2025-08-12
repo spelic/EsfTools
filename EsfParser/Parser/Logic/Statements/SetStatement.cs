@@ -100,6 +100,15 @@ namespace EsfParser.Parser.Logic.Statements
                         sb.AppendLine($"{indent}{tgt}Tag.Defined();");
                         break;
 
+                    case "RED" when isMapField:                        // <<< NEW
+                        sb.AppendLine($"{indent}{tgt}Tag.SetRed();");
+                        break;
+
+                    case "PROTECT" when isMapField:                        // <<< NEW
+                        sb.AppendLine($"{indent}{tgt}Tag.SetProtect();");
+                        break;
+
+
                     case var a when isMapField:
                         sb.AppendLine($"{indent}{tgt} = \"{a}\";");         // assign literal
                         break;

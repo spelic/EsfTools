@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using EsfParser.CodeGen;
+using System.Collections.Generic;
 using System.Text;
 
 namespace EsfParser.Parser.Logic.Statements
@@ -19,7 +20,10 @@ namespace EsfParser.Parser.Logic.Statements
             var indent = Indent(NestingLevel);
             var bodyIndent = Indent(NestingLevel + 1);
 
-            var cond = string.IsNullOrWhiteSpace(Condition) ? "true" : Condition.Trim();
+            // Translate ESF condition → C# using the new builder (which uses CSharpUtils internally).
+            var cond = string.IsNullOrWhiteSpace(Condition)
+                ? "true"
+                : ConditionBuilder.ToCSharp(Condition);
 
             // while header
             sb.Append(indent)

@@ -123,14 +123,18 @@ namespace EsfParser.Tags
             sb.AppendLine("        public int Column { get; set; }");
             sb.AppendLine("        public string Name { get; set; } = \"\";");
             sb.AppendLine("        public string Type { get; set; } = \"\";");
+            sb.AppendLine("        public ConsoleColor Color { get; set; } = ConsoleColor.White;");
             sb.AppendLine("        public int Bytes { get; set; }");
             sb.AppendLine("        public string Value { get; set; } = \"\";");
             sb.AppendLine("        public bool IsModified { get; private set; }");
+            sb.AppendLine("        public bool IsProtect { get; private set; }");
             sb.AppendLine("        public string Intensity { get; private set; } = \"NORMAL\";");
             sb.AppendLine("        public void SetModified() => IsModified = true;");
+            sb.AppendLine("        public void SetProtect() => IsProtect = true;");
             sb.AppendLine("        public void ClearModified() => IsModified = false;");
             sb.AppendLine("        public void SetDark() => Intensity = \"DARK\";");
             sb.AppendLine("        public void SetBright() => Intensity = \"BRIGHT\";");
+            sb.AppendLine("        public void SetRed() => Color = ConsoleColor.Red;");
             sb.AppendLine("        public void SetNormal() => Intensity = \"NORMAL\";");
             sb.AppendLine("        public void SetCursor() => OnCursor?.Invoke(this);");
             sb.AppendLine("        public bool IsCursor() => Console.CursorTop == (Row -1) && Console.CursorLeft == (Column - 1);");
@@ -138,6 +142,7 @@ namespace EsfParser.Tags
             sb.AppendLine("        public override string ToString() =>");
             sb.AppendLine("            $\"VFIELD [{Row},{Column}] {Name}/{Type}/{Bytes}B: '{Value}' (MDT={IsModified}, Intensity={Intensity})\";");
             sb.AppendLine("    }");
+           
         }
 
         private void WriteVariableFieldList(StringBuilder sb, MapTag map)

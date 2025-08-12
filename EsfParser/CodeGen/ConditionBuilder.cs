@@ -123,40 +123,33 @@ namespace EsfParser.CodeGen
                     // skip spaces
                     while (k < esfExpr.Length && char.IsWhiteSpace(esfExpr[k])) k++;
 
-                    // read next word (expect IS)
-                    int kStart = k;
-                    while (k < esfExpr.Length && (char.IsLetter(esfExpr[k]) || esfExpr[k] == '_')) k++;
-                    string maybeIs = k > kStart ? esfExpr.Substring(kStart, k - kStart) : "";
-
-                    if (maybeIs.Equals("IS", StringComparison.OrdinalIgnoreCase))
+                    // special "IS" handling
+                    if (word.Equals("IS", StringComparison.OrdinalIgnoreCase))
                     {
-                        // optional NOT
-                        int m = k;
-                        while (m < esfExpr.Length && char.IsWhiteSpace(esfExpr[m])) m++;
+                        // skip spaces
+                        while (i < esfExpr.Length && char.IsWhiteSpace(esfExpr[i])) i++;
 
-                        int mStart = m;
-                        while (m < esfExpr.Length && (char.IsLetter(esfExpr[m]) || esfExpr[m] == '_')) m++;
-                        string maybeNot = m > mStart ? esfExpr.Substring(mStart, m - mStart) : "";
+                        // capture next token
+                        int nextStart = i;
+                        while (i < esfExpr.Length && (char.IsLetterOrDigit(esfExpr[i]) || esfExpr[i] == '_'))
+                            i++;
+                        string nextWord = esfExpr.Substring(nextStart, i - nextStart);
 
-                        bool hasNot = maybeNot.Equals("NOT", StringComparison.OrdinalIgnoreCase);
-
-                        int n = hasNot ? m : k;
-                        while (n < esfExpr.Length && char.IsWhiteSpace(esfExpr[n])) n++;
-
-                        // read final keyword (expect CURSOR)
-                        int nStart = n;
-                        while (n < esfExpr.Length && (char.IsLetter(esfExpr[n]) || esfExpr[n] == '_')) n++;
-                        string tail = n > nStart ? esfExpr.Substring(nStart, n - nStart) : "";
-
-                        if (tail.Equals("CURSOR", StringComparison.OrdinalIgnoreCase))
+                        if (nextWord.Equals("CURSOR", StringComparison.OrdinalIgnoreCase))
                         {
-                            var left = ConvertOperand(word);
-                            if (hasNot) sb.Append('!');
-                            sb.Append(left);
                             sb.Append("Tag.IsCursor()");
-                            i = n;             // consume "IS [NOT] CURSOR"
-                            continue;
                         }
+                        else if (nextWord.StartsWith("PF", StringComparison.OrdinalIgnoreCase))
+                        {
+                            // Example: PF3 -> ConsoleKey.F3
+                            string pfNum = nextWord.Substring(2);
+                            sb.Append("== ConsoleKey.F" + pfNum);
+                        }
+                        else
+                        {
+                            sb.Append("== ").Append(nextWord);
+                        }
+                        continue;
                     }
 
                     // function call? (peek next non-space char)

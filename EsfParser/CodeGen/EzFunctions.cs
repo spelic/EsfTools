@@ -118,6 +118,18 @@ namespace EsfParser.CodeGen
             }
         }
 
+
+        // call external program with program name and multiple paramterer objects
+
+        /// <summary>
+        /// 
+
+        public static void ExternalCallProgram(string programName, params string[] jsonParameters)
+        {
+            Console.WriteLine($"CALLING PROGRAM: {programName} WITH PARAMS: {string.Join(", ", jsonParameters)}");
+        }
+
+
         /// <summary>
         /// Roll back system changes (stub for EZEROLLB).
         /// </summary>

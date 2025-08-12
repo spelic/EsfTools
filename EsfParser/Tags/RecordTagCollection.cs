@@ -112,6 +112,27 @@ namespace EsfParser.Tags
                         else
                             sb.AppendLine($"{pad4}{fld} = default({baseType});");
                     }
+                    sb.AppendLine($"{pad3}}}");
+
+                    // ── ToJson() helper ───────────────────────────────
+                    sb.AppendLine();
+                    sb.AppendLine($"{pad3}/// <summary>public static method to json</summary>");
+                    sb.AppendLine($"{pad3}public static string ToJson()");
+                    sb.AppendLine($"{pad3}{{");
+
+                    sb.AppendLine($"{pad4}return System.Text.Json.JsonSerializer.Serialize(new");
+                    sb.AppendLine($"{pad4}{{");
+                    foreach (var itm in rec.Items)
+                    {
+                        if (itm.Name == "*") continue;   // skip fillers
+
+                        string fld = CSharpUtils.CleanName(itm.Name);
+                        sb.AppendLine($"{pad4}    {fld},");
+                    }
+                    sb.Remove(sb.Length - 3, 1); // remove last comma
+                    sb.AppendLine($"{pad4}}});");
+
+
 
                     sb.AppendLine($"{pad3}}}");
                     sb.AppendLine($"{pad2}}}");

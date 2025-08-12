@@ -87,9 +87,25 @@ namespace EsfParser.Parser.Logic.Statements
             string csProgramId = CSharpUtils.CleanName(ProgramName);
             string paramList = string.Join(", ",
                                    Parameters.Select(p =>
-                                         CSharpUtils.ConvertOperand(p.Raw)));
+                                         CSharpUtils.ConvertOperand(p.Raw)+".ToJson()"));
 
-            sb.AppendLine($"{indent}{csProgramId}({paramList});");
+            var funcExist = CSharpUtils.Program.Functions.Functions.FirstOrDefault(f => f.Name.Equals(csProgramId, StringComparison.OrdinalIgnoreCase));
+            if (funcExist != null)
+            {
+                // If the function exists, we can call it directly
+                sb.AppendLine($"{indent}{csProgramId}({paramList});");
+                HandleOptions(sb, indent);
+                return sb.ToString().TrimEnd();
+            }
+
+            if (csProgramId == "EZERTN")
+            {
+                // Special case for EZERTN
+                sb.AppendLine($"{indent}return;");
+                return sb.ToString().TrimEnd();
+            }
+
+            sb.AppendLine($"{indent}EzFunctions.ExternalCallProgram(\"{csProgramId}\",{paramList});");
             HandleOptions(sb, indent);
             return sb.ToString().TrimEnd()+ $" // Org: {OriginalCode}";
         }

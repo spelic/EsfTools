@@ -213,6 +213,7 @@ namespace EsfParser.Tags
                 }
                 else
                 {
+                    sb.AppendLine($"        public static VfieldTag[] {safe}Tag => _vfieldsByName[\"{safe}\"].ToArray();");
                     sb.AppendLine($"        public static {csType}[] {safe}");
                     sb.AppendLine("        {");
 

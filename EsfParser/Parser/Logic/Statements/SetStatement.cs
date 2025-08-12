@@ -93,7 +93,15 @@ namespace EsfParser.Parser.Logic.Statements
 
                     // ── Map field visual / cursor / attribute ──────────────────────────
                     case "CURSOR" when isMapField:
-                        sb.AppendLine($"{indent}{tgt}Tag.SetCursor();");          // if you support it
+                        int bracket = tgt.IndexOf('[');
+                        if (bracket >= 0)
+                        {
+                            sb.AppendLine($"{indent}{tgt.Insert(bracket, "Tag")}.SetCursor();");  // if you support it
+                        }
+                        else
+                        {
+                            sb.AppendLine($"{indent}{tgt}Tag.SetCursor();");          // if you support it
+                        }
                         break;
 
                     case "DEFINED" when isMapField:                        // <<< NEW

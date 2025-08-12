@@ -35,15 +35,15 @@ namespace EsfParser.Parser.Logic.Statements
 
             // 2️⃣  Optional record to pass
             string recExpr = string.IsNullOrWhiteSpace(RecordName)
-                                ? "null"
-                                : CSharpUtils.ConvertOperand(RecordName.Trim());
+                                ? "\"\""
+                                : CSharpUtils.ConvertOperand(RecordName.Trim())+".ToJson()";
 
             // 3️⃣  Start-screen rarely used; we still honour if supplied
             string screenExpr = string.IsNullOrWhiteSpace(ProgramStartScreen)
-                                ? "null"
+                                ? ""
                                 : $"\"{ProgramStartScreen}\"";
 
-            sb.AppendLine($"{indent}RuntimeServices.Dxfr({progExpr}, {screenExpr}, {recExpr});");
+            sb.AppendLine($"{indent}EzFunctions.ExternalCallProgram({progExpr},{recExpr});");
             sb.AppendLine($"{indent}return;   // DXFR terminates current routine");
 
             return sb.ToString().TrimEnd() + $" // Org: {OriginalCode}";

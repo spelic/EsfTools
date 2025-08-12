@@ -133,6 +133,7 @@ namespace EsfParser.Tags
             sb.AppendLine("        public void SetBright() => Intensity = \"BRIGHT\";");
             sb.AppendLine("        public void SetNormal() => Intensity = \"NORMAL\";");
             sb.AppendLine("        public void SetCursor() => OnCursor?.Invoke(this);");
+            sb.AppendLine("        public bool IsCursor() => Console.CursorTop == (Row -1) && Console.CursorLeft == (Column - 1);");
             sb.AppendLine("        public void Defined()  { /* later logic */ }");
             sb.AppendLine("        public override string ToString() =>");
             sb.AppendLine("            $\"VFIELD [{Row},{Column}] {Name}/{Type}/{Bytes}B: '{Value}' (MDT={IsModified}, Intensity={Intensity})\";");

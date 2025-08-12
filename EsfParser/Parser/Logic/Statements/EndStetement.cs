@@ -10,7 +10,7 @@ public class EndStatement : IStatement
 
     public string ToCSharp()
     {
-        return " // throw new NotImplementedException();" + this.ToString();
+        return " // END";
     }
 
     public override string ToString()

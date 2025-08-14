@@ -10,13 +10,10 @@ using System.Text.Json.Serialization;
 namespace EsfParser.Tags
 {
     /// <summary>
-    /// Holds all <c>:RECORD</c> tags and converts them to two runtime
-    /// containers:
-    /// <list type="bullet">
-    ///   <item><c>GlobalWorkstor</c> – WORKSTOR records</item>
-    ///   <item><c>GlobalSqlRow</c>   – SQLROW   records</item>
-    /// </list>
-    /// Each record becomes a nested static class containing all its items.
+    /// Holds all <c>:RECORD</c> tags and converts them to runtime classes:
+    /// - Instance models per record under namespace <c>EsfRuntime.Records</c> (implementing IEsfRecord&lt;TSelf&gt;).
+    /// - Global containers <c>GlobalWorkstor</c> and <c>GlobalSqlRow</c> that expose a nested static class per record,
+    ///   each with a singleton <c>Current</c> instance and field-level forwarders for backwards-compatible usage.
     /// </summary>
     public class RecordTagCollection : IEsfTagModel
     {
@@ -45,119 +42,269 @@ namespace EsfParser.Tags
 
             var sb = new StringBuilder();
 
-            // local helper --------------------------------------------------
-            void EmitContainer(string className, IEnumerable<RecordTag> recs)
-            {
-                string pad1 = CSharpUtils.Indent(1);
-                string pad2 = CSharpUtils.Indent(2);
-                string pad3 = CSharpUtils.Indent(3);
-                string pad4 = CSharpUtils.Indent(4);
+            // Pads
+            string pad0 = CSharpUtils.Indent(0);
+            string pad1 = CSharpUtils.Indent(1);
+            string pad2 = CSharpUtils.Indent(2);
+            string pad3 = CSharpUtils.Indent(3);
+            string pad4 = CSharpUtils.Indent(4);
+            string pad5 = CSharpUtils.Indent(5);
 
-                sb.AppendLine($"{pad1}public static class {className}");
+            // ── runtime support (once) ─────────────────────────────────
+            void EmitRuntimeSupport()
+            {
+                sb.AppendLine("namespace EsfRuntime");
+                sb.AppendLine("{");
+                sb.AppendLine($"{pad1}public interface IEsfRecord<TSelf>");
                 sb.AppendLine($"{pad1}{{");
+                sb.AppendLine($"{pad2}void SetEmpty();");
+                sb.AppendLine($"{pad2}void CopyFrom(in TSelf src);");
+                sb.AppendLine($"{pad2}void CopyTo(ref TSelf dst);");
+                sb.AppendLine($"{pad2}TSelf Clone();");
+                sb.AppendLine($"{pad2}string ToJson();");
+                sb.AppendLine($"{pad2}static abstract TSelf FromJson(string json);");
+                sb.AppendLine($"{pad1}}}");
+                sb.AppendLine();
+
+                sb.AppendLine($"{pad1}internal static class RecordCopier");
+                sb.AppendLine($"{pad1}{{");
+                sb.AppendLine($"{pad2}public static void CopyByName(object? src, object? dst)");
+                sb.AppendLine($"{pad2}{{");
+                sb.AppendLine($"{pad3}if (src is null || dst is null) return;");
+                sb.AppendLine($"{pad3}var sType = src.GetType();");
+                sb.AppendLine($"{pad3}var dType = dst.GetType();");
+                sb.AppendLine($"{pad3}var sProps = sType.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);");
+                sb.AppendLine($"{pad3}var dProps = dType.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)");
+                sb.AppendLine($"{pad4}.ToDictionary(p => p.Name, StringComparer.OrdinalIgnoreCase);");
+                sb.AppendLine($"{pad3}foreach (var sp in sProps)");
+                sb.AppendLine($"{pad3}{{");
+                sb.AppendLine($"{pad4}if (!sp.CanRead) continue;");
+                sb.AppendLine($"{pad4}if (!dProps.TryGetValue(sp.Name, out var dp) || !dp.CanWrite) continue;");
+                sb.AppendLine($"{pad4}var val = sp.GetValue(src);");
+                sb.AppendLine($"{pad4}object? conv = ConvertValue(val, dp.PropertyType);");
+                sb.AppendLine($"{pad4}dp.SetValue(dst, conv);");
+                sb.AppendLine($"{pad3}}}");
+                sb.AppendLine();
+
+                sb.AppendLine($"{pad3}var sFields = sType.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);");
+                sb.AppendLine($"{pad3}var dFields = dType.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)");
+                sb.AppendLine($"{pad4}.ToDictionary(f => f.Name, StringComparer.OrdinalIgnoreCase);");
+                sb.AppendLine($"{pad3}foreach (var sf in sFields)");
+                sb.AppendLine($"{pad3}{{");
+                sb.AppendLine($"{pad4}if (!dFields.TryGetValue(sf.Name, out var df)) continue;");
+                sb.AppendLine($"{pad4}var val = sf.GetValue(src);");
+                sb.AppendLine($"{pad4}object? conv = ConvertValue(val, df.FieldType);");
+                sb.AppendLine($"{pad4}df.SetValue(dst, conv);");
+                sb.AppendLine($"{pad3}}}");
+                sb.AppendLine($"{pad2}}}");
+                sb.AppendLine();
+
+                sb.AppendLine($"{pad2}private static object? ConvertValue(object? value, Type targetType)");
+                sb.AppendLine($"{pad2}{{");
+                sb.AppendLine($"{pad3}if (value == null)");
+                sb.AppendLine($"{pad3}{{");
+                sb.AppendLine($"{pad4}return targetType.IsValueType ? Activator.CreateInstance(targetType) : null;");
+                sb.AppendLine($"{pad3}}}");
+                sb.AppendLine($"{pad3}var srcType = value.GetType();");
+                sb.AppendLine($"{pad3}if (targetType.IsAssignableFrom(srcType)) return value;");
+                sb.AppendLine($"{pad3}try");
+                sb.AppendLine($"{pad3}{{");
+                sb.AppendLine($"{pad4}if (targetType == typeof(string)) return System.Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture);");
+                sb.AppendLine($"{pad4}if (value is string s)");
+                sb.AppendLine($"{pad4}{{");
+                sb.AppendLine($"{pad5}if (targetType == typeof(int)) return int.TryParse(s, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var i) ? i : default(int);");
+                sb.AppendLine($"{pad5}if (targetType == typeof(long)) return long.TryParse(s, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var l) ? l : default(long);");
+                sb.AppendLine($"{pad5}if (targetType == typeof(decimal)) return decimal.TryParse(s, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var m) ? m : default(decimal);");
+                sb.AppendLine($"{pad5}if (targetType == typeof(double)) return double.TryParse(s, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var d) ? d : default(double);");
+                sb.AppendLine($"{pad5}if (targetType == typeof(float)) return float.TryParse(s, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var f) ? f : default(float);");
+                sb.AppendLine($"{pad5}if (targetType == typeof(DateTime)) return DateTime.TryParse(s, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var dt) ? dt : default(DateTime);");
+                sb.AppendLine($"{pad4}}}");
+                sb.AppendLine($"{pad4}if (value is IConvertible) return System.Convert.ChangeType(value, targetType, System.Globalization.CultureInfo.InvariantCulture);");
+                sb.AppendLine($"{pad3}}} catch {{ /* default on failure */ }}");
+                sb.AppendLine($"{pad3}return targetType.IsValueType ? Activator.CreateInstance(targetType) : null;");
+                sb.AppendLine($"{pad2}}}");
+                sb.AppendLine($"{pad1}}}");
+                sb.AppendLine("}");
+                sb.AppendLine();
+            }
+
+            // ── instance models (per record) ──────────────────────────
+            void EmitInstanceModels(IEnumerable<RecordTag> recs)
+            {
+                sb.AppendLine("namespace EsfRuntime.Records");
+                sb.AppendLine("{");
 
                 foreach (var rec in recs)
                 {
                     string recCls = CSharpUtils.CleanName(rec.Name);
-                    sb.AppendLine($"{pad2}public static class {recCls}");
-                    sb.AppendLine($"{pad2}{{");
 
-                    // ── field declarations ──────────────────────────────
+                    sb.AppendLine($"{pad1}public sealed class {recCls} : EsfRuntime.IEsfRecord<{recCls}>");
+                    sb.AppendLine($"{pad1}{{");
+
+                    // fields/properties
                     foreach (var itm in rec.Items)
                     {
-                        if (itm.Name == "*")               // virtual filler
-                        {
-                            sb.AppendLine($"{pad3}// * virtual filler, ignored");
-                            continue;
-                        }
+                        if (itm.Name == "*") { sb.AppendLine($"{pad2}// * virtual filler, ignored"); continue; }
 
                         string csType = CSharpUtils.MapCsType(itm.Type.ToString(), itm.Decimals);
-                        string fieldName = CSharpUtils.CleanName(itm.Name);
+                        string prop = CSharpUtils.CleanName(itm.Name);
                         bool isArray = int.TryParse(itm.Occurs, out var occ) && occ > 1;
 
-                        // XML doc
                         if (!string.IsNullOrWhiteSpace(itm.Description))
                         {
-                            sb.AppendLine($"{pad3}/// <summary>");
-                            sb.AppendLine($"{pad3}/// {itm.Description}");
-                            sb.AppendLine($"{pad3}/// </summary>");
+                            sb.AppendLine($"{pad2}/// <summary>{itm.Description}</summary>");
                         }
 
                         if (isArray)
-                        {
-                            sb.AppendLine($"{pad3}public static {csType}[] {fieldName} = new {csType}[{occ}];");
-                        }
+                            sb.AppendLine($"{pad2}public {csType}[] {prop} {{ get; set; }}");
                         else
-                        {
-                            sb.AppendLine($"{pad3}public static {csType} {fieldName};");
-                        }
+                            sb.AppendLine($"{pad2}public {csType} {prop} {{ get; set; }}");
                     }
 
-                    // ── SetEmpty() helper ───────────────────────────────
+                    // ctor
                     sb.AppendLine();
-                    sb.AppendLine($"{pad3}/// <summary>Reset all fields to default values.</summary>");
-                    sb.AppendLine($"{pad3}public static void SetEmpty()");
-                    sb.AppendLine($"{pad3}{{");
+                    sb.AppendLine($"{pad2}public {recCls}() {{ SetEmpty(); }}");
+                    sb.AppendLine();
 
+                    // SetEmpty
+                    sb.AppendLine($"{pad2}public void SetEmpty()");
+                    sb.AppendLine($"{pad2}{{");
                     foreach (var itm in rec.Items)
                     {
-                        if (itm.Name == "*") continue;   // skip fillers
-
-                        string baseType = CSharpUtils.MapCsType(itm.Type.ToString(), itm.Decimals);
-                        string fld = CSharpUtils.CleanName(itm.Name);
+                        if (itm.Name == "*") continue;
+                        string csType = CSharpUtils.MapCsType(itm.Type.ToString(), itm.Decimals);
+                        string prop = CSharpUtils.CleanName(itm.Name);
                         bool isArray = int.TryParse(itm.Occurs, out var occ) && occ > 1;
 
                         if (isArray)
-                            sb.AppendLine($"{pad4}{fld} = new {baseType}[{itm.Occurs}];");
+                            sb.AppendLine($"{pad3}{prop} = new {csType}[{itm.Occurs}];");
                         else
-                            sb.AppendLine($"{pad4}{fld} = default({baseType});");
+                            sb.AppendLine($"{pad3}{prop} = default({csType});");
                     }
-                    sb.AppendLine($"{pad3}}}");
-
-                    // ── ToJson() helper ───────────────────────────────
+                    sb.AppendLine($"{pad2}}}");
                     sb.AppendLine();
-                    sb.AppendLine($"{pad3}/// <summary>public static method to json</summary>");
-                    sb.AppendLine($"{pad3}public static string ToJson()");
-                    sb.AppendLine($"{pad3}{{");
 
-                    sb.AppendLine($"{pad4}return System.Text.Json.JsonSerializer.Serialize(new");
-                    sb.AppendLine($"{pad4}{{");
+                    // CopyFrom / CopyTo
+                    sb.AppendLine($"{pad2}public void CopyFrom(in {recCls} src)");
+                    sb.AppendLine($"{pad2}{{");
                     foreach (var itm in rec.Items)
                     {
-                        if (itm.Name == "*") continue;   // skip fillers
+                        if (itm.Name == "*") continue;
+                        string csType = CSharpUtils.MapCsType(itm.Type.ToString(), itm.Decimals);
+                        string prop = CSharpUtils.CleanName(itm.Name);
+                        bool isArray = int.TryParse(itm.Occurs, out var occ) && occ > 1;
 
-                        string fld = CSharpUtils.CleanName(itm.Name);
-                        sb.AppendLine($"{pad4}    {fld},");
+                        if (isArray)
+                            sb.AppendLine($"{pad3}{prop} = (src.{prop} != null) ? ({csType}[])src.{prop}.Clone() : null;");
+                        else
+                            sb.AppendLine($"{pad3}{prop} = src.{prop};");
                     }
-                    sb.Remove(sb.Length - 3, 1); // remove last comma
-                    sb.AppendLine($"{pad4}}});");
-
-
-
-                    sb.AppendLine($"{pad3}}}");
                     sb.AppendLine($"{pad2}}}");
+                    sb.AppendLine();
+
+                    sb.AppendLine($"{pad2}public void CopyTo(ref {recCls} dst) => dst.CopyFrom(this);");
+                    sb.AppendLine();
+
+                    // Clone
+                    sb.AppendLine($"{pad2}public {recCls} Clone()");
+                    sb.AppendLine($"{pad2}{{");
+                    sb.AppendLine($"{pad3}var x = new {recCls}();");
+                    sb.AppendLine($"{pad3}x.CopyFrom(this);");
+                    sb.AppendLine($"{pad3}return x;");
+                    sb.AppendLine($"{pad2}}}");
+                    sb.AppendLine();
+
+                    // JSON
+                    sb.AppendLine($"{pad2}public string ToJson() => System.Text.Json.JsonSerializer.Serialize(this);");
+                    sb.AppendLine($"{pad2}public static {recCls} FromJson(string json) => System.Text.Json.JsonSerializer.Deserialize<{recCls}>(json) ?? new {recCls}();");
+
+                    sb.AppendLine($"{pad1}}}");
                     sb.AppendLine();
                 }
 
-                sb.AppendLine($"{pad1}}}");
+                sb.AppendLine("}");
                 sb.AppendLine();
             }
 
-            // split by organisation ---------------------------------------
-            var workstorRecs = Records
-                .Where(r => r.Org.Equals("WORKSTOR", StringComparison.OrdinalIgnoreCase));
-            var sqlrowRecs = Records
-                .Where(r => r.Org.Equals("SQLROW", StringComparison.OrdinalIgnoreCase));
+            // ── global containers with forwarders ─────────────────────
+            void EmitContainer(string className, IEnumerable<RecordTag> recs)
+            {
+                sb.AppendLine($"public static class {className}");
+                sb.AppendLine("{");
 
-            if (workstorRecs.Any())
-                EmitContainer("GlobalWorkstor", workstorRecs);
+                foreach (var rec in recs)
+                {
+                    string recCls = CSharpUtils.CleanName(rec.Name);
+                    string fqRec = $"EsfRuntime.Records.{recCls}";
 
-            if (sqlrowRecs.Any())
-                EmitContainer("GlobalSqlRow", sqlrowRecs);
+                    sb.AppendLine($"{pad1}public static class {recCls}");
+                    sb.AppendLine($"{pad1}{{");
+                    sb.AppendLine($"{pad2}public static {fqRec} Current {{ get; }} = new {fqRec}();");
+                    sb.AppendLine();
 
+                    // Forwarding properties (field-level)
+                    foreach (var itm in rec.Items)
+                    {
+                        if (itm.Name == "*") continue;
+                        string csType = CSharpUtils.MapCsType(itm.Type.ToString(), itm.Decimals);
+                        string prop = CSharpUtils.CleanName(itm.Name);
+                        bool isArray = int.TryParse(itm.Occurs, out var occ) && occ > 1;
 
-            var r = sb.ToString();
-            return r;
+                        if (!string.IsNullOrWhiteSpace(itm.Description))
+                            sb.AppendLine($"{pad2}/// <summary>Forwards to Current.{prop} – {itm.Description}</summary>");
+                        else
+                            sb.AppendLine($"{pad2}/// <summary>Forwards to Current.{prop}</summary>");
+
+                        if (isArray)
+                        {
+                            sb.AppendLine($"{pad2}public static {csType}[] {prop}");
+                            sb.AppendLine($"{pad2}{{");
+                            sb.AppendLine($"{pad3}get => Current.{prop};");
+                            sb.AppendLine($"{pad3}set => Current.{prop} = value;");
+                            sb.AppendLine($"{pad2}}}");
+                        }
+                        else
+                        {
+                            sb.AppendLine($"{pad2}public static {csType} {prop}");
+                            sb.AppendLine($"{pad2}{{");
+                            sb.AppendLine($"{pad3}get => Current.{prop};");
+                            sb.AppendLine($"{pad3}set => Current.{prop} = value;");
+                            sb.AppendLine($"{pad2}}}");
+                        }
+                        sb.AppendLine();
+                    }
+
+                    // Forwarding helpers
+                    sb.AppendLine($"{pad2}public static void SetEmpty() => Current.SetEmpty();");
+                    sb.AppendLine($"{pad2}public static void CopyFrom(in {fqRec} src) => Current.CopyFrom(src);");
+                    sb.AppendLine($"{pad2}public static void CopyTo(ref {fqRec} dst) => Current.CopyTo(ref dst);");
+                    sb.AppendLine($"{pad2}public static {fqRec} Clone() => Current.Clone();");
+                    sb.AppendLine($"{pad2}public static string ToJson() => Current.ToJson();");
+                    sb.AppendLine($"{pad2}public static void FromJson(string json)");
+                    sb.AppendLine($"{pad2}{{");
+                    sb.AppendLine($"{pad3}var tmp = {fqRec}.FromJson(json);");
+                    sb.AppendLine($"{pad3}Current.CopyFrom(tmp);");
+                    sb.AppendLine($"{pad2}}}");
+
+                    sb.AppendLine($"{pad1}}}");
+                    sb.AppendLine();
+                }
+
+                sb.AppendLine("}");
+                sb.AppendLine();
+            }
+
+            // split by organisation
+            var workstorRecs = Records.Where(r => r.Org.Equals("WORKSTOR", StringComparison.OrdinalIgnoreCase)).ToList();
+            var sqlrowRecs = Records.Where(r => r.Org.Equals("SQLROW", StringComparison.OrdinalIgnoreCase)).ToList();
+            var allRecs = Records;
+
+            EmitRuntimeSupport();
+            EmitInstanceModels(allRecs);
+            if (workstorRecs.Any()) EmitContainer("GlobalWorkstor", workstorRecs);
+            if (sqlrowRecs.Any()) EmitContainer("GlobalSqlRow", sqlrowRecs);
+
+            return sb.ToString();
         }
     }
 }

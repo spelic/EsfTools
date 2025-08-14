@@ -60,6 +60,9 @@ public static class RoslynExporter
                 Using("System.Collections.Generic"),
                 Using("System.Linq"),
                 Using("System.Reflection"),
+                Using("EsfConsoleApp.EsfRuntime"),
+                Using("EsfConsoleApp.EsfRuntime.Records"),
+                Using("EsfConsoleApp.EsfRuntime.Maps")
             }))
             .AddMembers(EzFunctionsNode())                  // helper class
             .AddMembers(
@@ -94,14 +97,8 @@ public static class RoslynExporter
         if (p.Maps.Maps.Count > 0)
         {
             var mapCode = p.Maps.ToCSharp();
-
-            DumpRegion("⏪  Raw MAP region", mapCode);
-
             foreach (var m in SnipAll(mapCode))
                 yield return m;
-
-            // Just a visual confirmation that everything made it through
-            DumpRegion("⏩  Final MAP region (preview only)", mapCode);
         }
 
         // ── Tables ───────────────────────────────────────────────
@@ -128,33 +125,7 @@ public static class RoslynExporter
                                 ParseStatement("""Console.WriteLine("ESF program initialized.");"""))));
     }
 
-    // ────────────────────────────────────────────────────────────────
-    //  Region preview helper (diagnostics only)
-    // ────────────────────────────────────────────────────────────────
-    private static void DumpRegion(string title, string code)
-    {
-        var header = code.IndexOf("#region", StringComparison.Ordinal);
-        var tail = code.IndexOf("#endregion", StringComparison.Ordinal);
-
-        Console.WriteLine($"── {title} ────────────────────────────────────────────────────");
-
-        if (header < 0 || tail < 0)
-        {
-            Console.WriteLine("(region not found)");
-        }
-        else
-        {
-            int len = Math.Min(320, tail - header);
-            var preview = code.Substring(header, len)
-                              .Replace("\r", "");
-            Console.WriteLine(preview);
-            Console.WriteLine("…");
-        }
-
-        Console.WriteLine("──────────────────────────────────────────────────────────────");
-        Console.WriteLine();
-    }
-
+   
     // ────────────────────────────────────────────────────────────────
     //  EzFunctions loader (kept outside any namespace)
     // ────────────────────────────────────────────────────────────────

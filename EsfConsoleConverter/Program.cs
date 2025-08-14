@@ -1,13 +1,15 @@
-﻿
-using EsfParser;
+﻿using EsfParser;
 using EsfParser.Analytics;
 using EsfParser.Builder;
 using EsfParser.CodeGen;
 using EsfParser.Parser;
 using EsfParser.Parser.Logic;
 using EsfParser.Parser.Logic.Statements;
+using EsfParser.Tags;
 using System;
+using System.Collections;
 using System.IO;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 
@@ -28,7 +30,24 @@ path = "D133A-V68.esf";
 
     
     var nodes = MyEsfParser.Parse(lines);
+// your problematic ESF statements (exact lines you want to debug)
+var problemLines = $@"
+    /* paste failing statements here */
+     D133M04.IZDKOL-TRE[CTRLINIJ] = D133R06.IZDKOL;
+    CTRLINIJ = CTRLINIJ + 1;
 
+";
+
+
+foreach (var item in nodes)
+{
+    if (item.TagName == "FUNC" && item.Children[0].TagName == "BEFORE")
+    {
+        item.Attributes["NAME"][0] = "__DEBUG_ONLY__";
+        item.Children[0].Content = problemLines;
+        break;
+    }
+}
 
 var program = EsfProgramBuilder.GenerateEsfProgram(nodes);
 CSharpUtils.Program = program;
@@ -37,3 +56,4 @@ string name = path.ToLower().Replace(".esf", "").Replace("-", "_").ToUpper();
 program.RoslynExportToSingleProgramFile(@"C:\Users\denis.spelic\source\repos\Test\Test\ProgramR.cs", name + "_ConsoleAppRoslyn");
 
 Console.WriteLine("Done.");
+

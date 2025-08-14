@@ -56,7 +56,7 @@ namespace EsfParser.Parser.Logic.Statements
 
                 isMapField = isMap && dot > 0;
             }
-
+            int bracket = 0;
             foreach (var raw in Attributes)
             {
                 string attr = raw.Trim().ToUpperInvariant();
@@ -93,7 +93,7 @@ namespace EsfParser.Parser.Logic.Statements
 
                     // ── Map field visual / cursor / attribute ──────────────────────────
                     case "CURSOR" when isMapField:
-                        int bracket = tgt.IndexOf('[');
+                        bracket = tgt.IndexOf('[');
                         if (bracket >= 0)
                         {
                             sb.AppendLine($"{indent}{tgt.Insert(bracket, "Tag")}.SetCursor();");  // if you support it
@@ -105,11 +105,25 @@ namespace EsfParser.Parser.Logic.Statements
                         break;
 
                     case "DEFINED" when isMapField:                        // <<< NEW
-                        sb.AppendLine($"{indent}{tgt}Tag.Defined();");
-                        break;
+                        {
+                            bracket = tgt.IndexOf('[');
+                            if (bracket >= 0)
+                            {
+                                sb.AppendLine($"{indent}{tgt.Insert(bracket, "Tag")}.Defined();");  // if you support it
+                            }
+                            else
+                            {
+                                sb.AppendLine($"{indent}{tgt}Tag.Defined();");
+                            }
+                            break;
+                        }
 
                     case "RED" when isMapField:                        // <<< NEW
                         sb.AppendLine($"{indent}{tgt}Tag.SetRed();");
+                        break;
+
+                    case "BLINK" when isMapField:                        // <<< NEW
+                        sb.AppendLine($"{indent}{tgt}Tag.SetBlink();");
                         break;
 
                     case "PROTECT" when isMapField:                        // <<< NEW

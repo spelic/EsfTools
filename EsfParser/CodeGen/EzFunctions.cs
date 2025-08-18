@@ -48,10 +48,9 @@ namespace EsfParser.CodeGen
         /// <summary>
         /// Current date.
         /// </summary>
-        public static DateTime EZEDTE
+        public static string EZEDTE
         {
-            get => _ezedte;
-            set => _ezedte = value;
+            get => _ezedte.ToShortDateString();
         }
 
         private static int _ezesqcod;
@@ -218,5 +217,37 @@ namespace EsfParser.CodeGen
         }
 
         private static string _ezesys = "WIN";
+
+        // Tracks last modifiers pressed with EZEAID (set this in your key handling code)
+        public static ConsoleModifiers EZEAIDMods { get; set; } = 0;
+
+        /// <summary>
+        /// Tests the last AID (keyboard function) according to the default 3270 mapping:
+        /// PF1–PF12 → F1–F12; PF13–PF24 → Alt+F1–Alt+F12; PA1–PA3 → Ctrl+F1–Ctrl+F3.
+        /// </summary>
+        public static bool IsAid(string code)
+        {
+            if (string.IsNullOrWhiteSpace(code)) return false;
+            var up = code.Trim().ToUpperInvariant();
+
+            // PF
+            if (up.StartsWith("PF") && int.TryParse(up.Substring(2), out var pf) && pf >= 1 && pf <= 24)
+            {
+                if (pf <= 12)
+                    return EZEAID == (ConsoleKey)((int)ConsoleKey.F1 + (pf - 1));
+                // PF13..PF24 → Alt + F1..F12
+                int fn = pf - 12; // 1..12
+                return EZEAID == (ConsoleKey)((int)ConsoleKey.F1 + (fn - 1)) && (EZEAIDMods & ConsoleModifiers.Alt) == ConsoleModifiers.Alt;
+            }
+
+            // PA1..PA3 → Ctrl + F1..F3
+            if (up.StartsWith("PA") && int.TryParse(up.Substring(2), out var pa) && pa >= 1 && pa <= 3)
+            {
+                return EZEAID == (ConsoleKey)((int)ConsoleKey.F1 + (pa - 1)) && (EZEAIDMods & ConsoleModifiers.Control) == ConsoleModifiers.Control;
+            }
+
+            return false;
+        }
+
     }
 }

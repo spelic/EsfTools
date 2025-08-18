@@ -42,6 +42,7 @@ namespace EsfParser.CodeGen
                         sb.AppendLine(doubleIndent + line.TrimEnd());
                     }
                 }
+                //sb.AppendLine($"// ORG: {stmt.OriginalCode}");
             }
 
             

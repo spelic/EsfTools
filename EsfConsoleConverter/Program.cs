@@ -31,23 +31,23 @@ path = "D133A-V68.esf";
     
     var nodes = MyEsfParser.Parse(lines);
 // your problematic ESF statements (exact lines you want to debug)
-var problemLines = $@"
-    /* paste failing statements here */
-     D133M04.IZDKOL-TRE[CTRLINIJ] = D133R06.IZDKOL;
-    CTRLINIJ = CTRLINIJ + 1;
+//var problemLines = $@"
+//    /* paste failing statements here */
 
-";
+//   D13342();
+
+//";
 
 
-foreach (var item in nodes)
-{
-    if (item.TagName == "FUNC" && item.Children[0].TagName == "BEFORE")
-    {
-        item.Attributes["NAME"][0] = "__DEBUG_ONLY__";
-        item.Children[0].Content = problemLines;
-        break;
-    }
-}
+//foreach (var item in nodes)
+//{
+//    if (item.TagName == "FUNC" && item.Children[0].TagName == "BEFORE")
+//    {
+//        item.Attributes["NAME"][0] = "__DEBUG_ONLY__";
+//        item.Children[0].Content = problemLines;
+//        break;
+//    }
+//}
 
 var program = EsfProgramBuilder.GenerateEsfProgram(nodes);
 CSharpUtils.Program = program;

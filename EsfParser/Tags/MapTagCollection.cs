@@ -120,6 +120,7 @@ namespace EsfParser.Tags
             sb.AppendLine($"{p1}    public ConsoleColor Color {{ get; set; }} = ConsoleColor.White;");
             sb.AppendLine($"{p1}    public int Bytes {{ get; set; }}");
             sb.AppendLine($"{p1}    public string Value {{ get; set; }} = \"\";");
+            sb.AppendLine($"{p1}    public string RVideo {{ get; set; }} = \"\";");
             sb.AppendLine($"{p1}    public bool IsModified {{ get; private set; }}");
             sb.AppendLine($"{p1}    public bool IsProtect {{ get; private set; }}");
             sb.AppendLine($"{p1}    public bool IsBlink {{ get; private set; }}");
@@ -130,8 +131,8 @@ namespace EsfParser.Tags
             sb.AppendLine($"{p1}    public void SetDark() => Intensity = \"DARK\";");
             sb.AppendLine($"{p1}    public void SetBlink() => IsBlink = true;");
             sb.AppendLine($"{p1}    public void SetBright() => Intensity = \"BRIGHT\";");
-            sb.AppendLine($"{p1}    public void SetRed() => Color = ConsoleColor.Red;");
             sb.AppendLine($"{p1}    public void SetNormal() => Intensity = \"NORMAL\";");
+            sb.AppendLine($"{p1}    public void SetRVideo() => RVideo = \"SET\";");
             sb.AppendLine($"{p1}    public void SetCursor() => OnCursor?.Invoke(this);");
             sb.AppendLine($"{p1}    public bool IsCursor() => Console.CursorTop == (Row - 1) && Console.CursorLeft == (Column - 1);");
             sb.AppendLine($"{p1}    public void Defined()  {{ /* later logic */ }}");

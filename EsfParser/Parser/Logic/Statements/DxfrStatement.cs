@@ -42,8 +42,14 @@ namespace EsfParser.Parser.Logic.Statements
             string screenExpr = string.IsNullOrWhiteSpace(ProgramStartScreen)
                                 ? ""
                                 : $"\"{ProgramStartScreen}\"";
-
-            sb.AppendLine($"{indent}EzFunctions.ExternalCallProgram({progExpr},{recExpr});");
+            if (!string.IsNullOrWhiteSpace(recExpr))
+            {
+                sb.AppendLine($"{indent}EzFunctions.ExternalCallProgram({progExpr});");
+            }
+            else
+            {
+                sb.AppendLine($"{indent}EzFunctions.ExternalCallProgram({progExpr},{recExpr});");
+            }
             sb.AppendLine($"{indent}return;   // DXFR terminates current routine");
 
             return sb.ToString().TrimEnd() + $" // Org: {OriginalCode}";

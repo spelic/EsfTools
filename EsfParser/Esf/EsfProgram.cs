@@ -140,8 +140,6 @@ namespace EsfParser.Esf
             // Write combined source to the output file
             File.WriteAllText(outputFile, sb.ToString());
         }
-       
-
         public void RoslynExportToSingleProgramFile(string outputFile, string projectNameSpace = "EsfConsoleApp")
         {
             if (string.IsNullOrWhiteSpace(outputFile))

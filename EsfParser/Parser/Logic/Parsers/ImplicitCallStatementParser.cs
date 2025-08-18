@@ -6,6 +6,7 @@ public class ImplicitCallStatementParser : IStatementParser
 {
     public bool CanParse(string line)
     {
+        if (line.ToUpperInvariant().StartsWith("EZ")) return false;
         return Regex.IsMatch(line.Trim(), @"^[A-Z0-9_-]+\s*\(.*\)\s*;?$", RegexOptions.IgnoreCase);
     }
 

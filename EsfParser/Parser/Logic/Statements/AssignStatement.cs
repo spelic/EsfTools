@@ -1,12 +1,28 @@
 ﻿// AssignStatement.cs ───────────────────────────────────────────────────────
+// Robust ESF “Assignment” ⇒ C# generator
+//
+// Supports:
+//  • Pure movement (item ← item/literal/function), incl. whole-record copy
+//  • Arithmetic (+, -, *, /, //) with precedence, unary ±, parentheses
+//  • Rounding marker “(R” (only for arithmetic, applied at the *end*)
+//  • Safe, *inline* type coercions (int/decimal/string) w/o over-conversion
+//  • name-name → name_name (via CSharpUtils.ConvertOperand) everywhere
+//  • Smart int increments: X = X + 1 → X++;  X = 1 + X → X++;  X = X - 1 → X--
+//  • int ← decimal movement emits simple cast: (int)rhs
+//  • Whole-record copy: GlobalSqlRow.D133R06 = GlobalSqlRow.D133R01
+//      → EsfRuntime.RecordCopier.CopyByName(rhs, lhs)
+//
+// Notes:
+//  • We only use Convert.ToDecimal for decimal targets (or unknown→numeric).
+//  • No Convert.ToDecimal in simple int math or int movement where not needed.
+//
 using EsfParser.CodeGen;
 using EsfParser.Esf;
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Collections.Generic;
 
 namespace EsfParser.Parser.Logic.Statements
 {
@@ -20,151 +36,181 @@ namespace EsfParser.Parser.Logic.Statements
         public int LineNumber { get; set; }
         public int NestingLevel { get; set; }
 
-        private static readonly Regex ContainerRefRegex = new(
-            @"^\s*(?<container>GlobalWorkstor|GlobalSqlRow)\s*\.\s*(?<rec>[A-Za-z_][A-Za-z0-9_]*)\s*(?:\.\s*Current\s*)?$",
-            RegexOptions.Compiled);
-
-        private static readonly Regex GlobalMapRootRegex = new(
-            @"^\s*GlobalMaps\.(?<map>[A-Za-z_][A-Za-z0-9_]*)\s*$",
-            RegexOptions.Compiled);
-
-        private static readonly Regex TrailingRoundRegex = new(
-            @"\(\s*R\s*\)?\s*$",
-            RegexOptions.IgnoreCase | RegexOptions.Compiled);
-
-        // NEW: detect pure numeric literals like: 0, -5, (+12), ( -3.14 )
-        private static readonly Regex PureNumericRegex = new(
-            @"^\s*\(*\s*(?<sign>[+-])?\s*(?<num>\d+(?:\.\d+)?)\s*\)*\s*$",
-            RegexOptions.Compiled);
-
-        private static readonly Regex RecordFieldPathRegex = new(
-    @"^\s*(GlobalWorkstor|GlobalSqlRow)\s*\.\s*[A-Za-z_][A-Za-z0-9_]*\s*\.\s*[A-Za-z0-9_\-\[\]]+\s*$",
-    RegexOptions.Compiled);
-
-
         public string ToCSharp()
         {
+            // 1) Guard
             if (string.IsNullOrWhiteSpace(Left) || string.IsNullOrWhiteSpace(Right))
                 return $"// ⚠ malformed assignment at line {LineNumber}: {OriginalCode}";
 
             var prog = CSharpUtils.Program;
+
             var leftRaw = Left.Trim();
             var rightRaw = Right.Trim();
 
-            // Map root on the left → CopyFrom(...)
-            if (TryGetMapRoot(leftRaw, prog, out var leftMapRoot, out _))
-            {
-                if (TryGetMapRoot(rightRaw, prog, out var rightMapRoot, out _))
-                    return $"{leftMapRoot}.CopyFrom(typeof({rightMapRoot}));";
-
-                var rightQualified2 = NormalizeOperand(CSharpUtils.ConvertOperand(rightRaw));
-                if (TryGetContainerInstance(rightQualified2, out var rightInst, out _))
-                    return $"{leftMapRoot}.CopyFrom({rightInst});";
-
-                return $"{leftMapRoot}.CopyFrom({rightQualified2});";
-            }
-
-            // Whole-record copy (instance model)
+            // Normalize/qualify operands using compiler rules (handles name-name → name_name)
             var leftQualified = NormalizeOperand(CSharpUtils.ConvertOperand(leftRaw));
             var rightQualified = NormalizeOperand(CSharpUtils.ConvertOperand(rightRaw));
-            if (TryGetContainerInstance(leftQualified, out var leftInst2, out _) &&
-                TryGetContainerInstance(rightQualified, out var rightInst2, out _))
-            {
-                return $"EsfRuntime.RecordCopier.CopyByName({rightInst2}, {leftInst2});";
-            }
 
-            // Rounding marker
-            bool rounding = false;
-            string rhsNoRound = rightRaw;
-            if (TrailingRoundRegex.IsMatch(rhsNoRound))
-            {
-                rounding = true;
-                rhsNoRound = TrailingRoundRegex.Replace(rhsNoRound, string.Empty);
-            }
+            // 2) Handle rounding marker "(R" (arithmetic-only). Remove from RHS but remember it.
+            bool rounding = ContainsRoundMarker(rightRaw);
+            var rhsNoRound = RemoveRoundMarker(rightRaw);
 
-            // Detect pure numeric literal (so we don't treat '0' as arithmetic)
+            // 3) Tokenize RHS (for arithmetic detection/parsing)
             bool rhsIsPureNumber = TryGetPureNumeric(rhsNoRound, out bool rhsLiteralIsDecimal);
+            List<Token> tokens = rhsIsPureNumber
+                ? new List<Token> { new Token(TokKind.Number, rhsNoRound.Trim(), 0), new Token(TokKind.End, "", 0) }
+                : new Tokenizer(rhsNoRound).Tokenize();
 
-            // Arithmetic detection (unchanged)
-            List<Token> tokens = rhsIsPureNumber ? new List<Token> { new Token(TokKind.Number, "0", 0), new Token(TokKind.End, "", 0) }
-                                                 : new Tokenizer(rhsNoRound).Tokenize();
             bool isArithmetic = !rhsIsPureNumber && tokens.Any(t =>
-                                   t.Kind is TokKind.Plus or TokKind.Minus or TokKind.Star or TokKind.Slash or TokKind.Rem
-                                    or TokKind.LParen or TokKind.RParen);
+                t.Kind is TokKind.Plus or TokKind.Minus or TokKind.Star or TokKind.Slash or TokKind.Rem
+                       or TokKind.LParen or TokKind.RParen);
 
-            // RHS info (movement): try RAW first, then QUALIFIED (handles name-name → name_name)
+            if (isArithmetic && TryRewriteSimpleIncDec(leftQualified, rhsNoRound, out var incDecEarly))
+                return incDecEarly + ";";
+
+            // 4) Infer RHS/LHS value kinds (movement path prefers metadata)
             var rhsInfo = rhsIsPureNumber
-                ? new ValueInfo(rhsLiteralIsDecimal ? ValueKind.Decimal : ValueKind.Int, rhsLiteralIsDecimal ? 2 : 0)
+                ? new ValueInfo(rhsLiteralIsDecimal ? ValueKind.Decimal : ValueKind.Int,
+                                rhsLiteralIsDecimal ? 2 : 0)
                 : (isArithmetic ? ValueInfo.NumericUnknown()
                                 : InferValueInfoSmart(rightRaw, rightQualified, prog));
 
-            // LHS info: **use the qualified/converted** form (your fix)
+            // Use qualified LHS for metadata lookup (fixes name-name → name_name)
             var lhsInfo = InferTargetInfo(leftQualified, prog, rhsInfo, isArithmetic);
 
 
-            string lhs = CSharpUtils.ConvertOperand(leftRaw);
+            // If parser saw arithmetic and LHS looks like string, but there are *no* string tokens,
+            // treat this statement as numeric to avoid ToString(...) conversions.
+            if (isArithmetic && lhsInfo.Kind == ValueKind.String && IsPureNumericArithmetic(tokens))
+            {
+                // Downgrade the target "kind" for this assignment only, so we won't stringify the result
+                lhsInfo = ValueInfo.NumericUnknown();
+            }
 
+            // 5) Whole-record copy (handles qualified and unqualified)
+            //    D133R06 = D133R01;
+            //    GlobalSqlRow.D133R06 = GlobalSqlRow.D133R01;
+            if (!isArithmetic &&
+                TryResolveWholeRecordRef(leftRaw, prog, out var lhsRecQualified, out _, out _) &&
+                TryResolveWholeRecordRef(rightRaw, prog, out var rhsRecQualified, out _, out _))
+            {
+                return $"RecordCopier.CopyByName({leftQualified}.Current, {rightQualified}.Current);  // ORG: {OriginalCode} ";
+            }
+
+            // 6) Whole-map copy (handles qualified and unqualified)
+            //    D133M04 = D133M02;
+            //    GlobalMaps.D133M04 = GlobalMaps.D133M02;
+            if (!isArithmetic &&
+                TryResolveWholeMapRef(leftRaw, prog, out var lhsMapQualified, out _) &&
+                TryResolveWholeMapRef(rightRaw, prog, out var rhsMapQualified, out _))
+            {
+                return $"{leftQualified}.CopyFrom({rightQualified}.Current); // ORG: {OriginalCode} ";
+            }
+
+            // 7) Arithmetic RHS
             if (isArithmetic)
             {
+                // X = X ± N  or  X = N + X  (int targets) → ++ / -- / += N
+                if (lhsInfo.Kind == ValueKind.Int && TryRewriteSimpleIncDec(leftQualified, rhsNoRound, out var incDec))
+                    return incDec + $";      // ORG: {OriginalCode}";
+
+                // Build arithmetic expression in C#
                 var parser = new Parser(tokens, prog);
-                var decimalExpr = parser.ParseNumericExpression(out _);
-                string coerced = CoerceForTarget(decimalExpr, lhsInfo, rounding);
-                return $"{lhs} = {coerced};   // ORG: {OriginalCode}";
+                string arith = parser.ParseExpression();
+
+                // Apply rounding for *arithmetic* (final result only)
+                string coerced = CoerceForTarget(arith, lhsInfo, rounding);
+                return $"{leftQualified} = {coerced};      // ORG: {OriginalCode}";
             }
 
-            // Movement
-            string rhs = CSharpUtils.ConvertOperand(rightRaw);
-            string moved = CoerceMovement(rhs, rhsInfo, lhsInfo, rounding);
-            return $"{lhs} = {moved};   // ORG: {OriginalCode}";
-        }
-
-        private static ValueInfo InferValueInfoSmart(string raw, string qualified, EsfProgram? prog)
-        {
-            var v = InferValueInfo(raw, prog);
-            if (v.Kind != ValueKind.Unknown) return v;
-            return InferValueInfo(qualified, prog);
-        }
-        // ────────────────────────────────────────────────────────────────
-        // Map-root detection
-        // ────────────────────────────────────────────────────────────────
-        private static bool TryGetMapRoot(string operand, EsfProgram? prog, out string qualified, out string cleanMapName)
-        {
-            qualified = NormalizeOperand(CSharpUtils.ConvertOperand(operand));
-            cleanMapName = string.Empty;
-
-            var m = GlobalMapRootRegex.Match(qualified);
-            if (m.Success)
+            // 8) Movement RHS (no operators): coerce inline
+            //    Keep string literals simple; add minimal casts otherwise.
+            string rhsExpr;
+            if (rhsIsPureNumber)
             {
-                cleanMapName = CSharpUtils.CleanName(m.Groups["map"].Value);
-                return true;
+                // normalize numeric literal (remove spaces)
+                rhsExpr = rhsNoRound.Trim();
+            }
+            else
+            {
+                // Already qualified (identifiers/functions/strings…)
+                rhsExpr = rightQualified;
             }
 
-            var parts = qualified.Split('.');
-            string? candidate =
-                parts.Length == 1 ? parts[0]
-              : (parts.Length == 2 && string.Equals(parts[0], "GlobalMaps", StringComparison.Ordinal)) ? parts[1]
-              : null;
+            // Final movement coercion (e.g., int ← decimal → (int)rhs)
+            string moved = CoerceMovement(rhsExpr, rhsInfo, lhsInfo, rounding: false);
+            return $"{leftQualified} = {moved};      // ORG: {OriginalCode}";
+        }
 
-            if (string.IsNullOrEmpty(candidate))
-                return false;
 
-            var maps = prog?.Maps?.Maps;
-            if (maps == null) return false;
-
-            string candClean = CSharpUtils.CleanName(candidate);
-            var exists = maps.Any(x =>
-                string.Equals(CSharpUtils.CleanName(x.MapName), candClean, StringComparison.OrdinalIgnoreCase));
-
-            if (!exists) return false;
-
-            cleanMapName = candClean;
-            qualified = $"GlobalMaps.{candClean}";
+        private static bool IsPureNumericArithmetic(List<Token> toks)
+        {
+            foreach (var t in toks)
+            {
+                switch (t.Kind)
+                {
+                    case TokKind.End:
+                    case TokKind.Number:
+                    case TokKind.Ident:
+                    case TokKind.Plus:
+                    case TokKind.Minus:
+                    case TokKind.Star:
+                    case TokKind.Slash:
+                    case TokKind.Rem:
+                    case TokKind.LParen:
+                    case TokKind.RParen:
+                        continue;
+                    case TokKind.String:
+                        return false; // string literal present → not purely numeric
+                    default:
+                        return false;
+                }
+            }
             return true;
         }
 
-        // ────────────────────────────────────────────────────────────────
-        // Movement conversions (inline)
-        // ────────────────────────────────────────────────────────────────
+
+        // ──────────────────────────────────────────────────────────────────
+        // Movement/Arithmetic coercion
+        // ──────────────────────────────────────────────────────────────────
+
+        private static string CoerceForTarget(string expr, ValueInfo lhs, bool rounding)
+        {
+            // Decimal targets: ensure decimal and round to scale
+            if (lhs.Kind == ValueKind.Decimal)
+            {
+                string dec = ToDec(expr);
+                if (lhs.Scale >= 0)
+                {
+                    return rounding
+                        ? $"System.Math.Round({dec}, {lhs.Scale}, System.MidpointRounding.AwayFromZero)"
+                        : $"System.Math.Round({dec}, {lhs.Scale}, System.MidpointRounding.ToZero)";
+                }
+                return dec;
+            }
+
+            // Int targets: either simple cast or rounded cast if explicitly requested
+            if (lhs.Kind == ValueKind.Int)
+            {
+                if (rounding)
+                    return $"(int)System.Math.Round({ToDec(expr)}, 0, System.MidpointRounding.AwayFromZero)";
+
+                // Default: keep int math clean — just cast final result
+                return $"(int)({expr})";
+            }
+
+            // String targets: stringify
+            if (lhs.Kind == ValueKind.String)
+                return $"({ToDec(expr)}).ToString(System.Globalization.CultureInfo.InvariantCulture)";
+
+            // Unknown targets: pass-through
+            return expr;
+
+            static string ToDec(string e) =>
+                $"System.Convert.ToDecimal((object)({e}), System.Globalization.CultureInfo.InvariantCulture)";
+        }
+        private static string AsInstance(string qualifiedTypeName) => qualifiedTypeName + ".Current";
+
         private static string CoerceMovement(string rhsExpr, ValueInfo rhs, ValueInfo lhs, bool rounding)
         {
             static string ToDec(string e) =>
@@ -173,16 +219,21 @@ namespace EsfParser.Parser.Logic.Statements
             static bool IsIntLiteral(string e) =>
                 Regex.IsMatch(e, @"^\s*[+-]?\d+\s*$");
 
+            // In CoerceMovement → INT target → rhs.Kind == Int:
+            if (IsIntLiteral(rhsExpr))
+                return Regex.Match(rhsExpr, @"[+-]?\d+").Value; // emits "0" etc. verbatim
+
+
             // DECIMAL target
             if (lhs.Kind == ValueKind.Decimal)
             {
                 string dec = (rhs.Kind == ValueKind.Decimal) ? rhsExpr : ToDec(rhsExpr);
-                if (lhs.Scale >= 0)
-                {
-                    return rounding
-                        ? $"System.Math.Round({dec}, {lhs.Scale}, System.MidpointRounding.AwayFromZero)"
-                        : $"System.Math.Round({dec}, {lhs.Scale}, System.MidpointRounding.ToZero)";
-                }
+                //if (lhs.Scale >= 0)
+                //{
+                //    return rounding
+                //        ? $"System.Math.Round({dec}, {lhs.Scale}, System.MidpointRounding.AwayFromZero)"
+                //        : $"System.Math.Round({dec}, {lhs.Scale}, System.MidpointRounding.ToZero)";
+                //}
                 return dec;
             }
 
@@ -196,124 +247,140 @@ namespace EsfParser.Parser.Logic.Statements
                     if (IsIntLiteral(rhsExpr))
                         return Regex.Match(rhsExpr, @"[+-]?\d+").Value;
 
-                    // already int-typed expression → pass through
                     return rhsExpr;
                 }
 
                 // int ← decimal
                 if (rhs.Kind == ValueKind.Decimal)
                 {
-                    // If user specified (R), honor rounding; otherwise do a simple cast
                     return rounding
                         ? $"(int)System.Math.Round({ToDec(rhsExpr)}, 0, System.MidpointRounding.AwayFromZero)"
                         : $"(int)({rhsExpr})";
                 }
 
-                // int ← unknown
-                // If the RHS *looks like* a record field path (GlobalWorkstor/GlobalSqlRow),
-                // prefer a simple cast to int (covers decimal record fields we couldn't infer).
-                var rhsNorm = NormalizeOperand(rhsExpr);
-                if (RecordFieldPathRegex.IsMatch(rhsNorm))
+                // int ← unknown:
+                // If RHS *looks like* a record field path, prefer a simple cast.
+                if (RecordFieldPathRegex.IsMatch(NormalizeOperand(rhsExpr)))
                     return $"(int)({rhsExpr})";
 
-                // Otherwise, go through decimal conversion + truncate/round
-                string dec2 = ToDec(rhsExpr);
+                // Otherwise, go via decimal then truncate/round-to-zero
                 return rounding
-                    ? $"(int)System.Math.Round({dec2}, 0, System.MidpointRounding.AwayFromZero)"
-                    : $"(int)System.Math.Round({dec2}, 0, System.MidpointRounding.ToZero)";
+                    ? $"(int)System.Math.Round({ToDec(rhsExpr)}, 0, System.MidpointRounding.AwayFromZero)"
+                    : $"(int)System.Math.Round({ToDec(rhsExpr)}, 0, System.MidpointRounding.ToZero)";
             }
 
             // STRING target
             if (lhs.Kind == ValueKind.String)
             {
+                // if RHS is already a string literal → leave as-is
                 var t = rhsExpr.Trim();
-                if (t.Length >= 2 && t[0] == '"' && t[^1] == '"')
+                if (t.Length >= 2 && (t[0] == '"' && t[^1] == '"'))
                     return rhsExpr;
 
                 if (rhs.Kind == ValueKind.String)
                     return $"System.Convert.ToString({rhsExpr}, System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty";
 
-                // numeric/unknown → stringify decimal representation
+                // numeric/unknown → ToString(invariant)
                 return $"({ToDec(rhsExpr)}).ToString(System.Globalization.CultureInfo.InvariantCulture)";
             }
 
-            // Unknown target → pass-through
             return rhsExpr;
         }
 
-        private static string CoerceForTarget(string decimalExpr, ValueInfo target, bool rounding)
+        // ──────────────────────────────────────────────────────────────────
+        // Heuristics / metadata inference
+        // ──────────────────────────────────────────────────────────────────
+
+        private static ValueInfo InferTargetInfo(string lhsQualified, EsfProgram? prog, ValueInfo rhsInfo, bool isArithmetic)
         {
-            return target.Kind switch
-            {
-                ValueKind.Int => rounding
-                    ? $"(int)System.Math.Round({decimalExpr}, 0, System.MidpointRounding.AwayFromZero)"
-                    : $"(int)System.Math.Round({decimalExpr}, 0, System.MidpointRounding.ToZero)",
+            // Try map field
+            if (TryInferMapField(lhsQualified, prog, out var kind, out var scale))
+                return new ValueInfo(kind, scale);
 
-                ValueKind.Decimal => target.Scale >= 0
-                    ? (rounding
-                        ? $"System.Math.Round({decimalExpr}, {target.Scale}, System.MidpointRounding.AwayFromZero)"
-                        : $"System.Math.Round({decimalExpr}, {target.Scale}, System.MidpointRounding.ToZero)")
-                    : decimalExpr,
+            // Try record item
+            if (TryInferRecordItem(lhsQualified, prog, out kind, out scale))
+                return new ValueInfo(kind, scale);
 
-                ValueKind.String => $"({decimalExpr}).ToString(System.Globalization.CultureInfo.InvariantCulture)",
+            // If arithmetic and RHS is numeric, return numeric-unknown (fall back later in coercion)
+            if (isArithmetic && (rhsInfo.Kind == ValueKind.Int || rhsInfo.Kind == ValueKind.Decimal || rhsInfo.Kind == ValueKind.NumericUnknown))
+                return ValueInfo.NumericUnknown();
 
-                _ => decimalExpr
-            };
+            // Default to string
+            return new ValueInfo(ValueKind.String, -1);
         }
 
-        // ────────────────────────────────────────────────────────────────
-        // Type inference (metadata + safe fallback)
-        // ────────────────────────────────────────────────────────────────
-        private static ValueInfo InferTargetInfo(string operand, EsfProgram? prog, ValueInfo rhsHint, bool isArithmetic)
+        private static ValueInfo InferValueInfoSmart(string raw, string qualified, EsfProgram? prog)
         {
-            var v = InferValueInfo(operand, prog);
+            var v = InferValueInfo(raw, prog);
             if (v.Kind != ValueKind.Unknown) return v;
-
-            if (!isArithmetic)
-            {
-                // Safe RHS-aware fallbacks for movement
-                if (rhsHint.Kind == ValueKind.String) return new ValueInfo(ValueKind.String, -1);
-                if (rhsHint.Kind == ValueKind.Int) return new ValueInfo(ValueKind.Int, 0);
-                if (rhsHint.Kind == ValueKind.Decimal) return new ValueInfo(ValueKind.Decimal, rhsHint.Scale < 0 ? 2 : rhsHint.Scale);
-            }
-            else
-            {
-                // Arithmetic with unknown LHS: if it *looks* like a field path, default to INT
-                string conv = NormalizeOperand(CSharpUtils.ConvertOperand(operand));
-                if (Regex.IsMatch(conv, @"\b(GlobalWorkstor|GlobalSqlRow|GlobalMaps)\.[A-Za-z_0-9]+\.[A-Za-z0-9_]+"))
-                    return new ValueInfo(ValueKind.Int, 0);
-            }
-
-            return v;
+            return InferValueInfo(qualified, prog);
         }
 
         private static ValueInfo InferValueInfo(string operand, EsfProgram? prog)
         {
+            if (string.IsNullOrWhiteSpace(operand))
+                return ValueInfo.Unknown();
+
+            // String literal?
+            var t = operand.Trim();
+            if (t.Length >= 2 && (t[0] == '"' && t[^1] == '"'))
+                return new ValueInfo(ValueKind.String, -1);
+
+            // Pure numeric literal?
+            if (TryGetPureNumeric(operand, out bool isDec))
+                return new ValueInfo(isDec ? ValueKind.Decimal : ValueKind.Int, isDec ? 2 : 0);
+
+            // Map field?
             if (TryInferMapField(operand, prog, out var kind, out var scale))
                 return new ValueInfo(kind, scale);
 
+            // Record item?
             if (TryInferRecordItem(operand, prog, out kind, out scale))
                 return new ValueInfo(kind, scale);
 
-            var s = operand.Trim();
-
-            if (s.Length > 0 && (s[0] == '"' || s[0] == '\''))
-                return new ValueInfo(ValueKind.String, -1);
-
-            // numeric literal?
-            var m = PureNumericRegex.Match(s);
-            if (m.Success)
-            {
-                bool hasDot = m.Groups["num"].Value.Contains('.');
-                return new ValueInfo(hasDot ? ValueKind.Decimal : ValueKind.Int, hasDot ? 2 : 0);
-            }
-
+            // Unknown
             return ValueInfo.Unknown();
         }
 
-        // ────────────────────────────────────────────────────────────────
-        // Map/Record type inference (UPDATED: PACKED is always decimal)
-        // ────────────────────────────────────────────────────────────────
+        private static bool TryResolveWholeMapRef(string operand, EsfProgram? prog, out string qualified, out string mapNameClean)
+        {
+            qualified = ""; mapNameClean = "";
+            if (string.IsNullOrWhiteSpace(operand) || prog?.Maps?.Maps == null) return false;
+
+            var m = Regex.Match(operand, @"^\s*(?:GlobalMaps\.)?(?<name>[A-Za-z_][A-Za-z0-9_]*)\s*$");
+            if (!m.Success) return false;
+
+            string cand = CSharpUtils.CleanName(m.Groups["name"].Value);
+            bool exists = prog.Maps.Maps.Any(x =>
+                string.Equals(CSharpUtils.CleanName(x.MapName), cand, StringComparison.OrdinalIgnoreCase));
+            if (!exists) return false;
+
+            mapNameClean = cand;
+            qualified = $"GlobalMaps.{cand}";
+            return true;
+        }
+
+        private static bool TryResolveWholeRecordRef(string operand, EsfProgram? prog, out string qualified, out string container, out string recNameClean)
+        {
+            qualified = ""; container = ""; recNameClean = "";
+            if (string.IsNullOrWhiteSpace(operand) || prog?.Records?.Records == null) return false;
+
+            var m = Regex.Match(operand, @"^\s*(?:(GlobalWorkstor|GlobalSqlRow)\.)?(?<name>[A-Za-z_][A-Za-z0-9_]*)\s*$");
+            if (!m.Success) return false;
+
+            string cand = CSharpUtils.CleanName(m.Groups["name"].Value);
+            var rec = prog.Records.Records.FirstOrDefault(r =>
+                string.Equals(CSharpUtils.CleanName(r.Name), cand, StringComparison.OrdinalIgnoreCase));
+            if (rec == null) return false;
+
+            container = rec.Org.Equals("SQLROW", StringComparison.OrdinalIgnoreCase) ? "GlobalSqlRow" : "GlobalWorkstor";
+            recNameClean = cand;
+            qualified = $"{container}.{cand}";
+            return true;
+        }
+
+
+        // PACKED is always decimal; NUM → decimal when Decimals>0 else int; BINARY → int; else string.
         private static bool TryInferRecordItem(string operand, EsfProgram? prog, out ValueKind kind, out int scale)
         {
             kind = ValueKind.Unknown; scale = -1;
@@ -342,7 +409,6 @@ namespace EsfParser.Parser.Logic.Statements
 
             string tU = item.Type.ToString().ToUpperInvariant();
 
-            // NEW: PACKED is always represented as decimal in generated code, even when Decimals == 0
             if (tU == "PACKED")
             {
                 kind = ValueKind.Decimal;
@@ -350,7 +416,14 @@ namespace EsfParser.Parser.Logic.Statements
                 return true;
             }
 
-            // NUM: decimal only when Decimals > 0, otherwise int
+            if (tU == "PACK")
+            {
+                kind = ValueKind.Decimal;
+                scale = Math.Max(0, item.Decimals);
+                return true;
+            }
+
+
             if (tU == "NUM")
             {
                 if (item.Decimals > 0) { kind = ValueKind.Decimal; scale = item.Decimals; }
@@ -358,23 +431,22 @@ namespace EsfParser.Parser.Logic.Statements
                 return true;
             }
 
-            // BINARY → int (typical)
             if (tU == "BINARY")
             {
-                kind = ValueKind.Int;
-                scale = 0;
-                return true;
+                kind = ValueKind.Int; scale = 0; return true;
             }
 
-            // Otherwise treat as string
-            kind = ValueKind.String; scale = -1;
-            return true;
+            if (tU == "BIN")
+            {
+                kind = ValueKind.Int; scale = 0; return true;
+            }
+
+            kind = ValueKind.String; scale = -1; return true;
         }
 
         private static bool TryInferMapField(string operand, EsfProgram? prog, out ValueKind kind, out int scale)
         {
-            kind = ValueKind.Unknown;
-            scale = -1;
+            kind = ValueKind.Unknown; scale = -1;
             if (prog?.Maps?.Maps == null) return false;
 
             var m = Regex.Match(operand, @"GlobalMaps\.(?<map>[A-Za-z_0-9]+)\.(?<fld>[A-Za-z0-9_\-\[\]]+)");
@@ -390,15 +462,9 @@ namespace EsfParser.Parser.Logic.Statements
             string canonFld = Canon(fldName);
             var vf = map.Vfields.FirstOrDefault(v =>
                 string.Equals(Canon(v.Name), canonFld, StringComparison.OrdinalIgnoreCase));
-            if (vf == null)
-            {
-                kind = ValueKind.String; scale = -1;
-                return false;
-            }
+            if (vf == null) { kind = ValueKind.String; scale = -1; return false; }
 
             string tU = vf.Type.ToString().ToUpperInvariant();
-
-            // Vfields are usually "NUM"/"CHA". Treat NUM with Decimals>0 as decimal; else int. CHA → string.
             if (tU == "NUM")
             {
                 if (vf.Decimals > 0) { kind = ValueKind.Decimal; scale = vf.Decimals; }
@@ -411,18 +477,134 @@ namespace EsfParser.Parser.Logic.Statements
             return true;
         }
 
-        // ────────────────────────────────────────────────────────────────
-        // Arithmetic tokenizer & parser
-        // ────────────────────────────────────────────────────────────────
-        private enum TokKind { Identifier, Number, String, LParen, RParen, Plus, Minus, Star, Slash, Rem, Comma, End }
-        private sealed record Token(TokKind Kind, string Text, int Pos);
+        // ──────────────────────────────────────────────────────────────────
+        // Helpers (lexing/parsing/normalization)
+        // ──────────────────────────────────────────────────────────────────
+
+        private static readonly Regex RecordFieldPathRegex = new(
+            @"^\s*(GlobalWorkstor|GlobalSqlRow)\s*\.\s*[A-Za-z_][A-Za-z0-9_]*\s*\.\s*[A-Za-z0-9_\-\[\]]+\s*$",
+            RegexOptions.Compiled);
+
+        private static bool TryGetContainerRecordRef(string operand, out string instanceExpr)
+        {
+            // Whole-record reference: GlobalWorkstor.XYZ or GlobalSqlRow.XYZ
+            instanceExpr = operand?.Trim() ?? "";
+            var m = Regex.Match(instanceExpr, @"^\s*(GlobalWorkstor|GlobalSqlRow)\s*\.\s*([A-Za-z_][A-Za-z0-9_]*)\s*$");
+            if (!m.Success) return false;
+            // Use the exact text; ConvertOperand upstream will qualify as needed
+            return true;
+        }
+
+        private static bool IsWholeGlobalMap(string operand)
+        {
+            return Regex.IsMatch(operand ?? "",
+                @"^\s*GlobalMaps\s*\.\s*[A-Za-z_][A-Za-z0-9_]*\s*$",
+                RegexOptions.Compiled);
+        }
+
+        private static string StripIndexer(string s)
+        {
+            if (string.IsNullOrEmpty(s)) return s;
+            int i = s.IndexOf('[');
+            return i >= 0 ? s.Substring(0, i) : s;
+        }
+
+        // Normalize minimal formatting for comparisons (safe on non-literals)
+        private static string NormalizeOperand(string s)
+            => Regex.Replace(s ?? "", @"\s+", "");
+
+        private static string Canon(string s)
+            => Regex.Replace((s ?? "").Replace("-", "_"), @"\s+", "").Trim();
+
+        private static bool TryGetPureNumeric(string s, out bool isDecimal)
+        {
+            isDecimal = false;
+            if (string.IsNullOrWhiteSpace(s)) return false;
+            var t = s.Trim();
+            // simple forms: -12, +34, 12.34, .5, 5.
+            if (Regex.IsMatch(t, @"^[+-]?(\d+(\.\d*)?|\.\d+)$"))
+            {
+                isDecimal = t.Contains('.');
+                return true;
+            }
+            return false;
+        }
+
+        private static bool ContainsRoundMarker(string s)
+            => Regex.IsMatch(s ?? "", @"\(\s*R\b", RegexOptions.IgnoreCase);
+
+        private static string RemoveRoundMarker(string s)
+            => Regex.Replace(s ?? "", @"\(\s*R\b", "", RegexOptions.IgnoreCase);
+
+        // X = X ± N  OR  X = N + X  (N is integer literal)
+        private static bool TryRewriteSimpleIncDec(string leftQualified, string rhsRaw, out string rewritten)
+        {
+            rewritten = "";
+            string lhsCanon = Canon(leftQualified);
+
+            // lhs + N
+            var m1 = Regex.Match(rhsRaw, @"^\s*(?<a>.+?)\s*\+\s*(?<n>[+-]?\d+)\s*$");
+            if (m1.Success)
+            {
+                var a = Canon(NormalizeOperand(CSharpUtils.ConvertOperand(m1.Groups["a"].Value)));
+                if (a == lhsCanon)
+                {
+                    int n = int.Parse(m1.Groups["n"].Value, CultureInfo.InvariantCulture);
+                    rewritten = (n == 1) ? $"{leftQualified}++" : $"{leftQualified} += {n}";
+                    return true;
+                }
+            }
+
+            // N + lhs
+            var m2 = Regex.Match(rhsRaw, @"^\s*(?<n>[+-]?\d+)\s*\+\s*(?<a>.+?)\s*$");
+            if (m2.Success)
+            {
+                var a = Canon(NormalizeOperand(CSharpUtils.ConvertOperand(m2.Groups["a"].Value)));
+                if (a == lhsCanon)
+                {
+                    int n = int.Parse(m2.Groups["n"].Value, CultureInfo.InvariantCulture);
+                    rewritten = (n == 1) ? $"{leftQualified}++" : $"{leftQualified} += {n}";
+                    return true;
+                }
+            }
+
+            // lhs - N
+            var m3 = Regex.Match(rhsRaw, @"^\s*(?<a>.+?)\s*-\s*(?<n>\d+)\s*$");
+            if (m3.Success)
+            {
+                var a = Canon(NormalizeOperand(CSharpUtils.ConvertOperand(m3.Groups["a"].Value)));
+                if (a == lhsCanon)
+                {
+                    int n = int.Parse(m3.Groups["n"].Value, CultureInfo.InvariantCulture);
+                    rewritten = (n == 1) ? $"{leftQualified}--" : $"{leftQualified} -= {n}";
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        // ──────────────────────────────────────────────────────────────────
+        // Expression parser (Pratt-style, minimal)
+        // ──────────────────────────────────────────────────────────────────
+
+        private enum TokKind { End, Number, String, Ident, Plus, Minus, Star, Slash, Rem, LParen, RParen, Comma }
+
+        private readonly struct Token
+        {
+            public TokKind Kind { get; }
+            public string Text { get; }
+            public int Pos { get; }
+            public Token(TokKind k, string t, int p) { Kind = k; Text = t; Pos = p; }
+            public override string ToString() => $"{Kind}:{Text}";
+        }
 
         private sealed class Tokenizer
         {
             private readonly string _s;
             private int _i;
 
-            public Tokenizer(string s) { _s = s ?? string.Empty; }
+            public Tokenizer(string s) { _s = s ?? ""; _i = 0; }
 
             public List<Token> Tokenize()
             {
@@ -436,47 +618,20 @@ namespace EsfParser.Parser.Logic.Statements
             {
                 SkipWs();
                 if (_i >= _s.Length) return new Token(TokKind.End, "", _i);
-
                 char c = _s[_i];
-                int start = _i;
 
-                if (c == '"' || c == '\'')
-                {
-                    char q = c; _i++;
-                    var sb = new StringBuilder().Append(q);
-                    while (_i < _s.Length)
-                    {
-                        char d = _s[_i++]; sb.Append(d);
-                        if (d == q) break;
-                        if (d == '\\' && _i < _s.Length) sb.Append(_s[_i++]);
-                    }
-                    return new Token(TokKind.String, sb.ToString(), start);
-                }
+                // number
+                // number (no sign here; + / - are always separate tokens)
+                if (char.IsDigit(c) || (c == '.' && _i + 1 < _s.Length && char.IsDigit(_s[_i + 1])))
+                    return ReadNumber();
 
-                if (char.IsDigit(c))
-                {
-                    _i++;
-                    while (_i < _s.Length && (char.IsDigit(_s[_i]) || _s[_i] == '.')) _i++;
-                    var num = _s.Substring(start, _i - start);
-                    return new Token(TokKind.Number, num, start);
-                }
+                // string literal
+                if (c == '"' || c == '\'') return ReadString();
 
-                if (c == '/')
-                {
-                    if (_i + 1 < _s.Length && _s[_i + 1] == '/')
-                    { _i += 2; return new Token(TokKind.Rem, "//", start); }
-                    _i++; return new Token(TokKind.Slash, "/", start);
-                }
-                if (c == '+') { _i++; return new Token(TokKind.Plus, "+", start); }
-                if (c == '-') { _i++; return new Token(TokKind.Minus, "-", start); }
-                if (c == '*') { _i++; return new Token(TokKind.Star, "*", start); }
-                if (c == '(') { _i++; return new Token(TokKind.LParen, "(", start); }
-                if (c == ')') { _i++; return new Token(TokKind.RParen, ")", start); }
-                if (c == ',') { _i++; return new Token(TokKind.Comma, ",", start); }
-
+                // ident (allow ., _, digits, [subscript], hyphen stays here but ConvertOperand will normalize)
                 if (char.IsLetter(c) || c == '_')
                 {
-                    _i++;
+                    int start = _i;
                     while (_i < _s.Length)
                     {
                         char ch = _s[_i];
@@ -495,238 +650,202 @@ namespace EsfParser.Parser.Logic.Statements
                         }
                         break;
                     }
-                    string id = _s.Substring(start, _i - start);
-                    return new Token(TokKind.Identifier, id, start);
+                    return new Token(TokKind.Ident, _s.Substring(start, _i - start), start);
                 }
 
-                _i++;
-                return new Token(TokKind.Identifier, c.ToString(), start);
+                // operators
+                if (c == '+') { _i++; return new Token(TokKind.Plus, "+", _i - 1); }
+                if (c == '-') { _i++; return new Token(TokKind.Minus, "-", _i - 1); }
+                if (c == '*') { _i++; return new Token(TokKind.Star, "*", _i - 1); }
+                if (c == '/')
+                {
+                    if (_i + 1 < _s.Length && _s[_i + 1] == '/')
+                    {
+                        _i += 2; return new Token(TokKind.Rem, "//", _i - 2);
+                    }
+                    _i++; return new Token(TokKind.Slash, "/", _i - 1);
+                }
+                if (c == '(') { _i++; return new Token(TokKind.LParen, "(", _i - 1); }
+                if (c == ')') { _i++; return new Token(TokKind.RParen, ")", _i - 1); }
+                if (c == ',') { _i++; return new Token(TokKind.Comma, ",", _i - 1); }
+
+                // fallback: skip unknown char
+                _i++; return Next();
             }
 
             private void SkipWs()
             {
                 while (_i < _s.Length && char.IsWhiteSpace(_s[_i])) _i++;
             }
+
+            private bool LookaheadIsNumber()
+            {
+                int j = _i + 1;
+                while (j < _s.Length && char.IsWhiteSpace(_s[j])) j++;
+                return j < _s.Length && (char.IsDigit(_s[j]) || (_s[j] == '.' && j + 1 < _s.Length && char.IsDigit(_s[j + 1])));
+            }
+
+            private Token ReadNumber()
+            {
+                int start = _i;
+                bool sawDot = false;
+
+                while (_i < _s.Length)
+                {
+                    char ch = _s[_i];
+                    if (char.IsDigit(ch)) { _i++; continue; }
+                    if (ch == '.' && !sawDot) { sawDot = true; _i++; continue; }
+                    break;
+                }
+                return new Token(TokKind.Number, _s.Substring(start, _i - start), start);
+            }
+
+            private Token ReadString()
+            {
+                int start = _i;
+                char q = _s[_i++]; // quote
+                while (_i < _s.Length)
+                {
+                    char d = _s[_i++];
+                    if (d == q) break;
+                    if (d == '\\' && _i < _s.Length) _i++; // skip escaped next
+                }
+                return new Token(TokKind.String, _s.Substring(start, _i - start), start);
+            }
         }
 
         private sealed class Parser
         {
-            private readonly List<Token> _t;
+            private readonly List<Token> _toks;
             private int _p;
             private readonly EsfProgram? _prog;
 
-            public Parser(List<Token> tokens, EsfProgram? prog)
-            {
-                _t = tokens ?? new List<Token> { new Token(TokKind.End, "", 0) };
-                _p = 0; _prog = prog;
-            }
+            public Parser(List<Token> toks, EsfProgram? prog) { _toks = toks; _prog = prog; _p = 0; }
 
-            public string ParseNumericExpression(out bool usedRemainder)
-            {
-                usedRemainder = false;
-                return ParseAddSub(ref usedRemainder);
-            }
+            public string ParseExpression() => ParseAddSub();
 
-            private static string ToDec(string e) =>
-                $"System.Convert.ToDecimal((object)({e}), System.Globalization.CultureInfo.InvariantCulture)";
-
-            private string ParseAddSub(ref bool usedRem)
+            private string ParseAddSub()
             {
-                string left = ParseMulDivRem(ref usedRem);
-                while (true)
+                string left = ParseMulDivRem();
+                while (PeekKind() is TokKind.Plus or TokKind.Minus)
                 {
-                    var k = Peek().Kind;
-                    if (k == TokKind.Plus || k == TokKind.Minus)
-                    {
-                        var op = Next().Text;
-                        string right = ParseMulDivRem(ref usedRem);
-                        left = $"({left} {op} {right})";
-                        continue;
-                    }
-                    break;
+                    var op = Next().Kind;
+                    string right = ParseMulDivRem();
+                    left = $"({left} {(op == TokKind.Plus ? "+" : "-")} {right})";
                 }
                 return left;
             }
 
-            private string ParseMulDivRem(ref bool usedRem)
+            private string ParseMulDivRem()
             {
-                string left = ParseUnary(ref usedRem);
-                while (true)
+                string left = ParseUnary();
+                while (PeekKind() is TokKind.Star or TokKind.Slash or TokKind.Rem)
                 {
-                    var k = Peek().Kind;
-                    if (k == TokKind.Star || k == TokKind.Slash || k == TokKind.Rem)
+                    var op = Next().Kind;
+                    string right = ParseUnary();
+                    if (op == TokKind.Star) left = $"({left} * {right})";
+                    else if (op == TokKind.Slash) left = $"({left} / {right})";
+                    else
                     {
-                        var opTok = Next();
-                        string right = ParseUnary(ref usedRem);
-
-                        if (opTok.Kind == TokKind.Rem)
-                        {
-                            usedRem = true;
-                            left = $"({left} - ({right} * decimal.Truncate({left} / {right})))";
-                        }
-                        else
-                        {
-                            left = $"({left} {opTok.Text} {right})";
-                        }
-                        continue;
+                        // remainder: works for ints and decimals
+                        // (a) - (b) * Truncate((a)/(b))
+                        left = $"(({left}) - ({right}) * System.Math.Truncate(({left})/({right})))";
                     }
-                    break;
                 }
                 return left;
             }
 
-            private string ParseUnary(ref bool usedRem)
+            private string ParseUnary()
             {
-                var k = Peek().Kind;
-                if (k == TokKind.Plus)
-                {
-                    Next();
-                    string e = ParseUnary(ref usedRem);
-                    return $"(+{e})";
-                }
-                if (k == TokKind.Minus)
-                {
-                    Next();
-                    string e = ParseUnary(ref usedRem);
-                    return $"(-{e})";
-                }
-                return ParsePrimary(ref usedRem);
+                if (PeekKind() == TokKind.Plus) { Next(); return ParseUnary(); }
+                if (PeekKind() == TokKind.Minus) { Next(); var inner = ParseUnary(); return $"(-({inner}))"; }
+                return ParsePrimary();
             }
 
-            private string ParsePrimary(ref bool usedRem)
+            private string ParsePrimary()
             {
-                var t = Peek();
-                switch (t.Kind)
+                var k = PeekKind();
+
+                if (k == TokKind.Number) return Next().Text.Trim();
+
+                if (k == TokKind.String)
                 {
-                    case TokKind.Number:
-                        Next();
-                        return t.Text.Contains('.') ? $"{t.Text}m" : $"(decimal){t.Text}";
+                    var t = Next().Text;
+                    // Normalize to C# double-quoted string
+                    if (t.Length >= 2)
+                    {
+                        char q = t[0];
+                        string body = t.Substring(1, t.Length - 2);
+                        if (q == '\'') body = body.Replace("\"", "\\\"");
+                        return $"\"{body}\"";
+                    }
+                    return "\"\"";
+                }
 
-                    case TokKind.String:
-                        Next();
-                        return $"decimal.Parse({t.Text}, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture)";
+                if (k == TokKind.LParen)
+                {
+                    Next(); // '('
+                    var expr = ParseExpression();
+                    Expect(TokKind.RParen);
+                    return $"({expr})";
+                }
 
-                    case TokKind.Identifier:
+                if (k == TokKind.Ident)
+                {
+                    var id = Next().Text;
+                    // Function call?
+                    if (PeekKind() == TokKind.LParen)
+                    {
+                        Next(); // '('
+                        var args = new List<string>();
+                        if (PeekKind() != TokKind.RParen)
                         {
-                            string id = Next().Text;
-                            if (Peek().Kind == TokKind.LParen)
+                            do
                             {
-                                string call = id + CaptureCallText();
-                                string conv = CSharpUtils.ConvertOperand(call);
-                                return ToDec(conv);
-                            }
-                            else
-                            {
-                                string conv = CSharpUtils.ConvertOperand(id);
-                                return ToDec(conv);
-                            }
+                                args.Add(ParseExpression());
+                            } while (TryConsume(TokKind.Comma));
                         }
+                        Expect(TokKind.RParen);
+                        var f = CSharpUtils.ConvertOperand(id); // Qualify EZ* if needed
+                        return $"{f}({string.Join(", ", args)})";
+                    }
 
-                    case TokKind.LParen:
-                        {
-                            Next();
-                            string e = ParseAddSub(ref usedRem);
-                            Expect(TokKind.RParen);
-                            return $"({e})";
-                        }
-
-                    default:
-                        Next();
-                        return "(decimal)0";
+                    // plain identifier (operand)
+                    return CSharpUtils.ConvertOperand(id);
                 }
+
+                // End/unknown
+                return "0";
             }
 
-            private string CaptureCallText()
-            {
-                var sb = new StringBuilder();
-                int depth = 0;
-
-                var tok = Next(); // '('
-                sb.Append(tok.Text);
-                depth++;
-
-                while (_p < _t.Count && depth > 0)
-                {
-                    var t = Next();
-                    sb.Append(t.Text);
-                    if (t.Kind == TokKind.LParen) depth++;
-                    else if (t.Kind == TokKind.RParen) depth--;
-                }
-                return sb.ToString();
-            }
-
-            private Token Peek() => _p < _t.Count ? _t[_p] : new Token(TokKind.End, "", _t.Count > 0 ? _t[^1].Pos : 0);
-            private Token Next() => _p < _t.Count ? _t[_p++] : new Token(TokKind.End, "", _t.Count > 0 ? _t[^1].Pos : 0);
-            private void Expect(TokKind k) { var t = Next(); /* lenient */ }
+            private TokKind PeekKind() => _toks[_p].Kind;
+            private Token Next() => _toks[_p++];
+            private bool TryConsume(TokKind k) { if (PeekKind() == k) { _p++; return true; } return false; }
+            private void Expect(TokKind k) { if (PeekKind() == k) { _p++; return; } /* tolerant */ }
         }
 
-        // ────────────────────────────────────────────────────────────────
-        // Utils & typing
-        // ────────────────────────────────────────────────────────────────
-        private static bool TryGetContainerInstance(string operand, out string instanceExpr, out string recordName)
+        // ──────────────────────────────────────────────────────────────────
+        // Value typing model
+        // ──────────────────────────────────────────────────────────────────
+
+        private enum ValueKind
         {
-            instanceExpr = string.Empty;
-            recordName = string.Empty;
-            if (string.IsNullOrWhiteSpace(operand)) return false;
-
-            var m = ContainerRefRegex.Match(operand);
-            if (!m.Success) return false;
-
-            recordName = m.Groups["rec"].Value;
-            instanceExpr = operand.EndsWith(".Current", StringComparison.Ordinal) ? operand : operand + ".Current";
-            return true;
+            Unknown,
+            String,
+            Int,
+            Decimal,
+            NumericUnknown // used for arithmetic where exact numeric kind is not known
         }
-
-        private static string NormalizeOperand(string s)
-        {
-            if (string.IsNullOrWhiteSpace(s)) return string.Empty;
-            var trimmed = s.Trim();
-
-            while (trimmed.Length > 0 && (trimmed[^1] == ';' || char.IsWhiteSpace(trimmed[^1])))
-                trimmed = trimmed[..^1].TrimEnd();
-
-            int cmt = trimmed.IndexOf("//", StringComparison.Ordinal);
-            if (cmt >= 0) trimmed = trimmed[..cmt].TrimEnd();
-
-            trimmed = Regex.Replace(trimmed, @"\s*\.\s*", ".");
-            return trimmed;
-        }
-
-        private static string StripIndexer(string s)
-        {
-            if (string.IsNullOrEmpty(s)) return s;
-            int i = s.IndexOf('[');
-            return i >= 0 ? s.Substring(0, i) : s;
-        }
-
-        private static string Canon(string s)
-        {
-            if (string.IsNullOrEmpty(s)) return string.Empty;
-            var sb = new StringBuilder(s.Length);
-            foreach (var ch in s)
-                if (char.IsLetterOrDigit(ch)) sb.Append(char.ToUpperInvariant(ch));
-            return sb.ToString();
-        }
-
-        private static bool TryGetPureNumeric(string s, out bool isDecimal)
-        {
-            var m = PureNumericRegex.Match(s);
-            if (!m.Success) { isDecimal = false; return false; }
-            isDecimal = m.Groups["num"].Value.Contains('.');
-            return true;
-        }
-
-        private enum ValueKind { Unknown, Int, Decimal, String }
 
         private readonly struct ValueInfo
         {
             public ValueKind Kind { get; }
-            public int Scale { get; }
+            public int Scale { get; } // decimal places for Decimal; -1 otherwise
 
-            public ValueInfo(ValueKind kind, int scale) { Kind = kind; Scale = scale; }
+            public ValueInfo(ValueKind k, int scale) { Kind = k; Scale = scale; }
 
             public static ValueInfo Unknown() => new(ValueKind.Unknown, -1);
-            public static ValueInfo NumericUnknown() => new(ValueKind.Decimal, -1);
+            public static ValueInfo NumericUnknown() => new(ValueKind.NumericUnknown, -1);
         }
     }
 }

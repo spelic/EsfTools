@@ -22,39 +22,28 @@ namespace EsfParser.CodeGen
                 if (char.IsWhiteSpace(c)) { sb.Append(c); i++; continue; }
 
                 // ---------- string literals ----------
-                // ESF allows both 'single' and "double" quoted; C# requires ".
                 if (c == '"' || c == '\'')
                 {
-                    char q = c; i++;           // consume opening quote
-                    sb.Append('"');            // always open with double quote in C#
-
+                    char q = c; i++;
+                    sb.Append('"');
                     while (i < esfExpr.Length)
                     {
                         char d = esfExpr[i++];
-
-                        // end of this literal?
                         if (d == q) break;
-
-                        // backslash escapes: copy the escaped char verbatim
                         if (d == '\\' && i < esfExpr.Length)
                         {
                             sb.Append('\\');
                             sb.Append(esfExpr[i++]);
                             continue;
                         }
-
-                        // if ESF used single quotes, we may need to escape embedded "
                         if (q == '\'' && d == '"') sb.Append('\\');
-
                         sb.Append(d);
                     }
-
-                    sb.Append('"');            // close as C# double-quoted string
+                    sb.Append('"');
                     continue;
                 }
 
                 // ---------- multi-char symbolic operators ----------
-                // Handle them before single '=' so we don't corrupt <= and >= etc.
                 if (c == '<')
                 {
                     if (i + 1 < esfExpr.Length && esfExpr[i + 1] == '>') { sb.Append("!="); i += 2; continue; }
@@ -66,12 +55,11 @@ namespace EsfParser.CodeGen
                 }
                 if (c == '=')
                 {
-                    // If ESF ever emits '==', keep it as-is; otherwise translate '=' -> '=='
                     if (i + 1 < esfExpr.Length && esfExpr[i + 1] == '=') { sb.Append("=="); i += 2; continue; }
                     sb.Append("=="); i++; continue;
                 }
 
-                // ---------- number literal (simple: digits + optional '.') ----------
+                // ---------- number literal ----------
                 if (char.IsDigit(c))
                 {
                     int start = i;
@@ -80,12 +68,10 @@ namespace EsfParser.CodeGen
                     continue;
                 }
 
-                // ---------- identifier / dotted / subscript / word-ops / functions ----------
+                // ---------- identifiers ----------
                 if (char.IsLetter(c) || c == '_')
                 {
                     int start = i;
-
-                    // token can include letters/digits/_/., plus bracketed subscripts: NAME[...]
                     while (i < esfExpr.Length)
                     {
                         char ch = esfExpr[i];
@@ -107,8 +93,7 @@ namespace EsfParser.CodeGen
 
                     string word = esfExpr.Substring(start, i - start);
 
-
-                    // logical word-operators (token-level)
+                    // logical word-operators
                     if (word.Equals("AND", StringComparison.OrdinalIgnoreCase)) { sb.Append("&&"); continue; }
                     if (word.Equals("OR", StringComparison.OrdinalIgnoreCase)) { sb.Append("||"); continue; }
                     if (word.Equals("NOT", StringComparison.OrdinalIgnoreCase)) { sb.Append('!'); continue; }
@@ -121,86 +106,235 @@ namespace EsfParser.CodeGen
                     if (word.Equals("LT", StringComparison.OrdinalIgnoreCase)) { sb.Append("<"); continue; }
                     if (word.Equals("LE", StringComparison.OrdinalIgnoreCase)) { sb.Append("<="); continue; }
 
+                    // ESF NULL literal → C# null
+                    if (word.Equals("NULL", StringComparison.OrdinalIgnoreCase))
+                    {
+                        sb.Append("null");
+                        continue;
+                    }
 
-
-
-                    // ---------- lookahead: <operand> IS [NOT] {CURSOR|PFx|<identifier>} ----------
+                    // ---------- QUICK form: <SQLRecord> [NOT] (ERR|NRF) ----------
                     {
                         int look = i;
-                        // skip spaces
                         while (look < esfExpr.Length && char.IsWhiteSpace(esfExpr[look])) look++;
 
-                        // read next word (should be IS)
+                        // optional NOT
+                        int maybeNotStart = look;
+                        while (look < esfExpr.Length && char.IsLetter(esfExpr[look])) look++;
+                        string maybeNot = look > maybeNotStart ? esfExpr.Substring(maybeNotStart, look - maybeNotStart) : "";
+                        bool hasNot = maybeNot.Equals("NOT", StringComparison.OrdinalIgnoreCase);
+                        if (!hasNot) look = maybeNotStart; // rewind if NOT wasn't there
+
+                        while (look < esfExpr.Length && char.IsWhiteSpace(esfExpr[look])) look++;
+                        int statusStart = look;
+                        while (look < esfExpr.Length && char.IsLetter(esfExpr[look])) look++;
+                        string statusTok = look > statusStart ? esfExpr.Substring(statusStart, look - statusStart) : "";
+
+                        if (TryMapStatusToken(statusTok, out var statusProp) &&
+                            IsSqlRecordReference(word, prog))
+                        {
+                            string leftOp = ConvertOperand(word);
+                            if (hasNot) sb.Append('!');
+                            sb.Append(leftOp).Append('.').Append(statusProp);
+                            i = look; // consume "[NOT] ERR/NRF"
+                            continue;
+                        }
+                    }
+
+                    // ---------- <SQLRecord> op (ERR|NRF)  (==, <>, EQ, NE) ----------
+                    {
+                        int look = i;
+                        while (look < esfExpr.Length && char.IsWhiteSpace(esfExpr[look])) look++;
+
+                        bool isEq = false, isNe = false;
+                        int save = look;
+
+                        if (look < esfExpr.Length)
+                        {
+                            if (esfExpr[look] == '=')
+                            {
+                                isEq = true; look++;
+                                if (look < esfExpr.Length && esfExpr[look] == '=') look++; // '=='
+                            }
+                            else if (look + 1 < esfExpr.Length && esfExpr[look] == '<' && esfExpr[look + 1] == '>')
+                            {
+                                isNe = true; look += 2; // '<>'
+                            }
+                            else
+                            {
+                                int opStart = look;
+                                while (look < esfExpr.Length && char.IsLetter(esfExpr[look])) look++;
+                                string opWord = look > opStart ? esfExpr.Substring(opStart, look - opStart) : "";
+                                if (opWord.Equals("EQ", StringComparison.OrdinalIgnoreCase)) { isEq = true; }
+                                else if (opWord.Equals("NE", StringComparison.OrdinalIgnoreCase)) { isNe = true; }
+                                else { look = save; }
+                            }
+                        }
+
+                        if (isEq || isNe)
+                        {
+                            while (look < esfExpr.Length && char.IsWhiteSpace(esfExpr[look])) look++;
+                            int rStart = look;
+                            while (look < esfExpr.Length && (char.IsLetterOrDigit(esfExpr[look]) || esfExpr[look] == '_')) look++;
+                            string rhsTok = look > rStart ? esfExpr.Substring(rStart, look - rStart) : "";
+
+                            if (TryMapStatusToken(rhsTok, out var statusProp) &&
+                                IsSqlRecordReference(word, prog))
+                            {
+                                string leftOp = ConvertOperand(word);
+                                if (isNe) sb.Append('!');
+                                sb.Append(leftOp).Append('.').Append(statusProp);
+                                i = look; // consume op+status
+                                continue;
+                            }
+                        }
+                    }
+
+                    // ---------- EZEAID op PF/PA ----------
+                    if (IsEzEaidIdentifier(word))
+                    {
+                        int look = i;
+                        while (look < esfExpr.Length && char.IsWhiteSpace(esfExpr[look])) look++;
+
+                        bool isEq = false, isNe = false;
+                        int save = look;
+
+                        if (look < esfExpr.Length)
+                        {
+                            if (esfExpr[look] == '=')
+                            {
+                                isEq = true; look++;
+                                if (look < esfExpr.Length && esfExpr[look] == '=') look++;
+                            }
+                            else if (look + 1 < esfExpr.Length && esfExpr[look] == '<' && esfExpr[look + 1] == '>')
+                            {
+                                isNe = true; look += 2;
+                            }
+                            else
+                            {
+                                int opStart = look;
+                                while (look < esfExpr.Length && char.IsLetter(esfExpr[look])) look++;
+                                string opWord = look > opStart ? esfExpr.Substring(opStart, look - opStart) : "";
+                                if (opWord.Equals("EQ", StringComparison.OrdinalIgnoreCase)) { isEq = true; }
+                                else if (opWord.Equals("NE", StringComparison.OrdinalIgnoreCase)) { isNe = true; }
+                                else { look = save; }
+                            }
+                        }
+
+                        if (isEq || isNe)
+                        {
+                            while (look < esfExpr.Length && char.IsWhiteSpace(esfExpr[look])) look++;
+                            int rStart = look;
+                            while (look < esfExpr.Length && (char.IsLetterOrDigit(esfExpr[look]) || esfExpr[look] == '_')) look++;
+                            string rhsTok = look > rStart ? esfExpr.Substring(rStart, look - rStart) : "";
+
+                            if (TryParseAid(rhsTok, out var aidKind, out var aidNum))
+                            {
+                                string leftOp = ConvertOperand(word);
+
+                                if (aidKind == "PF" && aidNum >= 1 && aidNum <= 12)
+                                {
+                                    string op = isNe ? " != " : " == ";
+                                    sb.Append(leftOp).Append(op).Append("ConsoleKey.F").Append(aidNum);
+                                }
+                                else
+                                {
+                                    if (isNe) sb.Append('!');
+                                    sb.Append("EzFunctions.IsAid(\"").Append(aidKind).Append(aidNum).Append("\")");
+                                }
+
+                                i = look;
+                                continue;
+                            }
+                        }
+                    }
+
+                    // ---------- <operand> IS [NOT] {CURSOR|PF/PA|ERR|NRF|NULL|<id>} ----------
+                    {
+                        int look = i;
+                        while (look < esfExpr.Length && char.IsWhiteSpace(esfExpr[look])) look++;
+
                         int wStart = look;
                         while (look < esfExpr.Length && (char.IsLetter(esfExpr[look]) || esfExpr[look] == '_')) look++;
                         string maybeIs = look > wStart ? esfExpr.Substring(wStart, look - wStart) : "";
 
                         if (maybeIs.Equals("IS", StringComparison.OrdinalIgnoreCase))
                         {
-                            // parse optional NOT
                             while (look < esfExpr.Length && char.IsWhiteSpace(esfExpr[look])) look++;
                             int nStart = look;
                             while (look < esfExpr.Length && (char.IsLetter(esfExpr[look]) || esfExpr[look] == '_')) look++;
                             string maybeNot = look > nStart ? esfExpr.Substring(nStart, look - nStart) : "";
                             bool hasNot = maybeNot.Equals("NOT", StringComparison.OrdinalIgnoreCase);
+                            if (!hasNot) look = nStart;
 
-                            if (!hasNot) look = nStart; // rewind if NOT wasn't there
-
-                            // parse RHS token
                             while (look < esfExpr.Length && char.IsWhiteSpace(esfExpr[look])) look++;
                             int rStart = look;
                             while (look < esfExpr.Length && (char.IsLetterOrDigit(esfExpr[look]) || esfExpr[look] == '_')) look++;
                             string rhs = look > rStart ? esfExpr.Substring(rStart, look - rStart) : "";
 
-                            // Build left operand text from the token we just scanned (word already includes subscripts/dots)
                             string leftOp = ConvertOperand(word);
 
-                            // CASE 1: CURSOR check -> <op>Tag[...].IsCursor()
+                            // ERR / NRF on SQL records
+                            if (TryMapStatusToken(rhs, out var statusProp) &&
+                                IsSqlRecordReference(word, prog))
+                            {
+                                if (hasNot) sb.Append('!');
+                                sb.Append(leftOp).Append('.').Append(statusProp);
+                                i = look;
+                                continue;
+                            }
+
+                            // CURSOR on map tags
                             if (rhs.Equals("CURSOR", StringComparison.OrdinalIgnoreCase))
                             {
                                 string tagged = InsertTagBeforeTrailingIndexer(leftOp);
-                                if (hasNot)
+                                if (hasNot) sb.Append("!(").Append(tagged).Append(".IsCursor())");
+                                else sb.Append(tagged).Append(".IsCursor()");
+                                i = look;
+                                continue;
+                            }
+
+                            // PF/PA on EZEAID
+                            if (IsEzEaidIdentifier(word) && TryParseAid(rhs, out var aidKind2, out var aidNum2))
+                            {
+                                if (aidKind2 == "PF" && aidNum2 >= 1 && aidNum2 <= 12)
                                 {
-                                    sb.Append("!(").Append(tagged).Append(".IsCursor())");
+                                    string op = hasNot ? " != " : " == ";
+                                    sb.Append(leftOp).Append(op).Append("ConsoleKey.F").Append(aidNum2);
                                 }
                                 else
                                 {
-                                    sb.Append(tagged).Append(".IsCursor()");
+                                    if (hasNot) sb.Append('!');
+                                    sb.Append("EzFunctions.IsAid(\"").Append(aidKind2).Append(aidNum2).Append("\")");
                                 }
-                                i = look; // consume "IS [NOT] CURSOR"
+                                i = look;
                                 continue;
                             }
 
-                            // CASE 2: PFx mapping, only when LHS is EZEAID (qualified or not)
-                            if (rhs.StartsWith("PF", StringComparison.OrdinalIgnoreCase) &&
-                                IsEzEaidIdentifier(word)) // use original word to test identity
+                            // IS [NOT] NULL
+                            if (rhs.Equals("NULL", StringComparison.OrdinalIgnoreCase))
                             {
-                                string pfNum = rhs.Substring(2);
                                 string op = hasNot ? " != " : " == ";
-                                sb.Append(leftOp).Append(op).Append("ConsoleKey.F").Append(pfNum);
-                                i = look; // consume "IS [NOT] PFx"
+                                sb.Append(leftOp).Append(op).Append("null");
+                                i = look;
                                 continue;
                             }
 
-                            // CASE 3: generic IS / IS NOT -> equality/inequality
+                            // generic IS
                             {
                                 string op = hasNot ? " != " : " == ";
                                 sb.Append(leftOp).Append(op).Append(ConvertOperand(rhs));
-                                i = look; // consume "IS [NOT] rhs"
+                                i = look;
                                 continue;
                             }
                         }
-
-                        // If not an IS-sequence, fall through to normal handling below.
                     }
 
-
-                    // function call? (peek next non-space char)
+                    // function call? (peek next non-space)
                     int j = i;
                     while (j < esfExpr.Length && char.IsWhiteSpace(j < esfExpr.Length ? esfExpr[j] : '\0')) j++;
                     if (j < esfExpr.Length && esfExpr[j] == '(')
                     {
-                        // qualify only EZ* functions; other names are left as-is
                         if (word.StartsWith("EZ", StringComparison.OrdinalIgnoreCase))
                             sb.Append(QualifyIdentifier(word, prog));
                         else
@@ -213,7 +347,7 @@ namespace EsfParser.CodeGen
                     continue;
                 }
 
-                // ---------- default passthrough (parens, + - * / , etc.) ----------
+                // default passthrough
                 sb.Append(c);
                 i++;
             }
@@ -221,46 +355,76 @@ namespace EsfParser.CodeGen
             return sb.ToString();
         }
 
+        private static bool TryMapStatusToken(string tok, out string prop)
+        {
+            prop = "";
+            if (string.IsNullOrWhiteSpace(tok)) return false;
+            var up = tok.Trim().ToUpperInvariant();
+            if (up == "ERR") { prop = "Current.Err"; return true; }
+            if (up == "NRF") { prop = "Current.Nrf"; return true; }
+            return false;
+        }
+
         private static string InsertTagBeforeTrailingIndexer(string token)
         {
-            // Insert ".Tag" before the last segment's '[' if present, else append ".Tag".
-            // Examples:
-            //  "A.B[1]"   -> "A.BTag[1]"
-            //  "A.B.C"    -> "A.B.CTag"
-            //  "A[B].C[1]"-> "A[B].CTag[1]"
-
             int bracket = token.IndexOf('[');
-
-            if (bracket >= 0)
-            {
-                return token.Insert(bracket, "Tag");
-            }
-            else
-            {
-                if (token.EndsWith(".Tag", StringComparison.Ordinal) || token.EndsWith("Tag", StringComparison.Ordinal))
-                    return token;
-
-                return token + "Tag";
-            }
+            if (bracket >= 0) return token.Insert(bracket, "Tag");
+            if (token.EndsWith(".Tag", StringComparison.Ordinal) || token.EndsWith("Tag", StringComparison.Ordinal))
+                return token;
+            return token + "Tag";
         }
 
         private static bool IsEzEaidIdentifier(string originalWord)
         {
-            // Check the raw token (with dots/indexers) to see if the last segment is EZEAID
-            // Accepts: "EZEAID", "EzFunctions.EZEAID", "X.Y[0].EZEAID"
             if (string.IsNullOrEmpty(originalWord)) return false;
-
-            // Strip trailing indexer(s) from the last segment only
             int lastDot = originalWord.LastIndexOf('.');
             int segStart = lastDot + 1;
             string tail = originalWord.Substring(segStart);
-
-            // Remove trailing [..] groups
             int idx = tail.IndexOf('[');
             if (idx >= 0) tail = tail.Substring(0, idx);
-
             return tail.Equals("EZEAID", StringComparison.OrdinalIgnoreCase);
         }
 
+        private static bool IsSqlRecordReference(string token, EsfProgram? prog)
+        {
+            if (string.IsNullOrWhiteSpace(token) || prog?.Records?.Records == null) return false;
+            if (token.IndexOf('[') >= 0) return false;
+
+            var parts = token.Split('.');
+            string recName;
+            if (parts.Length == 1) recName = parts[0];
+            else if (parts.Length == 2 && parts[0].Equals("GlobalSqlRow", StringComparison.OrdinalIgnoreCase)) recName = parts[1];
+            else return false;
+
+            string clean = CleanName(recName);
+            foreach (var r in prog.Records.Records)
+            {
+                if (!r.Org.Equals("SQLROW", StringComparison.OrdinalIgnoreCase)) continue;
+                if (CleanName(r.Name).Equals(clean, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+            return false;
+        }
+
+        private static bool TryParseAid(string rhs, out string kind, out int num)
+        {
+            kind = ""; num = 0;
+            if (string.IsNullOrWhiteSpace(rhs)) return false;
+            var up = rhs.Trim().ToUpperInvariant();
+
+            if (up.StartsWith("PF"))
+            {
+                if (int.TryParse(up.Substring(2), out num) && num >= 1 && num <= 24)
+                { kind = "PF"; return true; }
+                return false;
+            }
+            if (up.StartsWith("PA"))
+            {
+                if (int.TryParse(up.Substring(2), out num) && num >= 1 && num <= 3)
+                { kind = "PA"; return true; }
+                return false;
+            }
+            return false;
+        }
     }
 }

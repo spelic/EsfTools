@@ -104,8 +104,14 @@ namespace EsfParser.Parser.Logic.Statements
                 sb.AppendLine($"{indent}return;");
                 return sb.ToString().TrimEnd();
             }
-
-            sb.AppendLine($"{indent}EzFunctions.ExternalCallProgram(\"{csProgramId}\",{paramList});");
+            if (!string.IsNullOrWhiteSpace(paramList))
+            {
+                sb.AppendLine($"{indent}EzFunctions.ExternalCallProgram(\"{csProgramId}\");");
+            }
+            else
+            {
+                sb.AppendLine($"{indent}EzFunctions.ExternalCallProgram(\"{csProgramId}\",{paramList});");
+            }
             HandleOptions(sb, indent);
             return sb.ToString().TrimEnd()+ $" // Org: {OriginalCode}";
         }

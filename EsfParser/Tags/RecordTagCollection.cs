@@ -150,6 +150,13 @@ namespace EsfParser.Tags
                         string prop = CSharpUtils.CleanName(itm.Name);
                         bool isArray = int.TryParse(itm.Occurs, out var occ) && occ > 1;
 
+                        if (itm.Name.ToUpperInvariant() == "LETODN")
+                        {
+                            // HACK
+                            isArray = false; // LETODN is always a single value
+                            Console.WriteLine("HACK: LETODN set to NONARRAY -> " + rec.Name);
+                        }
+
                         if (!string.IsNullOrWhiteSpace(itm.Description))
                         {
                             sb.AppendLine($"{pad2}/// <summary>{itm.Description}</summary>");
@@ -176,6 +183,13 @@ namespace EsfParser.Tags
                         string prop = CSharpUtils.CleanName(itm.Name);
                         bool isArray = int.TryParse(itm.Occurs, out var occ) && occ > 1;
 
+                        if (itm.Name.ToUpperInvariant() == "LETODN")
+                        {
+                            // HACK
+                            isArray = false; // LETODN is always a single value
+                            Console.WriteLine("HACK: LETODN set to NONARRAY -> " + rec.Name);
+                        }
+
                         if (isArray)
                             sb.AppendLine($"{pad3}{prop} = new {csType}[{itm.Occurs}];");
                         else
@@ -193,7 +207,12 @@ namespace EsfParser.Tags
                         string csType = CSharpUtils.MapCsType(itm.Type.ToString(), itm.Decimals);
                         string prop = CSharpUtils.CleanName(itm.Name);
                         bool isArray = int.TryParse(itm.Occurs, out var occ) && occ > 1;
-
+                        if (itm.Name.ToUpperInvariant() == "LETODN")
+                        {
+                            // HACK
+                            isArray = false; // LETODN is always a single value
+                            Console.WriteLine("HACK: LETODN set to NONARRAY -> " + rec.Name);
+                        }
                         if (isArray)
                             sb.AppendLine($"{pad3}{prop} = (src.{prop} != null) ? ({csType}[])src.{prop}.Clone() : null;");
                         else
@@ -217,6 +236,10 @@ namespace EsfParser.Tags
                     // JSON
                     sb.AppendLine($"{pad2}public string ToJson() => System.Text.Json.JsonSerializer.Serialize(this);");
                     sb.AppendLine($"{pad2}public static {recCls} FromJson(string json) => System.Text.Json.JsonSerializer.Deserialize<{recCls}>(json) ?? new {recCls}();");
+
+                    // Error property
+                    sb.AppendLine($"{pad2}public bool Err => false;");
+                    sb.AppendLine($"{pad2}public bool Nrf => false;");
 
                     sb.AppendLine($"{pad1}}}");
                     sb.AppendLine();
@@ -249,6 +272,13 @@ namespace EsfParser.Tags
                         string csType = CSharpUtils.MapCsType(itm.Type.ToString(), itm.Decimals);
                         string prop = CSharpUtils.CleanName(itm.Name);
                         bool isArray = int.TryParse(itm.Occurs, out var occ) && occ > 1;
+
+                        if (itm.Name.ToUpperInvariant() == "LETODN")
+                        {
+                            // HACK
+                            isArray = false; // LETODN is always a single value
+                            Console.WriteLine("HACK: LETODN set to NONARRAY -> " + rec.Name);
+                        }
 
                         if (!string.IsNullOrWhiteSpace(itm.Description))
                             sb.AppendLine($"{pad2}/// <summary>Forwards to Current.{prop} – {itm.Description}</summary>");

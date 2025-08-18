@@ -56,7 +56,8 @@ namespace EsfParser.Parser.Logic.Statements
 
                 isMapField = isMap && dot > 0;
             }
-            int bracket = 0;
+            int bracket = tgt.IndexOf("[");
+
             foreach (var raw in Attributes)
             {
                 string attr = raw.Trim().ToUpperInvariant();
@@ -93,7 +94,6 @@ namespace EsfParser.Parser.Logic.Statements
 
                     // ── Map field visual / cursor / attribute ──────────────────────────
                     case "CURSOR" when isMapField:
-                        bracket = tgt.IndexOf('[');
                         if (bracket >= 0)
                         {
                             sb.AppendLine($"{indent}{tgt.Insert(bracket, "Tag")}.SetCursor();");  // if you support it
@@ -106,7 +106,6 @@ namespace EsfParser.Parser.Logic.Statements
 
                     case "DEFINED" when isMapField:                        // <<< NEW
                         {
-                            bracket = tgt.IndexOf('[');
                             if (bracket >= 0)
                             {
                                 sb.AppendLine($"{indent}{tgt.Insert(bracket, "Tag")}.Defined();");  // if you support it
@@ -118,15 +117,73 @@ namespace EsfParser.Parser.Logic.Statements
                             break;
                         }
 
-                    case "RED" when isMapField:                        // <<< NEW
-                        sb.AppendLine($"{indent}{tgt}Tag.SetRed();");
+                    case "RED" when isMapField:
+                        {
+                            if (bracket >= 0)
+                            {
+                                sb.AppendLine($"{indent}{tgt.Insert(bracket, "Tag")}.Color = ConsoleColor.Red;");  // if you support it
+                            }
+                            else
+                            {
+
+                                sb.AppendLine($"{indent}{tgt}Tag.Color = ConsoleColor.Red;");
+                            }
+                        }
                         break;
 
-                    case "BLINK" when isMapField:                        // <<< NEW
-                        sb.AppendLine($"{indent}{tgt}Tag.SetBlink();");
+                    case "YELLOW" when isMapField:
+                        {
+                            if (bracket >= 0)
+                            {
+                                sb.AppendLine($"{indent}{tgt.Insert(bracket, "Tag")}.Color = ConsoleColor.Yellow;");  // if you support it
+                            }
+                            else
+                            {
+                                sb.AppendLine($"{indent}{tgt}Tag.Color = ConsoleColor.Yellow;");
+                            }
+                        }
+                        break;
+                    case "GREEN" when isMapField:
+                        {
+                            if (bracket >= 0)
+                            {
+                                sb.AppendLine($"{indent}{tgt.Insert(bracket, "Tag")}.Color = ConsoleColor.Green;");  // if you support it
+                            }
+                            else
+                            {
+                                sb.AppendLine($"{indent}{tgt}Tag.Color = ConsoleColor.Green;");
+                            }
+                        }
                         break;
 
-                    case "PROTECT" when isMapField:                        // <<< NEW
+
+                    case "BLINK" when isMapField:
+                        {
+                            if (bracket >= 0)
+                            {
+                                sb.AppendLine($"{indent}{tgt.Insert(bracket, "Tag")}.SetBlink();");  // if you support it
+                            }
+                            else
+                            {
+                                sb.AppendLine($"{indent}{tgt}Tag.SetBlink();");
+                            }
+                        }
+                        break;
+
+                    case "RVIDEO" when isMapField:
+                        {
+                            if (bracket >= 0)
+                            {
+                                sb.AppendLine($"{indent}{tgt.Insert(bracket, "Tag")}.SetRVideo();");  // if you support it
+                            }
+                            else
+                            {
+                                sb.AppendLine($"{indent}{tgt}Tag.SetRVideo();");
+                            }
+                        }
+                        break;
+
+                    case "PROTECT" when isMapField:                    
                         sb.AppendLine($"{indent}{tgt}Tag.SetProtect();");
                         break;
 

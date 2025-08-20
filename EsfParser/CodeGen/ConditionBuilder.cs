@@ -75,7 +75,7 @@ namespace EsfParser.CodeGen
                     while (i < esfExpr.Length)
                     {
                         char ch = esfExpr[i];
-                        if (char.IsLetterOrDigit(ch) || ch == '_' || ch == '.')
+                        if (char.IsLetterOrDigit(ch) || ch == '_' || ch == '.' || ch == '-')
                         { i++; continue; }
                         if (ch == '[')
                         {
@@ -217,6 +217,7 @@ namespace EsfParser.CodeGen
                                 string opWord = look > opStart ? esfExpr.Substring(opStart, look - opStart) : "";
                                 if (opWord.Equals("EQ", StringComparison.OrdinalIgnoreCase)) { isEq = true; }
                                 else if (opWord.Equals("NE", StringComparison.OrdinalIgnoreCase)) { isNe = true; }
+                                else if (opWord.Equals("NOT", StringComparison.OrdinalIgnoreCase)) { isNe = true; }
                                 else { look = save; }
                             }
                         }
@@ -297,10 +298,14 @@ namespace EsfParser.CodeGen
                             // PF/PA on EZEAID
                             if (IsEzEaidIdentifier(word) && TryParseAid(rhs, out var aidKind2, out var aidNum2))
                             {
+                                string op = hasNot ? " != " : " == ";
                                 if (aidKind2 == "PF" && aidNum2 >= 1 && aidNum2 <= 12)
                                 {
-                                    string op = hasNot ? " != " : " == ";
                                     sb.Append(leftOp).Append(op).Append("ConsoleKey.F").Append(aidNum2);
+                                }
+                                else if (aidKind2 == "ENTER")
+                                {
+                                    sb.Append(leftOp).Append(op).Append("ConsoleKey.Enter");
                                 }
                                 else
                                 {
@@ -423,6 +428,10 @@ namespace EsfParser.CodeGen
                 if (int.TryParse(up.Substring(2), out num) && num >= 1 && num <= 3)
                 { kind = "PA"; return true; }
                 return false;
+            }
+            if (up.StartsWith("ENTER"))
+            {
+                { kind = "ENTER"; return true; }
             }
             return false;
         }

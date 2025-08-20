@@ -1,0 +1,4 @@
+{
+  "DB2_CONN_STR": "Server=192.168.55.21:50000;Database=DNALCAD;UID=alcad;PWD=vrij;Pooling=true;",
+  "PARAM_STYLE": "PositionalQ"
+}

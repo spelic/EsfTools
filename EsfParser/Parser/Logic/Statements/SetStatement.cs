@@ -155,6 +155,18 @@ namespace EsfParser.Parser.Logic.Statements
                             }
                         }
                         break;
+                    case "DARK" when isMapField:
+                        {
+                            if (bracket >= 0)
+                            {
+                                sb.AppendLine($"{indent}{tgt.Insert(bracket, "Tag")}.Color = ConsoleColor.Black;");  // if you support it
+                            }
+                            else
+                            {
+                                sb.AppendLine($"{indent}{tgt}Tag.Color = ConsoleColor.Black;");
+                            }
+                        }
+                        break;
 
 
                     case "BLINK" when isMapField:
@@ -166,6 +178,19 @@ namespace EsfParser.Parser.Logic.Statements
                             else
                             {
                                 sb.AppendLine($"{indent}{tgt}Tag.SetBlink();");
+                            }
+                        }
+                        break;
+
+                    case "MODIFIED" when isMapField:
+                        {
+                            if (bracket >= 0)
+                            {
+                                sb.AppendLine($"{indent}{tgt.Insert(bracket, "Tag")}.SetModified();");  // if you support it
+                            }
+                            else
+                            {
+                                sb.AppendLine($"{indent}{tgt}Tag.SetModified();");
                             }
                         }
                         break;

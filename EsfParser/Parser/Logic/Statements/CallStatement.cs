@@ -104,7 +104,7 @@ namespace EsfParser.Parser.Logic.Statements
                 sb.AppendLine($"{indent}return;");
                 return sb.ToString().TrimEnd();
             }
-            if (!string.IsNullOrWhiteSpace(paramList))
+            if (string.IsNullOrWhiteSpace(paramList))
             {
                 sb.AppendLine($"{indent}EzFunctions.ExternalCallProgram(\"{csProgramId}\");");
             }

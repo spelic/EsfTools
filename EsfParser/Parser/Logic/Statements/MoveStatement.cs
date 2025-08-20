@@ -25,7 +25,16 @@ namespace EsfParser.Parser.Logic.Statements
         {
             // Normalize both sides (handles name-name → name_name, subscripts, qualifiers…)
             string srcExpr = CSharpUtils.ConvertOperand(Source);
+            // Normalize destination normally
             string dstExpr = CSharpUtils.ConvertOperand(Destination);
+
+            // Source: if quoted literal → preserve exactly; else normalize
+            string srcExpr2;
+            var srcTrim = (Source ?? string.Empty).Trim();
+            if (IsEsfStringLiteral(srcTrim))
+                srcExpr2 = EsfStringToCSharp(srcTrim);   // keep {, spaces, and "" → \"
+            else
+                srcExpr2 = CSharpUtils.ConvertOperand(Source);
 
             var prog = EsfLogicToCs.program ?? CSharpUtils.Program;
 
@@ -82,6 +91,47 @@ namespace EsfParser.Parser.Logic.Statements
         // ────────────────────────────────────────────────────────────────
         // Helpers
         // ────────────────────────────────────────────────────────────────
+        private static bool IsEsfStringLiteral(string s)
+        {
+            if (string.IsNullOrEmpty(s)) return false;
+            s = s.Trim();
+            return s.Length >= 2 && ((s[0] == '"' && s[^1] == '"') || (s[0] == '\'' && s[^1] == '\''));
+        }
+
+        /// <summary>
+        /// Convert ESF string literal to a safe C# double-quoted literal.
+        /// ESF uses doubled quotes "" inside a string to represent a single " character.
+        /// We convert: inner "" → \"   and escape backslashes minimally.
+        /// Examples:
+        ///   "{""username"":"""  →  "{\"username\":\""
+        ///   'abc'               →  "abc"
+        /// </summary>
+        private static string EsfStringToCSharp(string raw)
+        {
+            var t = (raw ?? string.Empty).Trim();
+            if (t.Length < 2) return "\"\"";
+
+            char q = t[0];
+            var body = t.Substring(1, t.Length - 2); // inside quotes
+
+            // Escape backslashes first (to keep sequences stable)
+            body = body.Replace("\\", "\\\\");
+
+            if (q == '"')
+            {
+                // ESF double quotes inside → doubled "" ; map to a single \" in C#
+                body = body.Replace("\"\"", "\\\"");
+                // Any stray single " (shouldn’t occur) also escape defensively
+                body = body.Replace("\"", "\\\"");
+            }
+            else // q == '\''
+            {
+                // Single-quoted ESF → just emit as C# "..." with quotes escaped
+                body = body.Replace("\"", "\\\"");
+            }
+
+            return $"\"{body}\"";
+        }
 
         private static string AsInstance(string qualifiedTypeName) => qualifiedTypeName + ".Current";
 

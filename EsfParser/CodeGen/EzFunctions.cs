@@ -105,6 +105,106 @@ namespace EsfParser.CodeGen
         public static int EZEREPLY { get; set; } = 0;
 
         /// <summary>
+        /// EZECLOS immediately ends the program. If the program is a called program,
+        /// EZECLOS returns control to the calling program.EZECLOS is the default flow
+        /// for the last main function in a program.
+        public static void EZECLOS()
+        {
+            // terminate current console program
+            Environment.Exit(0);
+        }
+
+        /// <summary>
+        /// EZESTLEN returns the length of an item less trailing spaces and nulls.
+        /// 
+        public static int EZESTLEN(string str)
+        {
+            return str.Length;
+        }
+
+        // ────────────────────────────────────────────────────────────────
+        // EZESCNCT — Concatenate source onto target (trim right spaces/nulls),
+        //             pad/truncate to the target item length, return 0 or -1.
+        // Usage patterns:
+        //   // 1) If you can use a local var:
+        //   var t = GlobalMaps.IS00M02.EZEMSG; 
+        //   var rc = EzFunctions.EZESCNCT(ref t, SALARY); 
+        //   GlobalMaps.IS00M02.EZEMSG = t;
+        //
+        //   // 2) Direct "out" form (when you can't pass a property by ref):
+        //   EzFunctions.EZESCNCT(GlobalMaps.IS00M02.EZEMSG, SALARY, out var newVal);
+        //   GlobalMaps.IS00M02.EZEMSG = newVal;
+        // ────────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// EZESCNCT (ref variant). Uses current target.Length as the fixed item size.
+        /// Returns 0 if it fits; -1 if truncation occurred.
+        /// </summary>
+        public static int EZESCNCT(ref string target, string? source)
+        {
+            if (target == null) target = string.Empty;
+            int itemLen = target.Length;               // assume fixed-length item (map/record field)
+            return EZESCNCT(ref target, source, itemLen);
+        }
+
+        /// <summary>
+        /// EZESCNCT (ref, explicit length). Supply the target item length if you know it.
+        /// </summary>
+        public static int EZESCNCT(ref string target, string? source, int targetItemLength)
+        {
+            if (targetItemLength < 0) targetItemLength = 0;
+            if (target == null) target = string.Empty;
+            if (source == null) source = string.Empty;
+
+            // 1) Trim trailing spaces and nulls from the current target value.
+            var trimmed = TrimRightSpacesAndNulls(target);
+
+            // 2) Append source.
+            var combined = trimmed + source;
+
+            // 3) Truncate/pad to item length and return status.
+            int rc;
+            if (combined.Length > targetItemLength)
+            {
+                rc = -1;
+                target = combined.Substring(0, targetItemLength);
+            }
+            else
+            {
+                rc = 0;
+                // Pad with spaces to exactly the item size.
+                target = combined.PadRight(targetItemLength, ' ');
+            }
+            return rc;
+        }
+
+        /// <summary>
+        /// EZESCNCT (out variant). Useful when the target is a property (cannot pass by ref).
+        /// Uses the current target value's length as the item length baseline.
+        /// </summary>
+        public static int EZESCNCT(string? targetValue, string? source, out string newValue)
+        {
+            var tmp = targetValue ?? string.Empty;
+            int rc = EZESCNCT(ref tmp, source, tmp.Length);
+            newValue = tmp;
+            return rc;
+        }
+
+        private static string TrimRightSpacesAndNulls(string s)
+        {
+            if (string.IsNullOrEmpty(s)) return string.Empty;
+            int end = s.Length - 1;
+            while (end >= 0)
+            {
+                char c = s[end];
+                if (c == ' ' || c == '\0') { end--; continue; }
+                break;
+            }
+            return (end >= 0) ? s.Substring(0, end + 1) : string.Empty;
+        }
+
+
+        /// <summary>
         /// Commit system changes (stub for EZECOMIT).
         /// </summary>
         public static class EZECOMIT

@@ -41,12 +41,32 @@ namespace EsfParser.Parser.Logic.Statements
             string condExpr = BuildCondition(subject, parsed);
 
             // Targets (optional)
-            string trueCall = string.IsNullOrWhiteSpace(parsed.TrueTarget)
-                ? null
-                : $"GlobalFunctions.{CSharpUtils.CleanName(parsed.TrueTarget)}();";
-            string falseCall = string.IsNullOrWhiteSpace(parsed.FalseTarget)
-                ? null
-                : $"GlobalFunctions.{CSharpUtils.CleanName(parsed.FalseTarget)}();";
+            string trueCall = null; 
+            
+            if (!string.IsNullOrWhiteSpace(parsed.TrueTarget))
+            {
+                if (parsed.TrueTarget.StartsWith("EZE"))
+                {
+                    trueCall = $"EzFunctions.{CSharpUtils.CleanName(parsed.TrueTarget)}();";
+                }
+                else
+                {
+                    trueCall = $"GlobalFunctions.{CSharpUtils.CleanName(parsed.TrueTarget)}();";
+                }
+            }
+
+            string falseCall = null;
+            if (!string.IsNullOrWhiteSpace(parsed.FalseTarget))
+            {
+                if (parsed.TrueTarget.StartsWith("EZE"))
+                {
+                    falseCall = $"EzFunctions.{CSharpUtils.CleanName(parsed.FalseTarget)}();";
+                }
+                else
+                {
+                    falseCall = $"GlobalFunctions.{CSharpUtils.CleanName(parsed.FalseTarget)}();";
+                }
+            }
 
             sb.AppendLine($"{ind}{{  // TEST  {OriginalCode}".TrimEnd());
             sb.AppendLine($"{ind}    bool __cond = {condExpr};");

@@ -51,6 +51,35 @@ namespace EsfParser.Parser.Logic.Statements
             var leftQualified = NormalizeOperand(CSharpUtils.ConvertOperand(leftRaw));
             var rightQualified = NormalizeOperand(CSharpUtils.ConvertOperand(rightRaw));
 
+            // ── Special-case: EZESCNCT(target, source) on RHS ─────────────────────────
+            // RESULT = EZESCNCT(PRINT_LINE, SALARY);
+            if (TryParseEzescnctCall(rightRaw, out var ez_tgtRaw, out var ez_srcRaw))
+            {
+                var tgtQ = CSharpUtils.ConvertOperand(ez_tgtRaw.Trim());
+                var srcQ = CSharpUtils.ConvertOperand(ez_srcRaw.Trim());
+
+                // LHS typing for proper movement of int result
+                var lhsInfo2 = InferTargetInfo(leftQualified, prog, ValueInfo.NumericUnknown(), isArithmetic: false);
+
+                // Unique temps per line
+                var id = LineNumber <= 0 ? Environment.TickCount : LineNumber;
+                var tVar = $"__ezc_t_{id}";
+                var rVar = $"__ezc_rc_{id}";
+                var nVar = $"__ezc_new_{id}";
+
+                // Move the int result into LHS with proper coercion
+                var movedResult = CoerceMovement(rVar, new ValueInfo(ValueKind.Int, 0), lhsInfo2, rounding: false);
+
+                return
+            $@"{{
+    var {tVar} = {tgtQ};
+    var {rVar} = EzFunctions.EZESCNCT({tVar}, {srcQ}, out var {nVar});
+    {tgtQ} = {nVar};
+    {leftQualified} = {movedResult};  // ORG: {OriginalCode}
+}}";
+            }
+
+
             // 2) Handle rounding marker "(R" (arithmetic-only). Remove from RHS but remember it.
             bool rounding = ContainsRoundMarker(rightRaw);
             var rhsNoRound = RemoveRoundMarker(rightRaw);
@@ -64,6 +93,14 @@ namespace EsfParser.Parser.Logic.Statements
             bool isArithmetic = !rhsIsPureNumber && tokens.Any(t =>
                 t.Kind is TokKind.Plus or TokKind.Minus or TokKind.Star or TokKind.Slash or TokKind.Rem
                        or TokKind.LParen or TokKind.RParen);
+
+            // Single string literal (e.g. "text with  spaces")? Preserve exactly.
+            bool rhsIsSingleStringLiteral =
+                !rhsIsPureNumber &&
+                tokens.Count >= 2 &&
+                tokens[0].Kind == TokKind.String &&
+                tokens[1].Kind == TokKind.End;
+
 
             if (isArithmetic && TryRewriteSimpleIncDec(leftQualified, rhsNoRound, out var incDecEarly))
                 return incDecEarly + ";";
@@ -107,6 +144,18 @@ namespace EsfParser.Parser.Logic.Statements
                 return $"{leftQualified}.CopyFrom({rightQualified}.Current); // ORG: {OriginalCode} ";
             }
 
+            // 6b) Whole-record → map copy (handles qualified and unqualified)
+            //     D133M04 = D133R01;
+            //     GlobalMaps.D133M04 = GlobalWorkstor.D133R01;
+            //     GlobalMaps.D133M04 = GlobalSqlRow.D133R01;
+            if (!isArithmetic &&
+                TryResolveWholeMapRef(leftRaw, prog, out var lhsMapQualifiedRM, out _) &&
+                TryResolveWholeRecordRef(rightRaw, prog, out var rhsRecQualifiedRM, out _, out _))
+            {
+                // Map knows how to copy from either a map instance or a record instance
+                return $"{leftQualified}.CopyFrom({rightQualified}.Current); // ORG: {OriginalCode} ";
+            }
+
             // 7) Arithmetic RHS
             if (isArithmetic)
             {
@@ -124,22 +173,94 @@ namespace EsfParser.Parser.Logic.Statements
             }
 
             // 8) Movement RHS (no operators): coerce inline
-            //    Keep string literals simple; add minimal casts otherwise.
             string rhsExpr;
             if (rhsIsPureNumber)
             {
-                // normalize numeric literal (remove spaces)
                 rhsExpr = rhsNoRound.Trim();
+            }
+            else if (rhsIsSingleStringLiteral)
+            {
+                // Preserve original string exactly (incl. spaces) as a C# double-quoted literal
+                rhsExpr = ExtractOriginalStringLiteral(rightRaw);
             }
             else
             {
-                // Already qualified (identifiers/functions/strings…)
+                // Identifiers / functions / anything else
                 rhsExpr = rightQualified;
             }
+
 
             // Final movement coercion (e.g., int ← decimal → (int)rhs)
             string moved = CoerceMovement(rhsExpr, rhsInfo, lhsInfo, rounding: false);
             return $"{leftQualified} = {moved};      // ORG: {OriginalCode}";
+        }
+
+        private static bool TryParseEzescnctCall(string s, out string targetArg, out string sourceArg)
+        {
+            targetArg = sourceArg = string.Empty;
+            if (string.IsNullOrWhiteSpace(s)) return false;
+
+            var span = s.AsSpan().Trim();
+            // case-insensitive match of name prefix
+            var name = "EZESCNCT";
+            if (span.Length < name.Length + 2) return false;
+            if (!span.Slice(0, name.Length).ToString().Equals(name, StringComparison.OrdinalIgnoreCase)) return false;
+
+            int i = name.Length;
+            while (i < span.Length && char.IsWhiteSpace(span[i])) i++;
+            if (i >= span.Length || span[i] != '(') return false;
+            i++; // after '('
+
+            // scan up to matching ')', split on first top-level comma
+            int depth = 1; char? q = null;
+            int comma = -1, start = i;
+            for (; i < span.Length; i++)
+            {
+                char c = span[i];
+                if (q != null)
+                {
+                    if (c == q) q = null;
+                    else if (c == '\\' && i + 1 < span.Length) i++; // skip escaped char
+                    continue;
+                }
+                if (c == '\'' || c == '"') { q = c; continue; }
+                if (c == '(') { depth++; continue; }
+                if (c == ')') { depth--; if (depth == 0) break; continue; }
+                if (c == ',' && depth == 1 && comma < 0) { comma = i; }
+            }
+            if (depth != 0) return false;
+            int end = i;
+
+            ReadOnlySpan<char> inside = span.Slice(start, end - start);
+            if (comma < 0) return false;
+
+            // split args
+            var a1 = inside.Slice(0, comma - start).ToString().Trim();
+            var a2 = inside.Slice(comma - start + 1).ToString().Trim();
+            if (a1.Length == 0 || a2.Length == 0) return false;
+
+            targetArg = a1;
+            sourceArg = a2;
+            return true;
+        }
+
+        private static string ExtractOriginalStringLiteral(string s)
+        {
+            var t = (s ?? string.Empty).Trim();
+            if (t.Length >= 2 && (t[0] == '"' || t[0] == '\''))
+            {
+                char q = t[0];
+                var body = t.Substring(1, t.Length - 2); // keep spaces exactly as written
+                if (q == '\'')
+                {
+                    // Convert to C# double-quoted literal; escape internal quotes minimally
+                    return $"\"{body.Replace("\"", "\\\"")}\"";
+                }
+                // Already double-quoted; keep as-is (escape internal quotes minimally)
+                return $"\"{body.Replace("\"", "\\\"")}\"";
+            }
+            // Fallback (shouldn't happen): return as-is
+            return t;
         }
 
 

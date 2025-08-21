@@ -154,11 +154,28 @@ namespace EsfParser.Tags
             var sb = new StringBuilder();
             var indent = new string(' ', indentSpaces);
 
-            // Keep your working BEFORE path untouched.
+            // Precompute a sanitized map class name for CONVERSE
+            string? mapCsName = null;
+            if (!string.IsNullOrWhiteSpace(ObjectName))
+            {
+                try { mapCsName = CSharpUtils.CleanName(ObjectName); } catch { }
+            }
+
+            // Keep your working BEFORE path untouched, but append CONVERSE call if applicable
             if (BeforeLogic.Count > 0)
             {
                 sb.AppendLine(indent + "// -- BEFORE logic --");
                 sb.Append(EsfLogicToCs.GenerateCSharpFromLogic(this, BeforeLogic, indentSpaces));
+                // If this function is a CONVERSE, call the map conversation after BEFORE logic
+                if (!string.IsNullOrWhiteSpace(Option) && Option.Equals("CONVERSE", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (!string.IsNullOrWhiteSpace(mapCsName))
+                    {
+                        sb.AppendLine(indent + $"// Render and edit map {ObjectName}");
+                        sb.AppendLine(indent + $"GlobalMaps.{mapCsName}.Render();");
+                        sb.AppendLine(indent + $"EsfParser.Runtime.ConverseConsole.RenderAndEdit(24, 80, new System.Collections.Generic.List<EsfParser.Tags.CfieldTag>(), GlobalMaps.{mapCsName}.Current.Vfields, null, null);");
+                    }
+                }
                 return sb.ToString();
             }
 
@@ -278,6 +295,18 @@ namespace EsfParser.Tags
                     sb.AppendLine(indent + "// CLOSE cursor opened by SETINQ/SETUPD");
                     sb.AppendLine(indent + $"CursorStore.Close(key: \"{keyLiteral}\");");
                     return sb.ToString();
+                }
+                // Handle CONVERSE option without BEFORE or SQL logic
+                if (optUpper == "CONVERSE")
+                {
+                    // If a map name is available, emit conversation call
+                    if (!string.IsNullOrWhiteSpace(mapCsName))
+                    {
+                        sb.AppendLine(indent + $"// Render and edit map {ObjectName}");
+                        sb.AppendLine(indent + $"GlobalMaps.{mapCsName}.Render();");
+                        sb.AppendLine(indent + $"EsfParser.Runtime.ConverseConsole.RenderAndEdit(24, 80, new System.Collections.Generic.List<EsfParser.Tags.CfieldTag>(), GlobalMaps.{mapCsName}.Current.Vfields, null, null);");
+                        return sb.ToString();
+                    }
                 }
             }
 

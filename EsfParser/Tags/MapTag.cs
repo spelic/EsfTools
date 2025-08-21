@@ -74,6 +74,23 @@ namespace EsfParser.Tags
         [JsonPropertyName("vfields")]
         public List<VfieldTag> Vfields { get; set; } = new();
 
+        /// <summary>
+        /// Optional starting cursor row (1‑based).  When this and
+        /// <see cref="StartCursorCol"/> are provided, the runtime editor
+        /// positions the cursor here when the map first appears.  If these
+        /// properties are null, the first unprotected variable field will be
+        /// chosen automatically.
+        /// </summary>
+        [JsonPropertyName("startCursorRow")]
+        public int? StartCursorRow { get; set; }
+
+        /// <summary>
+        /// Optional starting cursor column (1‑based).  See
+        /// <see cref="StartCursorRow"/>.
+        /// </summary>
+        [JsonPropertyName("startCursorCol")]
+        public int? StartCursorCol { get; set; }
+
         public override string ToString()
         {
             var sb = new StringBuilder();
@@ -133,6 +150,26 @@ namespace EsfParser.Tags
                 }
             }
 
+            // If no explicit start cursor was provided on the map itself, infer
+            // it from the first VFIELD that sets InitialCursor=YES.  If none
+            // have the flag, default to the first unprotected VFIELD.  This
+            // behaviour mirrors the default in VisualAge where the first
+            // variable field becomes the cursor location.
+            if (!tag.StartCursorRow.HasValue || !tag.StartCursorCol.HasValue)
+            {
+                VfieldTag? init = tag.Vfields.FirstOrDefault(v => v.InitialCursor);
+                if (init == null)
+                {
+                    // choose first unprotected field, else first field
+                    init = tag.Vfields.FirstOrDefault(v => !v.IsProtect) ?? tag.Vfields.FirstOrDefault();
+                }
+                if (init != null)
+                {
+                    tag.StartCursorRow ??= init.Row;
+                    tag.StartCursorCol ??= init.Column;
+                }
+            }
+
             return tag;
         }
 
@@ -183,9 +220,16 @@ namespace EsfParser.Tags
 
             sb.AppendLine();
 
-            // 3) Position cursor on first variable field (or top-left)
-            if (Vfields.Count > 0)
+            // 3) Position cursor on start location: either user‑supplied
+            // StartCursorRow/Col or the first unprotected VFIELD.  Coordinates
+            // are zero‑based for Console.SetCursorPosition.
+            if (StartCursorRow.HasValue && StartCursorCol.HasValue)
             {
+                sb.AppendLine($"    Console.SetCursorPosition({StartCursorCol.Value - 1}, {StartCursorRow.Value - 1});");
+            }
+            else if (Vfields.Count > 0)
+            {
+                // fallback: first VFIELD
                 var f = Vfields[0];
                 sb.AppendLine($"    Console.SetCursorPosition({f.Column - 1}, {f.Row - 1});");
             }
@@ -195,6 +239,28 @@ namespace EsfParser.Tags
             }
 
             return sb.ToString();
+        }
+
+        /// <summary>
+        /// Invokes the console editor for this map using the supplied runtime
+        /// library.  This method renders the map, populates values from
+        /// InitialValue and Value, and performs inline editing with auto‑skip,
+        /// validation and field navigation.  It returns the action key (Enter,
+        /// F1–F10 or Esc) pressed by the user to exit the edit loop.
+        /// </summary>
+        /// <param name="rows">Maximum number of rows on the console (defaults to 24)</param>
+        /// <param name="cols">Maximum number of columns on the console (defaults to 80)</param>
+        /// <returns>The AID key (Enter or function key) used to exit editing.</returns>
+        public EsfParser.Runtime.AidKey ConverseEdit(int rows = 24, int cols = 80)
+        {
+            // Populate the runtime Value property on each Vfield from its
+            // InitialValue prior to editing.  If no InitialValue exists, the
+            // Value will be blank.
+            foreach (var vf in Vfields)
+            {
+                vf.Value = vf.InitialValue ?? string.Empty;
+            }
+            return EsfParser.Runtime.ConverseConsole.RenderAndEdit(rows, cols, Cfields, Vfields, StartCursorRow, StartCursorCol);
         }
     }
 }

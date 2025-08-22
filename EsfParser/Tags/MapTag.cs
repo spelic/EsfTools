@@ -251,7 +251,7 @@ namespace EsfParser.Tags
         /// <param name="rows">Maximum number of rows on the console (defaults to 24)</param>
         /// <param name="cols">Maximum number of columns on the console (defaults to 80)</param>
         /// <returns>The AID key (Enter or function key) used to exit editing.</returns>
-        public EsfParser.Runtime.AidKey ConverseEdit(int rows = 24, int cols = 80)
+        public ConsoleKey ConverseEdit(int rows = 24, int cols = 80)
         {
             // Populate the runtime Value property on each Vfield from its
             // InitialValue prior to editing.  If no InitialValue exists, the

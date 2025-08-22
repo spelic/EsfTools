@@ -76,6 +76,8 @@ public static partial class RoslynExporter
         if (hasRecords) yield return $"{appNs}.Records";
         if (hasTables) yield return $"{appNs}.Tables";
         if (hasMaps) yield return $"{appNs}.Maps";
+        // Always include Runtime namespace so conversation helpers and AidKey are accessible
+        yield return $"{appNs}.Runtime";
     }
 
     /// <summary>

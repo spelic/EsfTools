@@ -172,8 +172,9 @@ namespace EsfParser.Tags
                     if (!string.IsNullOrWhiteSpace(mapCsName))
                     {
                         sb.AppendLine(indent + $"// Render and edit map {ObjectName}");
-                        sb.AppendLine(indent + $"GlobalMaps.{mapCsName}.Render();");
-                        sb.AppendLine(indent + $"EsfParser.Runtime.ConverseConsole.RenderAndEdit(24, 80, new System.Collections.Generic.List<EsfParser.Tags.CfieldTag>(), GlobalMaps.{mapCsName}.Current.Vfields, null, null);");
+                        // Call runtime CONVERSE editor with constant and variable fields; capture AID and store in GlobalWorkstor
+                        sb.AppendLine(indent + $"var aid = Runtime.ConverseConsole.RenderAndEdit(24, 80, GlobalMaps.{mapCsName}.Current.Cfields, GlobalMaps.{mapCsName}.Current.Vfields, null, null);");
+                        sb.AppendLine(indent + $"EzFunctions.EZEAID = aid;");
                     }
                 }
                 return sb.ToString();
@@ -303,8 +304,9 @@ namespace EsfParser.Tags
                     if (!string.IsNullOrWhiteSpace(mapCsName))
                     {
                         sb.AppendLine(indent + $"// Render and edit map {ObjectName}");
-                        sb.AppendLine(indent + $"GlobalMaps.{mapCsName}.Render();");
-                        sb.AppendLine(indent + $"EsfParser.Runtime.ConverseConsole.RenderAndEdit(24, 80, new System.Collections.Generic.List<EsfParser.Tags.CfieldTag>(), GlobalMaps.{mapCsName}.Current.Vfields, null, null);");
+                        // Call runtime CONVERSE editor with constant and variable fields; capture AID and store in GlobalWorkstor
+                        sb.AppendLine(indent + $"var aid = Runtime.ConverseConsole.RenderAndEdit(24, 80, GlobalMaps.{mapCsName}.Current.Cfields, GlobalMaps.{mapCsName}.Current.Vfields, null, null);");
+                        sb.AppendLine(indent + $"EzFunctions.EZEAID = aid;");
                         return sb.ToString();
                     }
                 }

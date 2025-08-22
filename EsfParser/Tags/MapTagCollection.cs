@@ -98,6 +98,10 @@ namespace EsfParser.Tags
             sb.AppendLine($"{p1}    public string Type {{ get; set; }} = \"\";");
             sb.AppendLine($"{p1}    public int Bytes {{ get; set; }}");
             sb.AppendLine($"{p1}    public string Value {{ get; set; }} = \"\";");
+            // Foreground color of the constant field (default Gray). Use ConsoleColor enumeration.
+            sb.AppendLine($"{p1}    public ConsoleColor Color {{ get; set; }} = ConsoleColor.Gray;");
+            // Intensity of the constant field: NORMAL (default), BRIGHT or DARK
+            sb.AppendLine($"{p1}    public string Intensity {{ get; set; }} = \"NORMAL\";");
             sb.AppendLine($"{p1}    public override string ToString() =>");
             sb.AppendLine($"{p1}        $\"CFIELD [{{Row}},{{Column}}] {{Type}}/{{Bytes}}B: '{{Value}}'\";");
             sb.AppendLine($"{p1}}}");
@@ -119,12 +123,21 @@ namespace EsfParser.Tags
             sb.AppendLine($"{p1}    public string Type {{ get; set; }} = \"\";");
             sb.AppendLine($"{p1}    public ConsoleColor Color {{ get; set; }} = ConsoleColor.White;");
             sb.AppendLine($"{p1}    public int Bytes {{ get; set; }}");
-            sb.AppendLine($"{p1}    public string Value {{ get; set; }} = \"\";");
+            // Default Value is a single space to match VisualAge default string initialization
+            sb.AppendLine($"{p1}    public string Value {{ get; set; }} = \" \";");
             sb.AppendLine($"{p1}    public string RVideo {{ get; set; }} = \"\";");
             sb.AppendLine($"{p1}    public bool IsModified {{ get; private set; }}");
             sb.AppendLine($"{p1}    public bool IsProtect {{ get; private set; }}");
             sb.AppendLine($"{p1}    public bool IsBlink {{ get; private set; }}");
-            sb.AppendLine($"{p1}    public string Intensity {{ get; private set; }} = \"NORMAL\";");
+            // Intensity must be publicly settable so that initial values can be assigned
+            sb.AppendLine($"{p1}    public string Intensity {{ get; set; }} = \"NORMAL\";");
+            // Extended field attributes for runtime conversation logic
+            sb.AppendLine(p1 + "    public bool Numeric { get; set; }");
+            sb.AppendLine(p1 + "    public bool HexOnly { get; set; }");
+            sb.AppendLine(p1 + "    public bool FoldToUpper { get; set; }");
+            sb.AppendLine(p1 + "    public int Decimals { get; set; }");
+            sb.AppendLine(p1 + "    public string Justify { get; set; } = \"LEFT\";");
+            sb.AppendLine(p1 + "    public bool RightJustify => string.Equals(Justify, \"RIGHT\", StringComparison.OrdinalIgnoreCase);");
             sb.AppendLine($"{p1}    public void SetModified() => IsModified = true;");
             sb.AppendLine($"{p1}    public void SetProtect() => IsProtect = true;");
             sb.AppendLine($"{p1}    public void ClearModified() => IsModified = false;");
@@ -165,10 +178,30 @@ namespace EsfParser.Tags
                 for (int i = 0; i < map.Vfields.Count; i++)
                 {
                     var vf = map.Vfields[i];
-                    var val = (vf.InitialValue ?? string.Empty).Replace("\\", "\\\\").Replace("\"", "\\\"");
-                    sb.AppendLine($"{p3}new VfieldTag {{ Row = {vf.Row}, Column = {vf.Column}, Name = \"{vf.Name}\", Type = \"{vf.Type}\", Bytes = {vf.Bytes}, Value = \"{val}\" }},");
+                    // Use a single space as default initial value if none supplied
+                    var rawVal = string.IsNullOrEmpty(vf.InitialValue) ? " " : vf.InitialValue;
+                    var val = rawVal.Replace("\\", "\\\\").Replace("\"", "\\\"");
+                    var justify = (vf.Justify ?? string.Empty).Replace("\\", "\\\\").Replace("\"", "\\\"");
+                    var numeric = vf.Numeric.ToString().ToLowerInvariant();
+                    var hexOnly = vf.HexOnly.ToString().ToLowerInvariant();
+                    var foldUpper = vf.FoldToUpper.ToString().ToLowerInvariant();
+                    sb.AppendLine($"{p3}new VfieldTag {{ Row = {vf.Row}, Column = {vf.Column}, Name = \"{vf.Name}\", Type = \"{vf.Type}\", Bytes = {vf.Bytes}, Value = \"{val}\", Numeric = {numeric}, HexOnly = {hexOnly}, FoldToUpper = {foldUpper}, Decimals = {vf.Decimals}, Justify = \"{justify}\", Color = ConsoleColor.{vf.Color}, Intensity = \"{vf.Intensity}\" }},");
                 }
                 if (map.Vfields.Count > 0)
+                    sb.Remove(sb.Length - 3, 1); // trailing comma
+                sb.AppendLine($"{p2}}};");
+                sb.AppendLine();
+
+                // Cfields (instance list)
+                sb.AppendLine($"{p2}public System.Collections.Generic.List<CfieldTag> Cfields {{ get; }} = new()");
+                sb.AppendLine($"{p2}{{");
+                for (int i = 0; i < map.Cfields.Count; i++)
+                {
+                    var cf = map.Cfields[i];
+                    var valCf = (cf.Value ?? string.Empty).Replace("\\", "\\\\").Replace("\"", "\\\"");
+                    sb.AppendLine($"{p3}new CfieldTag {{ Row = {cf.Row}, Column = {cf.Column}, Type = \"{cf.Type}\", Bytes = {cf.Bytes}, Value = \"{valCf}\", Color = ConsoleColor.{cf.Color}, Intensity = \"{cf.Intensity}\" }},");
+                }
+                if (map.Cfields.Count > 0)
                     sb.Remove(sb.Length - 3, 1); // trailing comma
                 sb.AppendLine($"{p2}}};");
                 sb.AppendLine();
@@ -217,7 +250,8 @@ namespace EsfParser.Tags
                 sb.AppendLine($"{p2}{{");
                 sb.AppendLine($"{p3}foreach (var tag in Vfields)");
                 sb.AppendLine($"{p3}{{");
-                sb.AppendLine($"{p4}tag.Value = string.Empty;");
+                // Reset value to a single space rather than empty string
+                sb.AppendLine($"{p4}tag.Value = \" \";");
                 sb.AppendLine($"{p4}tag.ClearModified();");
                 sb.AppendLine($"{p4}tag.SetNormal();");
                 sb.AppendLine($"{p3}}}");
@@ -377,6 +411,10 @@ namespace EsfParser.Tags
                 // Cursor forwarding
                 sb.AppendLine($"{p2}public static int CursorRow => Current.CursorRow;");
                 sb.AppendLine($"{p2}public static int CursorColumn => Current.CursorColumn;");
+                sb.AppendLine();
+
+                // Forward constant fields
+                sb.AppendLine($"{p2}public static System.Collections.Generic.List<CfieldTag> Cfields => Current.Cfields;");
                 sb.AppendLine();
 
                 // Accessors per VFIELD group

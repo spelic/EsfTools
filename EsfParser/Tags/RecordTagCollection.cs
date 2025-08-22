@@ -191,9 +191,22 @@ namespace EsfParser.Tags
                         }
 
                         if (isArray)
+                        {
                             sb.AppendLine($"{pad3}{prop} = new {csType}[{itm.Occurs}];");
+                            // For string arrays, initialize each element to a single space
+                            if (csType == "string")
+                            {
+                                sb.AppendLine($"{pad3}for (int i = 0; i < {itm.Occurs}; i++) {prop}[i] = \" \";");
+                            }
+                        }
                         else
-                            sb.AppendLine($"{pad3}{prop} = default({csType});");
+                        {
+                            // For string types, default to single space
+                            if (csType == "string")
+                                sb.AppendLine($"{pad3}{prop} = \" \";");
+                            else
+                                sb.AppendLine($"{pad3}{prop} = default({csType});");
+                        }
                     }
                     sb.AppendLine($"{pad2}}}");
                     sb.AppendLine();
@@ -254,7 +267,7 @@ namespace EsfParser.Tags
             {
                 sb.AppendLine($"public static class {className}");
                 sb.AppendLine("{");
-
+                
                 foreach (var rec in recs)
                 {
                     string recCls = CSharpUtils.CleanName(rec.Name);

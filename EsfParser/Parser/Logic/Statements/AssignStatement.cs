@@ -340,6 +340,22 @@ namespace EsfParser.Parser.Logic.Statements
             static bool IsIntLiteral(string e) =>
                 Regex.IsMatch(e, @"^\s*[+-]?\d+\s*$");
 
+            // Treat assigning blank or whitespace string literals to numeric targets as zero.
+            static bool IsBlankStringLiteralExpr(string expr)
+            {
+                if (string.IsNullOrWhiteSpace(expr)) return false;
+                var t = expr.Trim();
+                // Check for double-quoted string literal
+                if (t.Length >= 2 && t[0] == '"' && t[^1] == '"')
+                {
+                    var body = t.Substring(1, t.Length - 2);
+                    // Unescape common escape sequences minimal (only \"), treat others as-is
+                    // We only care about whitespace, so unescaping is unnecessary here.
+                    return string.IsNullOrWhiteSpace(body);
+                }
+                return false;
+            }
+
             // In CoerceMovement → INT target → rhs.Kind == Int:
             if (IsIntLiteral(rhsExpr))
                 return Regex.Match(rhsExpr, @"[+-]?\d+").Value; // emits "0" etc. verbatim
@@ -348,6 +364,12 @@ namespace EsfParser.Parser.Logic.Statements
             // DECIMAL target
             if (lhs.Kind == ValueKind.Decimal)
             {
+                // If assigning a blank string literal to a decimal target, return zero
+                if (rhs.Kind == ValueKind.String && IsBlankStringLiteralExpr(rhsExpr))
+                {
+                    // use 0m to explicitly denote decimal zero
+                    return "0m";
+                }
                 string dec = (rhs.Kind == ValueKind.Decimal) ? rhsExpr : ToDec(rhsExpr);
                 //if (lhs.Scale >= 0)
                 //{
@@ -361,6 +383,11 @@ namespace EsfParser.Parser.Logic.Statements
             // INT target
             if (lhs.Kind == ValueKind.Int)
             {
+                // If assigning a blank string literal to an int target, return zero
+                if (rhs.Kind == ValueKind.String && IsBlankStringLiteralExpr(rhsExpr))
+                {
+                    return "0";
+                }
                 // int ← int
                 if (rhs.Kind == ValueKind.Int)
                 {

@@ -40,7 +40,8 @@ namespace EsfParser.Runtime
             {
                 int r = Math.Clamp(cf.Row - 1, 0, rows - 1);
                 int c = Math.Clamp(cf.Column - 1, 0, cols - 1);
-                string text = cf.Value ?? string.Empty;
+                // default constant field value to single space when null or empty
+                string text = string.IsNullOrEmpty(cf.Value) ? " " : cf.Value;
                 int maxLen = cf.Bytes > 0 ? cf.Bytes : text.Length;
                 int len = Math.Min(text.Length, maxLen);
                 for (int i = 0; i < len && c + i < cols; i++)
@@ -66,12 +67,42 @@ namespace EsfParser.Runtime
                 Console.Write(sb.ToString());
             }
 
+            // Overlay constant field values with colour and intensity
+            foreach (var cf in cfields)
+            {
+                int r = Math.Clamp(cf.Row - 1, 0, rows - 1);
+                int c = Math.Clamp(cf.Column - 1, 0, cols - 1);
+                // default constant value to single space when null or empty
+                string raw = string.IsNullOrEmpty(cf.Value) ? " " : cf.Value;
+                // Format to field width (truncate or pad right)
+                string display;
+                int maxLen = cf.Bytes > 0 ? cf.Bytes : raw.Length;
+                if (raw.Length > maxLen) display = raw.Substring(0, maxLen);
+                else display = raw.PadRight(maxLen);
+                // Choose console colour based on intensity for constants
+                ConsoleColor prev = Console.ForegroundColor;
+                if (cf.Intensity == "DARK") Console.ForegroundColor = ConsoleColor.DarkGray;
+                else if (cf.Intensity == "BRIGHT") Console.ForegroundColor = ConsoleColor.White;
+                else Console.ForegroundColor = cf.Color;
+                try
+                {
+                    Console.SetCursorPosition(c, r);
+                    Console.Write(display);
+                }
+                catch
+                {
+                    // ignore positioning errors on small consoles
+                }
+                Console.ForegroundColor = prev;
+            }
+
             // Overlay variable field values with colour and justification
             foreach (var vf in vfields)
             {
                 int r = Math.Clamp(vf.Row - 1, 0, rows - 1);
                 int c = Math.Clamp(vf.Column - 1, 0, cols - 1);
-                string val = vf.Value ?? string.Empty;
+                // default variable value to single space when null or empty
+                string val = string.IsNullOrEmpty(vf.Value) ? " " : vf.Value;
                 // Format value to fit field width
                 string display = FitToBytes(val, vf.Bytes, vf.RightJustify);
                 // Choose console colour based on intensity

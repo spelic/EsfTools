@@ -21,6 +21,7 @@ namespace EsfParser.Tags
 
         public static RecordItemTag Parse(TagNode node)
         {
+            
             return new RecordItemTag
             {
                 Name = node.GetString("NAME"),
@@ -32,7 +33,7 @@ namespace EsfParser.Tags
                 Decimals = (node.GetString("DECIMALS").Trim() == "") ? 0 : int.Parse(node.GetString("DECIMALS").Trim()),
                 EvenSql = node.GetString("EVENSQL"),
                 Description = node.GetString("DESC")
-            };
+            }; 
         }
     }
 }

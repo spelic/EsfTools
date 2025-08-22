@@ -27,7 +27,7 @@ namespace EsfParser.Runtime
         /// <param name="startCursorRow">Optional initial cursor row.</param>
         /// <param name="startCursorCol">Optional initial cursor column.</param>
         /// <returns>An AID key representing how the edit session terminated.</returns>
-        public static AidKey RenderAndEdit(int rows, int cols,
+        public static ConsoleKey RenderAndEdit(int rows, int cols,
             IReadOnlyList<CfieldTag> cfields,
             IReadOnlyList<VfieldTag> vfields,
             int? startCursorRow = null,
@@ -44,7 +44,7 @@ namespace EsfParser.Runtime
                 .ThenBy(x => x.vf.Column)
                 .Select(x => x.i)
                 .ToArray();
-            if (order.Length == 0) return AidKey.Enter;
+            if (order.Length == 0) return ConsoleKey.Enter;
 
             // Determine starting index
             int curIndex = 0;
@@ -72,21 +72,35 @@ namespace EsfParser.Runtime
                 }
                 if (completedOrEnter)
                 {
-                    // move to next field; if none, return Enter
-                    if (!Next(order, ref curIndex))
-                        return AidKey.Enter;
+                    // decide direction: backward if shift+tab was pressed
+                    if (_moveBackward)
+                    {
+                        // move to previous field if possible; otherwise stay at first field
+                        if (!Previous(order, ref curIndex))
+                        {
+                            curIndex = 0;
+                        }
+                        _moveBackward = false;
+                    }
+                    else
+                    {
+                        // move to next field; if none, return Enter
+                        if (!Next(order, ref curIndex))
+                            return ConsoleKey.Enter;
+                    }
                 }
             }
         }
 
         // Edit a single field.  Returns null if editing continues to another
         // field; returns an AidKey if the user pressed a function key or Esc.
-        private static AidKey? EditOneField(VfieldTag vf, int rows, int cols, out bool completedOrEnter)
+        private static ConsoleKey? EditOneField(VfieldTag vf, int rows, int cols, out bool completedOrEnter)
         {
             completedOrEnter = false;
 
-            // Ensure Value is not null
-            vf.Value ??= string.Empty;
+            // Ensure Value is not null or empty; default to single space
+            if (vf.Value == null || vf.Value == string.Empty)
+                vf.Value = " ";
 
             // Truncate value to the field length
             if (vf.Value.Length > vf.Bytes)
@@ -109,10 +123,10 @@ namespace EsfParser.Runtime
 
                 // AID keys
                 if (key == ConsoleKey.Escape)
-                    return AidKey.Esc;
+                    return key; // Esc key exits editing
                 if (key >= ConsoleKey.F1 && key <= ConsoleKey.F10)
                 {
-                    return (AidKey)((int)AidKey.F1 + (key - ConsoleKey.F1));
+                    return key;
                 }
                 // Enter accepts field and triggers move to next
                 if (key == ConsoleKey.Enter)
@@ -122,12 +136,21 @@ namespace EsfParser.Runtime
                     completedOrEnter = true;
                     return null;
                 }
-                // Tab key also moves to next field
+                // Tab key (with or without Shift) moves to next/previous field
                 if (key == ConsoleKey.Tab)
                 {
                     vf.Value = buffer.ToString();
                     WriteField(vf);
                     completedOrEnter = true;
+                    // if Shift modifier is pressed, mark moveBackward
+                    if ((keyInfo.Modifiers & ConsoleModifiers.Shift) != 0)
+                    {
+                        _moveBackward = true;
+                    }
+                    else
+                    {
+                        _moveBackward = false;
+                    }
                     return null;
                 }
                 // navigation keys
@@ -219,13 +242,27 @@ namespace EsfParser.Runtime
             return false;
         }
 
+        // Moves current index to the previous item in order. Returns false if there is no previous.
+        private static bool Previous(int[] order, ref int curIndex)
+        {
+            if (curIndex > 0)
+            {
+                curIndex--;
+                return true;
+            }
+            return false;
+        }
+
         // Writes the current value of a variable field to the console using
         // the field's colour, intensity and justification.  The write
         // operation is limited to the field width and respects the current
         // Console encoding.
         private static void WriteField(VfieldTag vf)
         {
-            string display = FitToBytes(vf.Value ?? string.Empty, vf.Bytes, vf.RightJustify);
+            // Default to single space when value is null or empty
+            string raw = vf.Value;
+            if (string.IsNullOrEmpty(raw)) raw = " ";
+            string display = FitToBytes(raw, vf.Bytes, vf.RightJustify);
             var prev = Console.ForegroundColor;
             if (vf.Intensity == "DARK") Console.ForegroundColor = ConsoleColor.DarkGray;
             else if (vf.Intensity == "BRIGHT") Console.ForegroundColor = ConsoleColor.White;
@@ -277,5 +314,8 @@ namespace EsfParser.Runtime
             if (s.Length > len) return s.Substring(0, len);
             return right ? s.PadLeft(len) : s.PadRight(len);
         }
+
+        // Flag set when Shift+Tab is pressed to indicate moving to previous field on next completed input
+        private static bool _moveBackward = false;
     }
 }

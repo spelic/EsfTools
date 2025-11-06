@@ -65,6 +65,11 @@ namespace EsfParser.Esf
             else if (tag is ItemTagCollection i) Items.Items.AddRange(i.Items);
             else if (tag is TableTagCollection t) Tables.Tables.AddRange(t.Tables);
         }
+
+        public EsfProgram()
+        {
+            Records.Program = this;
+        }
     }
 
 }

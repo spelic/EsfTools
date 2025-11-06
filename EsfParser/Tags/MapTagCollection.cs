@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.Json.Serialization;
+using System.Xml.Linq;
 
 namespace EsfParser.Tags
 {
@@ -127,6 +128,7 @@ namespace EsfParser.Tags
             sb.AppendLine($"{p1}    public string Value {{ get; set; }} = \" \";");
             sb.AppendLine($"{p1}    public string RVideo {{ get; set; }} = \"\";");
             sb.AppendLine($"{p1}    public bool IsModified {{ get; private set; }}");
+            sb.AppendLine($"{p1}    public bool IsAutoSkip {{ get; private set; }} = false;");
             sb.AppendLine($"{p1}    public bool IsProtect {{ get; private set; }}");
             sb.AppendLine($"{p1}    public bool IsBlink {{ get; private set; }}");
             // Intensity must be publicly settable so that initial values can be assigned
@@ -144,6 +146,7 @@ namespace EsfParser.Tags
             sb.AppendLine($"{p1}    public void SetDark() => Intensity = \"DARK\";");
             sb.AppendLine($"{p1}    public void SetBlink() => IsBlink = true;");
             sb.AppendLine($"{p1}    public void SetBright() => Intensity = \"BRIGHT\";");
+            sb.AppendLine($"{p1}    public void SetAutoSkip() => IsAutoSkip = true;");
             sb.AppendLine($"{p1}    public void SetNormal() => Intensity = \"NORMAL\";");
             sb.AppendLine($"{p1}    public void SetRVideo() => RVideo = \"SET\";");
             sb.AppendLine($"{p1}    public void SetCursor() => OnCursor?.Invoke(this);");
@@ -239,9 +242,10 @@ namespace EsfParser.Tags
                 // Helper: get tags by name
                 sb.AppendLine($"{p2}public System.Collections.Generic.IReadOnlyList<VfieldTag> GetTagsByName(string name)");
                 sb.AppendLine($"{p2}{{");
-                sb.AppendLine($"{p3}return _byName.TryGetValue(name, out var list)");
-                sb.AppendLine($"{p3}    ? (System.Collections.Generic.IReadOnlyList<VfieldTag>)list");
-                sb.AppendLine($"{p3}    : System.Array.Empty<VfieldTag>();");
+                sb.AppendLine($"_byName.TryGetValue(name, out var list);");
+                sb.AppendLine($"if (list == null || list.Count <= 0) return System.Array.Empty<VfieldTag>();");
+                sb.AppendLine($"else if (list.Count == 1) return list;");
+                sb.AppendLine($"else {{ list.Insert(0, new VfieldTag {{ Name = name, Type = \"DUMMY ARRAY 0\" }}); return list; }}");
                 sb.AppendLine($"{p2}}}");
                 sb.AppendLine();
 
@@ -371,14 +375,6 @@ namespace EsfParser.Tags
                 sb.AppendLine($"{p3}_ => v.ToString() ?? string.Empty");
                 sb.AppendLine($"{p2}}};");
                 sb.AppendLine();
-
-                // Render (instance) – reuse existing console renderer
-                sb.AppendLine($"{p2}public void Render()");
-                sb.AppendLine($"{p2}{{");
-                var lines = map.GenerateConsoleRenderer().Split(Environment.NewLine);
-                foreach (var line in lines)
-                    sb.AppendLine($"{p3}{line}");
-                sb.AppendLine($"{p2}}}");
 
                 sb.AppendLine($"{p1}}}");
                 sb.AppendLine();
@@ -513,7 +509,7 @@ namespace EsfParser.Tags
 
                 // Forwarding helpers
                 sb.AppendLine($"{p2}public static void SetClear() => Current.SetClear();");
-                sb.AppendLine($"{p2}public static void Render() => Current.Render();");
+                //sb.AppendLine($"{p2}public static void Render() => Current.Render();");
                 sb.AppendLine($"{p2}public static void CopyFrom(object recordOrType) => Current.CopyFromObject(recordOrType);");
                 sb.AppendLine($"{p2}public static void CopyFrom(System.Type type) => Current.CopyFromObject(type);");
                 sb.AppendLine($"{p2}public static string ToJson() => Current.ToJson();");

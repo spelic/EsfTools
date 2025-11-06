@@ -195,6 +195,31 @@ namespace EsfParser.Parser.Logic.Statements
                         }
                         break;
 
+                    case "BRIGHT" when isMapField:
+                        {
+                            if (bracket >= 0)
+                            {
+                                sb.AppendLine($"{indent}{tgt.Insert(bracket, "Tag")}.SetBright();");  // if you support it
+                            }
+                            else
+                            {
+                                sb.AppendLine($"{indent}{tgt}Tag.SetBright();");
+                            }
+                        }
+                        break;
+
+                    case "AUTOSKIP" when isMapField:
+                        {
+                            if (bracket >= 0)
+                            {
+                                sb.AppendLine($"{indent}{tgt.Insert(bracket, "Tag")}.SetAutoSkip();");  // if you support it
+                            }
+                            else
+                            {
+                                sb.AppendLine($"{indent}{tgt}Tag.SetAutoSkip();");
+                            }
+                        }
+                        break;
                     case "RVIDEO" when isMapField:
                         {
                             if (bracket >= 0)
@@ -208,8 +233,18 @@ namespace EsfParser.Parser.Logic.Statements
                         }
                         break;
 
-                    case "PROTECT" when isMapField:                    
-                        sb.AppendLine($"{indent}{tgt}Tag.SetProtect();");
+                    case "PROTECT" when isMapField:
+                        {
+                            if (bracket >= 0)
+                            {
+                                sb.AppendLine($"{indent}{tgt.Insert(bracket, "Tag")}.SetProtect();");  // if you support it
+                            }
+                            else
+                            {
+                                sb.AppendLine($"{indent}{tgt}Tag.SetProtect();");
+                            }
+                        }
+                       
                         break;
 
 
@@ -223,7 +258,7 @@ namespace EsfParser.Parser.Logic.Statements
                         break;
                 }
             }
-            return sb.ToString().TrimEnd() + $" // Org: {OriginalCode}";
+            return sb.ToString().TrimEnd() + $" // Org: {OriginalCode.Replace("\n", " ")}";
         }
     }
 }

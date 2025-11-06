@@ -1,4 +1,7 @@
+using IBM.Data.Db2;
 using System;
+using System.Runtime.Intrinsics.X86;
+using System.Threading.Tasks;
 using static System.Net.Mime.MediaTypeNames;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
@@ -45,13 +48,16 @@ namespace EsfParser.CodeGen
         }
 
         private static DateTime _ezedte;
+        
+
         /// <summary>
-        /// Current date.
+        /// Current time.
         /// </summary>
-        public static string EZEDTE
+        public static string EZETIM
         {
-            get => _ezedte.ToShortDateString();
+            get => _ezedte.ToShortTimeString();
         }
+               
 
         private static int _ezesqcod;
         /// <summary>
@@ -112,6 +118,46 @@ namespace EsfParser.CodeGen
         {
             // terminate current console program
             Environment.Exit(0);
+        }
+
+        public static void EZEFLO()
+        {
+            // todo: implement EZEFLO behavior
+            throw new NotImplementedException("EZEFLO is not implemented yet.");
+        }
+
+        
+        /// <summary> 
+        /// EZEDTEL retrieves the current date in Gregorian format(YYYYMMDD).
+        /// EZEDTEL is automatically updated each time it is referenced by your program.
+        /// The Gregorian date is presented in a numeric format without separator characters.
+        /// The retrieved date format is valid for use in variable fields defined with a Gregorian date edit mask with a four-digit year.
+        /// Uses
+        /// You can use EZEDTEL as any of the following:
+        /// v A source operand on a MOVE, MOVEA, or assignment statement.
+        /// The receiver can be a map field or data item.
+        /// 
+        /// 
+        public static int EZEDTEL
+        {
+            get
+            {
+                var d = DateTime.Now.Date; // or DateTime.UtcNow.Date if UTC is desired
+                return d.Year * 10000 + d.Month * 100 + d.Day;
+            }
+        }
+
+        /// <summary>
+        /// Current date.
+        /// </summary>
+        public static int EZEDTE
+        {
+            get
+            {
+                var now = DateTime.Now.Date; // use .UtcNow.Date if UTC is required
+                int year = now.Year % 100;    // two-digit year
+                return year * 10000 + now.Month * 100 + now.Day;
+            }
         }
 
         /// <summary>

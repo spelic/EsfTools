@@ -20,6 +20,8 @@ namespace EsfParser.Tags
         [JsonIgnore]
         public string TagName => "RECORDS";
 
+        public EsfProgram? Program { get; set; }
+
         public List<RecordTag> Records { get; set; } = new();
 
         public override string ToString()
@@ -146,6 +148,13 @@ namespace EsfParser.Tags
                     {
                         if (itm.Name == "*") { sb.AppendLine($"{pad2}// * virtual filler, ignored"); continue; }
 
+                        if (itm.Type == "")
+                        {
+                            var type = FindSharedVariable(itm.Name);
+                            itm.Type = type.Type;
+                            itm.Decimals = type.Decimals;
+                        }
+
                         string csType = CSharpUtils.MapCsType(itm.Type.ToString(), itm.Decimals);
                         string prop = CSharpUtils.CleanName(itm.Name);
                         bool isArray = int.TryParse(itm.Occurs, out var occ) && occ > 1;
@@ -179,6 +188,14 @@ namespace EsfParser.Tags
                     foreach (var itm in rec.Items)
                     {
                         if (itm.Name == "*") continue;
+
+                        if (itm.Type == "")
+                        {
+                            var type = FindSharedVariable(itm.Name);
+                            itm.Type = type.Type;
+                            itm.Decimals = type.Decimals;
+                        }
+
                         string csType = CSharpUtils.MapCsType(itm.Type.ToString(), itm.Decimals);
                         string prop = CSharpUtils.CleanName(itm.Name);
                         bool isArray = int.TryParse(itm.Occurs, out var occ) && occ > 1;
@@ -192,11 +209,21 @@ namespace EsfParser.Tags
 
                         if (isArray)
                         {
-                            sb.AppendLine($"{pad3}{prop} = new {csType}[{itm.Occurs}];");
-                            // For string arrays, initialize each element to a single space
-                            if (csType == "string")
+                            // Convert itm.Occurs to int and increment by 1
+                            if (int.TryParse(itm.Occurs, out var occurs))
                             {
-                                sb.AppendLine($"{pad3}for (int i = 0; i < {itm.Occurs}; i++) {prop}[i] = \" \";");
+                                occurs += 1;
+                                sb.AppendLine($"{pad3}{prop} = new {csType}[{occurs}];");
+
+                                // For string arrays, initialize each element to a single space
+                                if (csType == "string")
+                                {
+                                    sb.AppendLine($"{pad3}for (int i = 0; i < {occurs}; i++) {prop}[i] = \" \";");
+                                }
+                            }
+                            else
+                            {
+                                throw new InvalidOperationException($"Invalid OCCURS value '{itm.Occurs}' in record '{rec.Name}', field '{itm.Name}'");
                             }
                         }
                         else
@@ -262,6 +289,29 @@ namespace EsfParser.Tags
                 sb.AppendLine();
             }
 
+
+            (string Type, int Decimals) FindSharedVariable(string name)
+            {
+                RecordItemTag itm = new RecordItemTag { Name = name, Type = "", Decimals = 0 };
+
+                // Find type in MapTagCollection map fields
+                var mapField = Program?.Maps.Maps
+                    .SelectMany(m => m.Vfields)
+                    .FirstOrDefault(f => f.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+                if (mapField != null)
+                {
+                    return (mapField.Type.ToString(), mapField.Decimals);
+                }
+                
+                var itemField = Program?.Items.Items
+                    .FirstOrDefault(f => f.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+                if (itemField != null)
+                {
+                    return (itemField.Type.ToString(), itemField.Decimals);
+                }
+
+                return ("CHA",0);
+            }
             // ── global containers with forwarders ─────────────────────
             void EmitContainer(string className, IEnumerable<RecordTag> recs)
             {
@@ -282,6 +332,14 @@ namespace EsfParser.Tags
                     foreach (var itm in rec.Items)
                     {
                         if (itm.Name == "*") continue;
+
+                        if (itm.Type == "")
+                        {
+                            var type = FindSharedVariable(itm.Name);
+                            itm.Type = type.Type;
+                            itm.Decimals = type.Decimals;
+                        }
+
                         string csType = CSharpUtils.MapCsType(itm.Type.ToString(), itm.Decimals);
                         string prop = CSharpUtils.CleanName(itm.Name);
                         bool isArray = int.TryParse(itm.Occurs, out var occ) && occ > 1;

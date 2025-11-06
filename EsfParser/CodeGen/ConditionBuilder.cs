@@ -44,6 +44,10 @@ namespace EsfParser.CodeGen
                 }
 
                 // ---------- multi-char symbolic operators ----------
+                if (c == '^')
+                {                   
+                    if (i + 1 < esfExpr.Length && esfExpr[i + 1] == '=') { sb.Append("!="); i += 2; continue; }
+                }
                 if (c == '<')
                 {
                     if (i + 1 < esfExpr.Length && esfExpr[i + 1] == '>') { sb.Append("!="); i += 2; continue; }
@@ -294,6 +298,18 @@ namespace EsfParser.CodeGen
                                 i = look;
                                 continue;
                             }
+
+                            // MODIFIED on map tags
+                            if (rhs.Equals("MODIFIED", StringComparison.OrdinalIgnoreCase))
+                            {
+                                string tagged = InsertTagBeforeTrailingIndexer(leftOp);
+                                if (hasNot) sb.Append("!(").Append(tagged).Append(".IsModified)");
+                                else sb.Append(tagged).Append(".IsModified");
+                                i = look;
+                                continue;
+                            }
+
+                            
 
                             // PF/PA on EZEAID
                             if (IsEzEaidIdentifier(word) && TryParseAid(rhs, out var aidKind2, out var aidNum2))

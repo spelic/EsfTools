@@ -91,26 +91,6 @@ namespace EsfParser.Tags
         [JsonPropertyName("startCursorCol")]
         public int? StartCursorCol { get; set; }
 
-        public override string ToString()
-        {
-            var sb = new StringBuilder();
-            sb.AppendLine($":MAP grp={GrpName} map={MapName}  date={Date}  time={Time}");
-            if (Present != null) sb.AppendLine($"  PRESENT: {Present}");
-            if (BypassKeys.Count > 0) sb.AppendLine($"  BYPKEY: {string.Join(',', BypassKeys)}");
-            if (Devices.Count > 0) sb.AppendLine($"  DEVICES: {string.Join(',', Devices)}");
-            if (HelpKey.HasValue) sb.AppendLine($"  HELPKEY: {HelpKey}");
-            if (!string.IsNullOrEmpty(HelpMap)) sb.AppendLine($"  HELPMAP: {HelpMap}");
-            if (MapEdits != null) sb.AppendLine($"  MAPEDITS: {MapEdits}");
-
-            sb.AppendLine("  Cfields:");
-            foreach (var cf in Cfields) sb.AppendLine($"    {cf}");
-
-            sb.AppendLine("  Vfields:");
-            foreach (var vf in Vfields) sb.AppendLine($"    {vf}");
-
-            return sb.ToString();
-        }
-
         public static MapTag Parse(TagNode node)
         {
             static int ParseInt(string? s) => int.TryParse(s, out var v) ? v : 0;
@@ -171,96 +151,6 @@ namespace EsfParser.Tags
             }
 
             return tag;
-        }
-
-        public string GenerateConsoleRenderer()
-        {
-            const int ConsoleWidth = 80;
-            const int ConsoleHeight = 24;
-
-            var sb = new StringBuilder();
-            sb.AppendLine("    Console.Clear();");
-            sb.AppendLine();
-            sb.AppendLine("    void WriteWrapped(int col, int row, string text)");
-            sb.AppendLine("    {");
-            sb.AppendLine("        int c = col, r = row;");
-            sb.AppendLine("        while (!string.IsNullOrEmpty(text) && r < " + ConsoleHeight + ")");
-            sb.AppendLine("        {");
-            sb.AppendLine("            int space = " + ConsoleWidth + " - c;");
-            sb.AppendLine("            if (space <= 1) { c = 0; r++; continue; }");
-            sb.AppendLine("            int take = text.Length <= space ? text.Length : space;");
-            sb.AppendLine("            var part = text.Substring(0, take);");
-            sb.AppendLine("            Console.SetCursorPosition(c, r);");
-            sb.AppendLine("            Console.Write(part);");
-            sb.AppendLine("            text = text.Substring(take);");
-            sb.AppendLine("            c = 0; r++;");
-            sb.AppendLine("        }");
-            sb.AppendLine("    }");
-            sb.AppendLine();
-
-            // 1) Draw constant fields
-            foreach (var cf in Cfields)
-            {
-                var txt = (cf.Value ?? "")
-                    .Replace("\\", "\\\\")
-                    .Replace("\"", "\\\"");
-                sb.AppendLine($"    WriteWrapped({cf.Column - 1}, {cf.Row - 1}, \"{txt}\");");
-            }
-
-            sb.AppendLine();
-
-            // 2) Draw variable fields (initially their Value or blanks)
-            foreach (var vf in Vfields)
-            {
-                var txt = (vf.InitialValue ?? "")
-                    .Replace("\\", "\\\\")
-                    .Replace("\"", "\\\"");
-                sb.AppendLine($"    WriteWrapped({vf.Column - 1}, {vf.Row - 1}, \"{txt}\");");
-            }
-
-            sb.AppendLine();
-
-            // 3) Position cursor on start location: either user‑supplied
-            // StartCursorRow/Col or the first unprotected VFIELD.  Coordinates
-            // are zero‑based for Console.SetCursorPosition.
-            if (StartCursorRow.HasValue && StartCursorCol.HasValue)
-            {
-                sb.AppendLine($"    Console.SetCursorPosition({StartCursorCol.Value - 1}, {StartCursorRow.Value - 1});");
-            }
-            else if (Vfields.Count > 0)
-            {
-                // fallback: first VFIELD
-                var f = Vfields[0];
-                sb.AppendLine($"    Console.SetCursorPosition({f.Column - 1}, {f.Row - 1});");
-            }
-            else
-            {
-                sb.AppendLine("    Console.SetCursorPosition(0, 0);");
-            }
-
-            return sb.ToString();
-        }
-
-        /// <summary>
-        /// Invokes the console editor for this map using the supplied runtime
-        /// library.  This method renders the map, populates values from
-        /// InitialValue and Value, and performs inline editing with auto‑skip,
-        /// validation and field navigation.  It returns the action key (Enter,
-        /// F1–F10 or Esc) pressed by the user to exit the edit loop.
-        /// </summary>
-        /// <param name="rows">Maximum number of rows on the console (defaults to 24)</param>
-        /// <param name="cols">Maximum number of columns on the console (defaults to 80)</param>
-        /// <returns>The AID key (Enter or function key) used to exit editing.</returns>
-        public ConsoleKey ConverseEdit(int rows = 24, int cols = 80)
-        {
-            // Populate the runtime Value property on each Vfield from its
-            // InitialValue prior to editing.  If no InitialValue exists, the
-            // Value will be blank.
-            foreach (var vf in Vfields)
-            {
-                vf.Value = vf.InitialValue ?? string.Empty;
-            }
-            return EsfParser.Runtime.ConverseConsole.RenderAndEdit(rows, cols, Cfields, Vfields, StartCursorRow, StartCursorCol);
-        }
+        }      
     }
 }

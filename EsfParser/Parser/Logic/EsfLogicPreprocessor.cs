@@ -60,7 +60,7 @@
             if (buffer.Count == 0)
                 startLine = i + 1;
 
-            // chack for inline comments in raw line
+            // check for inline comments in raw line
             // 
             int inlineCommentIndex = trimmed.IndexOf("/*");
             if (inlineCommentIndex >= 0)

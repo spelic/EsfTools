@@ -113,6 +113,16 @@ public static class CSharpUtils
             }
 
             string rightId = CleanName(rightHead);
+
+            // check if rightSuffix needs to be converted to operand
+            if (rightSuffix.Length > 0)
+            {
+                if (rightSuffix.StartsWith("[") && rightSuffix.EndsWith("]"))
+                    rightSuffix = "[" + ConvertOperand(rightSuffix.Substring(1, rightSuffix.Length - 2)) + "]";
+                else
+                    rightSuffix = ConvertOperand(rightSuffix.Substring(1, rightSuffix.Length - 2));
+            }
+
             return $"{qualifiedLeft}.{rightId}{rightSuffix}";
         }
 
@@ -176,12 +186,35 @@ public static class CSharpUtils
         if (rec == null) return null;
 
         string fieldName = CleanName(rawIdx);
-        string prefix = rec.Org.Equals("SQLROW", StringComparison.OrdinalIgnoreCase)
-                        ? SQL_PREFIX
-                        : WORK_PREFIX;
 
-        // NOTE: If you have a definitive field list per record, validate fieldName here.
-        return $"{prefix}{recordName}.{fieldName}";
+        // check if field is in basePath record
+        if (fieldName.IndexOf(".")<0 && rec.Items.FirstOrDefault(t => t.Name == fieldName) == null)
+        {
+            // find the right basePath
+            var (found, recName) = IsRecordProperty(fieldName, p);
+            if (found)
+            {
+                recordName = recName;
+                rec = p.Records.Records
+                    .FirstOrDefault(r => CleanName(recName)
+                        .Equals(recordName, StringComparison.OrdinalIgnoreCase));
+            }
+            else
+            {
+                throw new Exception($"Field '{fieldName}' not found in record '{recordName}' or any other record.");
+            }
+        }
+        string prefix = rec.Org.Equals("SQLROW", StringComparison.OrdinalIgnoreCase)
+                            ? SQL_PREFIX
+                            : WORK_PREFIX;
+        if (fieldName.IndexOf(".")>0)
+        {
+            string fieldbase = CleanName(basePath.Split('.')[0]);
+            if (fieldbase == recordName)
+                return $"{prefix}{fieldName}";
+        }
+            // NOTE: If you have a definitive field list per record, validate fieldName here.
+            return $"{prefix}{recordName}.{fieldName}";
     }
 
     // ── Null-safe look-ups ────────────────────────────────────────────────

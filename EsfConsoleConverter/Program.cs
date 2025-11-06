@@ -19,6 +19,13 @@ string path = args.Length > 0 ? args[0] : "D133A-V68.esf";
 
 path = "D133A-V68.esf";
 path = "IS00A-V26.esf";
+//path = "NA70A-V25.esf";
+
+path = "EN00AV33.esf";
+
+path = "IN72AV71.esf";
+
+
 
 if (!File.Exists(path))
     {
@@ -33,20 +40,21 @@ if (!File.Exists(path))
     var nodes = MyEsfParser.Parse(lines);
 //your problematic ESF statements (exact lines you want to debug)
 var problemLines = $@"
-  MOVE ""{{""""username"""":"""""" TO IS00W06.JSON;
 ";
 
 
-foreach (var item in nodes)
+if (problemLines.Trim().Length > 0)
 {
-    if (item.TagName == "FUNC" && item.Children[0].TagName == "BEFORE")
+    foreach (var item in nodes)
     {
-        item.Attributes["NAME"][0] = "__DEBUG_ONLY__";
-        item.Children[0].Content = problemLines;
-        break;
+        if (item.TagName == "FUNC" && item.Children[0].TagName == "BEFORE")
+        {
+            item.Attributes["NAME"][0] = "__DEBUG_ONLY__";
+            item.Children[0].Content = problemLines;
+            break;
+        }
     }
 }
-
 var program = EsfProgramBuilder.GenerateEsfProgram(nodes);
 CSharpUtils.Program = program;
 string name = path.ToLower().Replace(".esf", "").Replace("-", "_").ToUpper();

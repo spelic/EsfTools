@@ -82,10 +82,15 @@ namespace EsfParser.Parser.Logic.Statements
             if (dstInfo.Kind == ValueKind.Int && srcInfo.Kind == ValueKind.Decimal)
                 return $"{dstExpr} = (int)({srcExpr});  // Org: {OriginalCode}";
 
+            if (dstInfo.Kind == ValueKind.String && srcInfo.Kind != ValueKind.String)
+            {
+                return $"{dstExpr} = {srcExpr}.ToString();  // Org: {OriginalCode}";
+            }
+
             // int → decimal (let C# do the widening; no rounding for MOVE)
             // string ↔ numeric is left as-is (ConvertOperand already handles literals/paths)
 
-            return $"{dstExpr} = {srcExpr};  // Org: {OriginalCode}";
+            return $"{dstExpr} = {srcExpr};  // Org: {OriginalCode.Replace("\n", " ")}";
         }
 
         // ────────────────────────────────────────────────────────────────
@@ -182,6 +187,36 @@ namespace EsfParser.Parser.Logic.Statements
             // record item?
             if (TryInferRecordItem(operand, prog, out kind, out scale))
                 return new ValueInfo(kind, scale);
+
+            // Try item tag
+            if (prog?.Items?.Items != null)
+            {
+                if (operand.IndexOf(".") > 0)
+                    operand = operand.Substring(operand.LastIndexOf(".") + 1);
+
+                var itemTag = prog.Items.Items.FirstOrDefault(i =>
+                    string.Equals(CSharpUtils.CleanName(i.Name), CSharpUtils.CleanName(operand), StringComparison.OrdinalIgnoreCase));
+                if (itemTag != null)
+                {
+                    string tU = itemTag.Type.ToString().ToUpperInvariant();
+                    if (tU == "PACKED" || tU == "PACK")
+                    {
+                        return new ValueInfo(ValueKind.Decimal, Math.Max(0, itemTag.Decimals));
+                    }
+                    if (tU == "NUM")
+                    {
+                        if (itemTag.Decimals > 0)
+                            return new ValueInfo(ValueKind.Decimal, itemTag.Decimals);
+                        else
+                            return new ValueInfo(ValueKind.Int, 0);
+                    }
+                    if (tU == "BINARY" || tU == "BIN")
+                    {
+                        return new ValueInfo(ValueKind.Int, 0);
+                    }
+                    return new ValueInfo(ValueKind.String, -1);
+                }
+            }
 
             return ValueInfo.Unknown();
         }

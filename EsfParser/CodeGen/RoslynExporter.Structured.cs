@@ -224,6 +224,10 @@ public static partial class GlobalFunctions
                     var sqlRecord = program.Records.Records
                         .FirstOrDefault(r => r.Name != null &&
                                              r.Name.Equals(sqlRecordName, System.StringComparison.OrdinalIgnoreCase));
+
+                    // TODO: System.InvalidOperationException: 'SQL function 'NA70P30' references record 'NA70M05' which does not exist in the program.'
+                    // ADD SUPPORT FOR MAP OBJECT AND VFIELDS
+
                     if (sqlRecord == null)
                     {
                         System.Console.WriteLine($"⚠️  Warning: SQL function '{f.Name}' references record '{sqlRecordName}' which does not exist in the program.");
@@ -247,29 +251,56 @@ public static partial class GlobalFunctions
 
                     switch (f.Option)
                     {
-                        case "INQUIRY":
+                        case "ADD":
                             {
-                                // WHERE + params
-                                var (whereClean, paramDecl, originalWhere) =
-                                    SqlEmitHelpers.BuildWhereAndParams(whereRaw, cleanSqlRowRecord, op => CSharpUtils.ConvertOperand(op));
+                                var insertColsRaw = f.SqlClauses?.FirstOrDefault(c => c?.ClauseType == "INSERTCOLNAME")?.Text ?? "";
+                                var valuesRaw = f.SqlClauses?.FirstOrDefault(c => c?.ClauseType == "VALUES")?.Text ?? "";
 
-                                // Clean SELECT/ORDERBY (remove comments)
-                                var selectClean = SqlEmitHelpers.StripSqlComments(selectRaw);
-                                if (string.IsNullOrWhiteSpace(selectClean))
-                                {
-                                    System.Console.WriteLine($"⚠️  Warning: SQL function '{f.Name}' has no SELECT clause.");
-                                    selectClean = "*";
-                                }
-                                var orderClean = SqlEmitHelpers.StripSqlComments(orderRaw);
+                                var (colsClean, colsOrig, colsTokens) = SqlEmitHelpers.PrepClause(insertColsRaw);
+                                var (valsClean, valsOrig, valsTokens) = SqlEmitHelpers.PrepClause(valuesRaw);
+                                var tokens = SqlEmitHelpers.MergeTokens(colsTokens, valsTokens);
 
-                                // Compose originals (with comments) and executed (no comments)
-                                var originalSqlWithComments = SqlEmitHelpers.ComposeSql(selectRaw, dbTableName, originalWhere, orderRaw);
-                                var executedSql = SqlEmitHelpers.ComposeSql(selectClean, dbTableName, whereClean, orderClean);
-
-                                // 🚫 Final hard strip to guarantee NO comments reach Dapper
+                                var originalSqlWithComments = $"INSERT INTO {dbTableName} ({colsOrig}) VALUES ({valsOrig})";
+                                var executedSql = SqlEmitHelpers.ComposeInsert(dbTableName, colsClean, valsClean);
                                 executedSql = SqlEmitHelpers.StripSqlComments(executedSql);
 
-                                // Build method
+                                var paramDecl = SqlEmitHelpers.BuildParametersDecl(tokens, cleanSqlRowRecord, op => CSharpUtils.ConvertOperand(op));
+
+                                sqlMethodCode = $@"
+public static partial class GlobalFunctions
+{{
+    /// <summary>Auto-generated SQL ADD for ESF function “{EscapeXml(f.Name)}”.</summary>
+    public static int {methodName}()
+    {{
+        using var conn = DataAccess.GetConnection();
+        /*
+{originalSqlWithComments}
+        */
+        {(string.IsNullOrEmpty(paramDecl) ? "" : paramDecl)}
+        var sql = @""{executedSql}"";
+        var rows = {(string.IsNullOrEmpty(paramDecl) ? "conn.Execute(sql)" : "conn.Execute(sql, parameters)")};
+        return rows;
+    }}
+}}";
+                                break;
+                            }
+
+                        case "UPDATE":
+                            {
+                                // Read for update (single row) — SELECT ... [FOR UPDATE OF ...]
+                                var (whereClean, whereOrig, whereTokens) = SqlEmitHelpers.PrepClause(whereRaw);
+                                var (selClean, selOrig, selTokens) = SqlEmitHelpers.PrepClause(selectRaw); if (string.IsNullOrWhiteSpace(selClean)) selClean = "*";
+                                var (ordClean, ordOrig, ordTokens) = SqlEmitHelpers.PrepClause(orderRaw);
+                                var forUpdRaw = f.SqlClauses?.FirstOrDefault(c => c?.ClauseType == "FORUPDATEOF")?.Text ?? "";
+                                var (forUpdClean, forUpdOrig, _) = SqlEmitHelpers.PrepClause(forUpdRaw, normalizeHostVars: false);
+
+                                var tokens = SqlEmitHelpers.MergeTokens(selTokens, whereTokens, ordTokens);
+
+                                var originalSqlWithComments = SqlEmitHelpers.ComposeSelect(selOrig, dbTableName, whereOrig, ordOrig, forUpdOrig);
+                                var executedSql = SqlEmitHelpers.ComposeSelect(selClean, dbTableName, whereClean, ordClean, forUpdClean);
+                                executedSql = SqlEmitHelpers.StripSqlComments(executedSql);
+
+                                var paramDecl = SqlEmitHelpers.BuildParametersDecl(tokens, cleanSqlRowRecord, op => CSharpUtils.ConvertOperand(op));
                                 var callLine = string.IsNullOrEmpty(paramDecl)
                                     ? $"var result = conn.QueryFirstOrDefault<{cleanSqlRowRecordType}>(sql);"
                                     : $"var result = conn.QueryFirstOrDefault<{cleanSqlRowRecordType}>(sql, parameters);";
@@ -277,8 +308,184 @@ public static partial class GlobalFunctions
                                 sqlMethodCode = $@"
 public static partial class GlobalFunctions
 {{
-    /// <summary>Auto-generated SQL for ESF function “{EscapeXml(f.Name)}”.</summary>
+    /// <summary>Auto-generated SQL UPDATE (read-for-update) for ESF function “{EscapeXml(f.Name)}”.</summary>
     public static void {methodName}()
+    {{
+        using var conn = DataAccess.GetConnection();
+        /*
+{originalSqlWithComments}
+        */
+        {(string.IsNullOrEmpty(paramDecl) ? "" : paramDecl)}
+        var sql = @""{executedSql}"";
+        {callLine}
+        if (result != null) {cleanSqlRowRecord}.Current.CopyFrom(result);
+        else {cleanSqlRowRecord}.Current.SetEmpty();
+    }}
+}}";
+                                break;
+                            }
+
+                        case "REPLACE":
+                            {
+                                // UPDATE ... SET <SET> WHERE <WHERE>
+                                var setRaw = f.SqlClauses?.FirstOrDefault(c => c?.ClauseType == "SET")?.Text ?? "";
+                                var (setClean, setOrig, setTokens) = SqlEmitHelpers.PrepClause(setRaw);
+                                var (whereClean, whereOrig, whereTokens) = SqlEmitHelpers.PrepClause(whereRaw);
+                                var tokens = SqlEmitHelpers.MergeTokens(setTokens, whereTokens);
+
+                                var originalSqlWithComments = SqlEmitHelpers.ComposeUpdateSet(dbTableName, setOrig, whereOrig);
+                                var executedSql = SqlEmitHelpers.ComposeUpdateSet(dbTableName, setClean, whereClean);
+                                executedSql = SqlEmitHelpers.StripSqlComments(executedSql);
+
+                                var paramDecl = SqlEmitHelpers.BuildParametersDecl(tokens, cleanSqlRowRecord, op => CSharpUtils.ConvertOperand(op));
+
+                                sqlMethodCode = $@"
+public static partial class GlobalFunctions
+{{
+    /// <summary>Auto-generated SQL REPLACE for ESF function “{EscapeXml(f.Name)}”.</summary>
+    public static int {methodName}()
+    {{
+        using var conn = DataAccess.GetConnection();
+        /*
+{originalSqlWithComments}
+        */
+        {(string.IsNullOrEmpty(paramDecl) ? "" : paramDecl)}
+        var sql = @""{executedSql}"";
+        var rows = {(string.IsNullOrEmpty(paramDecl) ? "conn.Execute(sql)" : "conn.Execute(sql, parameters)")};
+        return rows;
+    }}
+}}";
+                                break;
+                            }
+
+                        case "DELETE":
+                            {
+                                var (whereClean, whereOrig, whereTokens) = SqlEmitHelpers.PrepClause(whereRaw);
+
+                                var originalSqlWithComments = SqlEmitHelpers.ComposeDelete(dbTableName, whereOrig);
+                                var executedSql = SqlEmitHelpers.ComposeDelete(dbTableName, whereClean);
+                                executedSql = SqlEmitHelpers.StripSqlComments(executedSql);
+
+                                var paramDecl = SqlEmitHelpers.BuildParametersDecl(whereTokens, cleanSqlRowRecord, op => CSharpUtils.ConvertOperand(op));
+
+                                sqlMethodCode = $@"
+public static partial class GlobalFunctions
+{{
+    /// <summary>Auto-generated SQL DELETE for ESF function “{EscapeXml(f.Name)}”.</summary>
+    public static int {methodName}()
+    {{
+        using var conn = DataAccess.GetConnection();
+        /*
+{originalSqlWithComments}
+        */
+        {(string.IsNullOrEmpty(paramDecl) ? "" : paramDecl)}
+        var sql = @""{executedSql}"";
+        var rows = {(string.IsNullOrEmpty(paramDecl) ? "conn.Execute(sql)" : "conn.Execute(sql, parameters)")};
+        return rows;
+    }}
+}}";
+                                break;
+                            }
+
+                        case "SETINQ":
+                            {
+                                var (whereClean, whereOrig, whereTokens) = SqlEmitHelpers.PrepClause(whereRaw);
+                                var (selClean, selOrig, selTokens) = SqlEmitHelpers.PrepClause(selectRaw); if (string.IsNullOrWhiteSpace(selClean)) selClean = "*";
+                                var (ordClean, ordOrig, ordTokens) = SqlEmitHelpers.PrepClause(orderRaw);
+
+                                var tokens = SqlEmitHelpers.MergeTokens(selTokens, whereTokens, ordTokens);
+
+                                var originalSqlWithComments = SqlEmitHelpers.ComposeSelect(selOrig, dbTableName, whereOrig, ordOrig);
+                                var executedSql = SqlEmitHelpers.ComposeSelect(selClean, dbTableName, whereClean, ordClean);
+                                executedSql = SqlEmitHelpers.StripSqlComments(executedSql);
+
+                                var paramDecl = SqlEmitHelpers.BuildParametersDecl(tokens, cleanSqlRowRecord, op => CSharpUtils.ConvertOperand(op));
+
+                                sqlMethodCode = $@"
+public static partial class GlobalFunctions
+{{
+    /// <summary>Auto-generated SQL SETINQ for ESF function “{EscapeXml(f.Name)}”.</summary>
+    public static IEnumerable<{cleanSqlRowRecordType}> {methodName}()
+    {{
+        using var conn = DataAccess.GetConnection();
+        /*
+{originalSqlWithComments}
+        */
+        {(string.IsNullOrEmpty(paramDecl) ? "" : paramDecl)}
+        var sql = @""{executedSql}"";
+        var rows = {(string.IsNullOrEmpty(paramDecl) ? $"conn.Query<{cleanSqlRowRecordType}>(sql)" : $"conn.Query<{cleanSqlRowRecordType}>(sql, parameters)")}.ToList();
+
+        if (rows.Count > 0) {cleanSqlRowRecord}.Current.CopyFrom(rows[0]); else {cleanSqlRowRecord}.Current.SetEmpty();
+        return rows;
+    }}
+}}";
+                                break;
+                            }
+
+                        case "SETUPD":
+                            {
+                                var (whereClean, whereOrig, whereTokens) = SqlEmitHelpers.PrepClause(whereRaw);
+                                var (selClean, selOrig, selTokens) = SqlEmitHelpers.PrepClause(selectRaw); if (string.IsNullOrWhiteSpace(selClean)) selClean = "*";
+                                var (ordClean, ordOrig, ordTokens) = SqlEmitHelpers.PrepClause(orderRaw);
+                                var forUpdRaw = f.SqlClauses?.FirstOrDefault(c => c?.ClauseType == "FORUPDATEOF")?.Text ?? "";
+                                var (forUpdClean, forUpdOrig, _) = SqlEmitHelpers.PrepClause(forUpdRaw, normalizeHostVars: false);
+
+                                var tokens = SqlEmitHelpers.MergeTokens(selTokens, whereTokens, ordTokens);
+
+                                var originalSqlWithComments = SqlEmitHelpers.ComposeSelect(selOrig, dbTableName, whereOrig, ordOrig, forUpdOrig);
+                                var executedSql = SqlEmitHelpers.ComposeSelect(selClean, dbTableName, whereClean, ordClean, forUpdClean);
+                                executedSql = SqlEmitHelpers.StripSqlComments(executedSql);
+
+                                var paramDecl = SqlEmitHelpers.BuildParametersDecl(tokens, cleanSqlRowRecord, op => CSharpUtils.ConvertOperand(op));
+
+                                sqlMethodCode = $@"
+public static partial class GlobalFunctions
+{{
+    /// <summary>Auto-generated SQL SETUPD for ESF function “{EscapeXml(f.Name)}”.</summary>
+    public static IEnumerable<{cleanSqlRowRecordType}> {methodName}()
+    {{
+        using var conn = DataAccess.GetConnection();
+        /*
+{originalSqlWithComments}
+        */
+        {(string.IsNullOrEmpty(paramDecl) ? "" : paramDecl)}
+        var sql = @""{executedSql}"";
+        var rows = {(string.IsNullOrEmpty(paramDecl) ? $"conn.Query<{cleanSqlRowRecordType}>(sql)" : $"conn.Query<{cleanSqlRowRecordType}>(sql, parameters)")}.ToList();
+
+        if (rows.Count > 0) {cleanSqlRowRecord}.Current.CopyFrom(rows[0]); else {cleanSqlRowRecord}.Current.SetEmpty();
+        return rows;
+    }}
+}}";
+                                break;
+                            }
+
+                        case "SCAN":
+                            {
+                                // SELECT ... WHERE ... ORDER BY ... ; return next row on each call
+                                var (whereClean, whereOrig, whereTokens) = SqlEmitHelpers.PrepClause(whereRaw);
+                                var (selClean, selOrig, selTokens) = SqlEmitHelpers.PrepClause(selectRaw); if (string.IsNullOrWhiteSpace(selClean)) selClean = "*";
+                                var (ordClean, ordOrig, ordTokens) = SqlEmitHelpers.PrepClause(orderRaw);
+
+                                // Merge tokens from ALL clauses so we bind params for SELECT/WHERE/ORDER BY as needed
+                                var allTokens = SqlEmitHelpers.MergeTokens(selTokens, whereTokens, ordTokens);
+                                var paramDecl = SqlEmitHelpers.BuildParametersDecl(allTokens, cleanSqlRowRecord, op => CSharpUtils.ConvertOperand(op));
+                                var hasParams = !string.IsNullOrWhiteSpace(paramDecl);
+
+                                var originalSqlWithComments = SqlEmitHelpers.ComposeSql(selOrig, dbTableName, whereOrig, ordOrig);
+                                var executedSql = SqlEmitHelpers.ComposeSql(selClean, dbTableName, whereClean, ordClean);
+                                executedSql = SqlEmitHelpers.StripSqlComments(executedSql);
+
+                                var safe = SanitizeFileName(methodName);
+
+                                sqlMethodCode = $@"
+public static partial class GlobalFunctions
+{{
+    private static System.Collections.Generic.List<{cleanSqlRowRecordType}>? __{safe}_SCAN_ROWS;
+    private static int __{safe}_SCAN_POS;
+    private static string? __{safe}_SCAN_KEY;
+
+    /// <summary>Auto-generated SQL SCAN for ESF function “{EscapeXml(f.Name)}”.</summary>
+    public static bool {methodName}()
     {{
         using var conn = DataAccess.GetConnection();
 
@@ -287,214 +494,199 @@ public static partial class GlobalFunctions
 {originalSqlWithComments}
         */
 
-        {(string.IsNullOrEmpty(paramDecl) ? "" : paramDecl)}
-        var sql = @""{executedSql}"";
-        {callLine}
-        if (result != null)
+        {(hasParams ? paramDecl + "\n        " : "")}var sql = @""{executedSql}"";
+
+        // Build a key that changes when SQL or bound values change
+        string key = sql;
+        {(hasParams ? @"
+        if (parameters is object p)
+        {
+            var props = p.GetType().GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+            if (props?.Length > 0)
+            {
+                var parts = new System.Collections.Generic.List<string>(props.Length);
+                foreach (var pr in props)
+                    parts.Add(pr.Name + ""="" + (pr.GetValue(p)?.ToString() ?? """"));
+                key += ""|"" + string.Join("","", parts);
+            }
+        }" : "")}
+
+        // (Re)load the set if first time or the key changed
+        if (__{safe}_SCAN_ROWS == null || !string.Equals(__{safe}_SCAN_KEY, key, StringComparison.Ordinal))
         {{
-            {cleanSqlRowRecord}.Current.CopyFrom(result);
+            var rows = {(hasParams ? $"conn.Query<{cleanSqlRowRecordType}>(sql, parameters)" : $"conn.Query<{cleanSqlRowRecordType}>(sql)")}.ToList();
+            __{safe}_SCAN_ROWS = rows;
+            __{safe}_SCAN_POS  = 0;
+            __{safe}_SCAN_KEY  = key;
         }}
-        else
+
+        // Yield next row (if any)
+        if (__{safe}_SCAN_ROWS != null && __{safe}_SCAN_POS < __{safe}_SCAN_ROWS.Count)
         {{
-            {cleanSqlRowRecord}.Current.SetEmpty();
+            var row = __{safe}_SCAN_ROWS[__{safe}_SCAN_POS++];
+            {cleanSqlRowRecord}.Current.CopyFrom(row);
+            return true;
         }}
+
+        {cleanSqlRowRecord}.Current.SetEmpty();
+        return false;
     }}
 }}";
                                 break;
                             }
-                        case "SETINQ":
+
+                        case "SCANBACK":
                             {
-                                // SELECT ... WHERE ... ORDER BY ... (returns a set)
-                                var (whereClean, paramDecl, originalWhere) =
-                                    SqlEmitHelpers.BuildWhereAndParams(whereRaw, cleanSqlRowRecord, op => CSharpUtils.ConvertOperand(op));
+                                // Build clauses
+                                var (whereClean, whereOrig, whereTokens) = SqlEmitHelpers.PrepClause(whereRaw);
+                                var (selClean, selOrig, selTokens) = SqlEmitHelpers.PrepClause(selectRaw); if (string.IsNullOrWhiteSpace(selClean)) selClean = "*";
+                                var (ordClean, ordOrig, ordTokens) = SqlEmitHelpers.PrepClause(orderRaw);
 
-                                var selectClean = SqlEmitHelpers.StripSqlComments(selectRaw);
-                                if (string.IsNullOrWhiteSpace(selectClean))
-                                {
-                                    System.Console.WriteLine($"⚠️  Warning: SQL function '{f.Name}' has no SELECT clause.");
-                                    selectClean = "*";
-                                }
-                                var orderClean = SqlEmitHelpers.StripSqlComments(orderRaw);
+                                // Params from ALL clauses (SELECT/WHERE/ORDER BY)
+                                var allTokens = SqlEmitHelpers.MergeTokens(selTokens, whereTokens, ordTokens);
+                                var paramDecl = SqlEmitHelpers.BuildParametersDecl(allTokens, cleanSqlRowRecord, op => CSharpUtils.ConvertOperand(op));
+                                var hasParams = !string.IsNullOrWhiteSpace(paramDecl);
 
-                                // Compose originals (with comments) and executed (no comments)
-                                var originalSqlWithComments = SqlEmitHelpers.ComposeSql(selectRaw, dbTableName, originalWhere, orderRaw);
-                                var executedSql = SqlEmitHelpers.ComposeSql(selectClean, dbTableName, whereClean, orderClean);
+                                // Compose SQL
+                                var originalSqlWithComments = SqlEmitHelpers.ComposeSql(selOrig, dbTableName, whereOrig, ordOrig);
+                                var executedSql = SqlEmitHelpers.ComposeSql(selClean, dbTableName, whereClean, ordClean);
                                 executedSql = SqlEmitHelpers.StripSqlComments(executedSql);
 
-                                // Generate method that returns a set
-                                sqlMethodCode = $@"
-                                public static partial class GlobalFunctions
-                                {{
-                                    /// <summary>Auto-generated SQL SETINQ for ESF function “{EscapeXml(f.Name)}”.</summary>
-                                    public static IEnumerable<{cleanSqlRowRecordType}> {methodName}()
-                                    {{
-                                        using var conn = DataAccess.GetConnection();
-
-                                        // Original SQL (with comments) — preserved for review/debug:
-                                        /*
-                                            {originalSqlWithComments}
-                                        */
-
-                                            {(string.IsNullOrEmpty(paramDecl) ? "" : paramDecl)}
-                                            var sql = @""{executedSql}"";
-                                            var rows = {(string.IsNullOrEmpty(paramDecl) ? 
-                                                        $"conn.Query<{cleanSqlRowRecordType}>(sql)" : $"conn.Query<{cleanSqlRowRecordType}>(sql, parameters)")}.ToList();
-
-                                            // Keep Current in sync with first row (VAGen ""current row"" convention)
-                                            if (rows.Count > 0)
-                                                                    {cleanSqlRowRecord}.Current.CopyFrom(rows[0]);
-                                            else
-                                                                    {cleanSqlRowRecord}.Current.SetEmpty();
-
-                                            return rows;
-                                        
-                                    }}
-                                }}
-                                ";
-                                break;
-                            }
-
-                        case "SETUPD":
-                            {
-                                // SELECT ... WHERE ... ORDER BY ... [FOR UPDATE OF ...] (returns a set that can be updated)
-                                var (whereClean, paramDecl, originalWhere) =
-                                    SqlEmitHelpers.BuildWhereAndParams(whereRaw, cleanSqlRowRecord, op => CSharpUtils.ConvertOperand(op));
-
-                                var selectClean = SqlEmitHelpers.StripSqlComments(selectRaw);
-                                if (string.IsNullOrWhiteSpace(selectClean))
-                                {
-                                    System.Console.WriteLine($"⚠️  Warning: SQL function '{f.Name}' has no SELECT clause.");
-                                    selectClean = "*";
-                                }
-                                var orderClean = SqlEmitHelpers.StripSqlComments(orderRaw);
-
-                                // Optional FOR UPDATE OF <cols> clause
-                                var forUpdateRaw = f.SqlClauses?.FirstOrDefault(c => c?.ClauseType == "FORUPDATEOF")?.Text ?? string.Empty;
-                                var forUpdateClean = SqlEmitHelpers.StripSqlComments(forUpdateRaw);
-                                string forUpdateOrigTail = string.IsNullOrWhiteSpace(forUpdateRaw) ? "" : $" FOR UPDATE OF {forUpdateRaw.Trim()}";
-                                string forUpdateCleanTail = string.IsNullOrWhiteSpace(forUpdateClean) ? "" : $" FOR UPDATE OF {forUpdateClean.Trim()}";
-
-                                // Compose originals (with comments) and executed (no comments)
-                                var originalSqlWithComments = SqlEmitHelpers.ComposeSql(selectRaw, dbTableName, originalWhere, orderRaw) + forUpdateOrigTail;
-                                var executedSql = SqlEmitHelpers.ComposeSql(selectClean, dbTableName, whereClean, orderClean) + forUpdateCleanTail;
-                                executedSql = SqlEmitHelpers.StripSqlComments(executedSql);
-
-                                // Generate method that returns a set
-                                sqlMethodCode = $@"
-                                public static partial class GlobalFunctions
-                                {{
-                                    /// <summary>Auto-generated SQL SETUPD for ESF function “{EscapeXml(f.Name)}”.</summary>
-                                    public static IEnumerable<{cleanSqlRowRecordType}> {methodName}()
-                                    {{
-                                        using var conn = DataAccess.GetConnection();
-
-                                        // Original SQL (with comments) — preserved for review/debug:
-                                        /*
-                                            {originalSqlWithComments}
-                                        */
-
-                                        {(string.IsNullOrEmpty(paramDecl) ? "" : paramDecl)}
-                                        var sql = @""{executedSql}"";
-                                        var rows = {(string.IsNullOrEmpty(paramDecl) ? $"conn.Query<{cleanSqlRowRecordType}>(sql)" : $"conn.Query<{cleanSqlRowRecordType}>(sql, parameters)")}.ToList();
-
-                                        // Keep Current in sync with first row
-                                        if (rows.Count > 0)
-                                            {cleanSqlRowRecord}.Current.CopyFrom(rows[0]);
-                                        else
-                                            {cleanSqlRowRecord}.Current.SetEmpty();
-
-                                        return rows;
-                                    }}
-                                }}";
-                                break;
-                            }
-                        case "SCAN":
-                            {
-                                // SELECT ... WHERE ... ORDER BY ... ; return next row on each call
-                                var (whereClean, paramDecl, originalWhere) =
-                                    SqlEmitHelpers.BuildWhereAndParams(whereRaw, cleanSqlRowRecord, op => CSharpUtils.ConvertOperand(op));
-
-                                var selectClean = SqlEmitHelpers.StripSqlComments(selectRaw);
-                                if (string.IsNullOrWhiteSpace(selectClean))
-                                {
-                                    System.Console.WriteLine($"⚠️  Warning: SQL function '{f.Name}' has no SELECT clause.");
-                                    selectClean = "*";
-                                }
-                                var orderClean = SqlEmitHelpers.StripSqlComments(orderRaw);
-
-                                // Compose originals (with comments) and executed (no comments)
-                                var originalSqlWithComments = SqlEmitHelpers.ComposeSql(selectRaw, dbTableName, originalWhere, orderRaw);
-                                var executedSql = SqlEmitHelpers.ComposeSql(selectClean, dbTableName, whereClean, orderClean);
-                                executedSql = SqlEmitHelpers.StripSqlComments(executedSql);
-
-                                // Give the per-function static fields unique, safe names
+                                // Unique static fields per function
                                 var safe = SanitizeFileName(methodName);
 
                                 sqlMethodCode = $@"
-                                public static partial class GlobalFunctions
-                                {{
-                                    // SCAN state for {EscapeXml(methodName)}
-                                    private static System.Collections.Generic.List<{cleanSqlRowRecordType}>? __{safe}_SCAN_ROWS;
-                                    private static int __{safe}_SCAN_POS;
-                                    private static string? __{safe}_SCAN_KEY;
+public static partial class GlobalFunctions
+{{
+    private static System.Collections.Generic.List<{cleanSqlRowRecordType}>? __{safe}_SCAN_ROWS;
+    private static int __{safe}_SCAN_POS;
+    private static string? __{safe}_SCAN_KEY;
 
-                                    /// <summary>Auto-generated SQL SCAN for ESF function “{EscapeXml(f.Name)}”.</summary>
-                                    /// <returns>true if a row was fetched & copied to Current; false if no more rows</returns>
-                                    public static bool {methodName}()
-                                    {{
-                                        using var conn = DataAccess.GetConnection();
+    /// <summary>Auto-generated SQL SCANBACK for ESF function “{EscapeXml(f.Name)}”.</summary>
+    public static bool {methodName}()
+    {{
+        using var conn = DataAccess.GetConnection();
 
-                                        // Original SQL (with comments) — preserved for review/debug:
-                                        /*
-                                            {originalSqlWithComments}
-                                        */
+        // Original SQL (with comments) — preserved for review/debug:
+        /*
+{originalSqlWithComments}
+        */
 
-                                        {(string.IsNullOrEmpty(paramDecl) ? "" : paramDecl)}
-                                        var sql = @""{executedSql}"";
+        {(hasParams ? paramDecl + "\n        " : "")}var sql = @""{executedSql}"";
 
-                                        // Build a simple key from SQL + bound parameter values to detect changes between calls
-                                        string key = sql;
-                                        {(string.IsNullOrEmpty(paramDecl) ? "" :
-                                                                    @"if (parameters is object p)
-                                        {
-                                            var props = p.GetType().GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-                                            if (props != null && props.Length > 0)
-                                            {
-                                                var parts = new System.Collections.Generic.List<string>(props.Length);
-                                                foreach (var pr in props)
-                                                {
-                                                    var val = pr.GetValue(p);
-                                                    parts.Add(pr.Name + ""="" + (val?.ToString() ?? """"));
-                                                }
-                                                key += ""|"" + string.Join("","", parts);
-                                            }
-                                        }")}
+        // Build key from SQL + bound values (if any)
+        string key = sql;
+        {(hasParams ? @"
+        if (parameters is object p)
+        {
+            var props = p.GetType().GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+            if (props?.Length > 0)
+            {
+                var parts = new System.Collections.Generic.List<string>(props.Length);
+                foreach (var pr in props)
+                    parts.Add(pr.Name + ""="" + (pr.GetValue(p)?.ToString() ?? """"));
+                key += ""|"" + string.Join("","", parts);
+            }
+        }" : "")}
 
-                                        // (Re)load the set if first time or the key changed
-                                        if (__{safe}_SCAN_ROWS == null || !string.Equals(__{safe}_SCAN_KEY, key, System.StringComparison.Ordinal))
-                                        {{
-                                            var rows = {(string.IsNullOrEmpty(paramDecl)
-                                                                            ? $"conn.Query<{cleanSqlRowRecordType}>(sql)"
-                                                                            : $"conn.Query<{cleanSqlRowRecordType}>(sql, parameters)")}?.ToList()
-                                                ?? new System.Collections.Generic.List<{cleanSqlRowRecordType}>();
+        // (Re)load if first call or the key changed
+        if (__{safe}_SCAN_ROWS == null || !string.Equals(__{safe}_SCAN_KEY, key, StringComparison.Ordinal))
+        {{
+            var rows = {(hasParams ? $"conn.Query<{cleanSqlRowRecordType}>(sql, parameters)" : $"conn.Query<{cleanSqlRowRecordType}>(sql)")}.ToList();
+            __{safe}_SCAN_ROWS = rows;
+            __{safe}_SCAN_POS  = rows.Count; // start from end
+            __{safe}_SCAN_KEY  = key;
+        }}
 
-                                            __{safe}_SCAN_ROWS = rows;
-                                            __{safe}_SCAN_POS  = 0;
-                                            __{safe}_SCAN_KEY  = key;
-                                        }}
+        // Step backward
+        if (__{safe}_SCAN_ROWS != null && __{safe}_SCAN_POS > 0)
+        {{
+            var row = __{safe}_SCAN_ROWS[--__{safe}_SCAN_POS];
+            {cleanSqlRowRecord}.Current.CopyFrom(row);
+            return true;
+        }}
 
-                                        // Yield next row (if any)
-                                        if (__{safe}_SCAN_ROWS != null && __{safe}_SCAN_POS < __{safe}_SCAN_ROWS.Count)
-                                        {{
-                                            var row = __{safe}_SCAN_ROWS[__{safe}_SCAN_POS++];
-                                            {cleanSqlRowRecord}.Current.CopyFrom(row);
-                                            return true;
-                                        }}
+        {cleanSqlRowRecord}.Current.SetEmpty();
+        return false;
+    }}
+}}";
+                                break;
+                            }
 
-                                        {cleanSqlRowRecord}.Current.SetEmpty();
-                                        return false;
-                                    }}
-                                }}";
+                        case "SQLEXEC":
+                            {
+                                var sqlRaw = f.SqlClauses?.FirstOrDefault(c =>
+                                                string.Equals(c?.ClauseType, "SQL", StringComparison.OrdinalIgnoreCase) ||
+                                                string.Equals(c?.ClauseType, "STATEMENT", StringComparison.OrdinalIgnoreCase) ||
+                                                string.Equals(c?.ClauseType, "SQLTEXT", StringComparison.OrdinalIgnoreCase)
+                                            )?.Text ?? string.Empty;
+
+                                var (sqlClean, sqlOrig, sqlTokens) = SqlEmitHelpers.PrepClause(sqlRaw);
+                                var originalSqlWithComments = sqlOrig;
+                                var executedSql = SqlEmitHelpers.StripSqlComments(sqlClean);
+                                var paramDecl = SqlEmitHelpers.BuildParametersDecl(sqlTokens, cleanSqlRowRecord, op => CSharpUtils.ConvertOperand(op));
+                                bool isSelect = executedSql.TrimStart().StartsWith("SELECT", StringComparison.OrdinalIgnoreCase);
+
+                                if (isSelect)
+                                {
+                                    {
+                                        sqlMethodCode = $@"
+public static partial class GlobalFunctions
+{{
+    /// <summary>Auto-generated SQL SQLEXEC (SELECT) for ESF function “{EscapeXml(f.Name)}”.</summary>
+    public static IEnumerable<{cleanSqlRowRecordType}> {methodName}()
+    {{
+        using var conn = DataAccess.GetConnection();
+        /*
+{originalSqlWithComments}
+        */
+        {(string.IsNullOrEmpty(paramDecl) ? "" : paramDecl)}
+        var sql = @""{executedSql}"";
+        var rows = {(string.IsNullOrEmpty(paramDecl) ? $"conn.Query<{cleanSqlRowRecordType}>(sql)" : $"conn.Query<{cleanSqlRowRecordType}>(sql, parameters)")}.ToList();
+        if (rows.Count > 0) {cleanSqlRowRecord}.Current.CopyFrom(rows[0]); else {cleanSqlRowRecord}.Current.SetEmpty();
+        return rows;
+    }}
+}}";
+                                    }
+                                }
+                                else
+                                {
+                                    {
+                                        sqlMethodCode = $@"
+public static partial class GlobalFunctions
+{{
+    /// <summary>Auto-generated SQL SQLEXEC (non-SELECT) for ESF function “{EscapeXml(f.Name)}”.</summary>
+    public static int {methodName}()
+    {{
+        using var conn = DataAccess.GetConnection();
+        /*
+{originalSqlWithComments}
+        */
+        {(string.IsNullOrEmpty(paramDecl) ? "" : paramDecl)}
+        var sql = @""{executedSql}"";
+        var rows = {(string.IsNullOrEmpty(paramDecl) ? "conn.Execute(sql)" : "conn.Execute(sql, parameters)")};
+        return rows;
+    }}
+}}";
+                                    }
+                                }
+                                break;
+                            }
+
+                        case "CLOSE":
+                            {
+                                // SQL cursors aren’t held with Dapper; honor semantics by clearing Current.
+                                sqlMethodCode = $@"
+public static partial class GlobalFunctions
+{{
+    /// <summary>Auto-generated CLOSE for ESF function “{EscapeXml(f.Name)}”.</summary>
+    public static void {methodName}()
+    {{
+        {cleanSqlRowRecord}.Current.SetEmpty();
+        // NOTE: If you want to also clear SCAN/SCANBACK buffers, say the word;
+        // we can centralize set caching and release it here.
+    }}
+}}";
                                 break;
                             }
 

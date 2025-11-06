@@ -12,6 +12,7 @@ public class MoveStatementParser : IStatementParser
     {
         var line = lines[index];
         var original = line.OriginalBlock;
+
         // strip trailing ';' if present, then remove leading "MOVE "
         var raw = line.CleanLine.TrimEnd().TrimEnd(';');
         if (raw.Length < 5)

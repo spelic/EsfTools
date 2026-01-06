@@ -32,6 +32,9 @@
     <None Update="NA70A-V25.esf">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="NR11av28.esf">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="S535A-V16.esf">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

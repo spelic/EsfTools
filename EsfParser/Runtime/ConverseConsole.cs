@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using EsfParser.Tags;
 
-namespace EsfParser.Runtime
+namespace NR11AV28_ConsoleApp.Runtime
 {
     /// <summary>
     /// Provides a simple CONVERSE editor for ESF maps running in the console.

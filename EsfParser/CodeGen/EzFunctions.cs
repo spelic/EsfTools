@@ -18,6 +18,13 @@ namespace EsfParser.CodeGen
         public static int EZEFEC { get; set; } = 1;
 
         /// <summary>
+        /// Current message text. In ESF, EZEMSG is the message field; bare (unqualified)
+        /// EZEMSG references resolve here so generated code compiles. Qualified map fields
+        /// (e.g. MAP.EZEMSG) continue to use the map's own field.
+        /// </summary>
+        public static string EZEMSG { get; set; } = string.Empty;
+
+        /// <summary>
         /// ORG: MOVE 1 TO EZESQISL;
         /// </summary>
         public static int EZESQISL { get; set; } = 1;

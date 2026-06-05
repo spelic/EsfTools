@@ -21,9 +21,9 @@ public static class SqlSupport
             "SQLEXEC", "CLOSE",
         };
 
-    /// <summary>Options routed to the logic (non-SQL) branch.</summary>
+    /// <summary>Options routed to the logic/map (non-SQL) branch.</summary>
     public static readonly IReadOnlySet<string> LogicOptions =
-        new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "EXECUTE", "CONVERSE" };
+        new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "EXECUTE", "CONVERSE", "DISPLAY" };
 
     /// <summary>SQL cursor-flow options (a semantic-risk signal).</summary>
     public static readonly IReadOnlySet<string> CursorFlowOptions =

@@ -210,7 +210,7 @@ internal static class EzeeInfo
         string ns,
         string[] subUsings)
     {
-                if (f.Option == "EXECUTE" || f.Option == "CONVERSE")
+                if (f.Option == "EXECUTE" || f.Option == "CONVERSE" || f.Option == "DISPLAY")
                 {
                     // LOGIC → Functions/Logic/<FuncName>.cs
                     var methodName = f.Name;

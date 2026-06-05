@@ -166,15 +166,19 @@ namespace EsfParser.Tags
             {
                 sb.AppendLine(indent + "// -- BEFORE logic --");
                 sb.Append(EsfLogicToCs.GenerateCSharpFromLogic(this, BeforeLogic, indentSpaces));
-                // If this function is a CONVERSE, call the map conversation after BEFORE logic
-                if (!string.IsNullOrWhiteSpace(Option) && Option.Equals("CONVERSE", StringComparison.OrdinalIgnoreCase))
+                // If this function is a CONVERSE/DISPLAY, render the map after BEFORE logic.
+                if (!string.IsNullOrWhiteSpace(mapCsName) && !string.IsNullOrWhiteSpace(Option))
                 {
-                    if (!string.IsNullOrWhiteSpace(mapCsName))
+                    if (Option.Equals("CONVERSE", StringComparison.OrdinalIgnoreCase))
                     {
                         sb.AppendLine(indent + $"// Render and edit map {ObjectName}");
-                        // Call runtime CONVERSE editor with constant and variable fields; capture AID and store in GlobalWorkstor
                         sb.AppendLine(indent + $"var aid = Runtime.ConverseConsole.RenderAndEdit(24, 80, GlobalMaps.{mapCsName}.Current.Cfields, GlobalMaps.{mapCsName}.Current.Vfields, null, null);");
                         sb.AppendLine(indent + $"EzFunctions.EZEAID = aid;");
+                    }
+                    else if (Option.Equals("DISPLAY", StringComparison.OrdinalIgnoreCase))
+                    {
+                        sb.AppendLine(indent + $"// Display map {ObjectName} (output only)");
+                        sb.AppendLine(indent + $"Runtime.ConsoleMapRenderer.Render(24, 80, GlobalMaps.{mapCsName}.Current.Cfields, GlobalMaps.{mapCsName}.Current.Vfields);");
                     }
                 }
                 return sb.ToString();
@@ -307,6 +311,16 @@ namespace EsfParser.Tags
                         // Call runtime CONVERSE editor with constant and variable fields; capture AID and store in GlobalWorkstor
                         sb.AppendLine(indent + $"var aid = Runtime.ConverseConsole.RenderAndEdit(24, 80, GlobalMaps.{mapCsName}.Current.Cfields, GlobalMaps.{mapCsName}.Current.Vfields, null, null);");
                         sb.AppendLine(indent + $"EzFunctions.EZEAID = aid;");
+                        return sb.ToString();
+                    }
+                }
+                // Handle DISPLAY option (output-only map render) without BEFORE or SQL logic
+                if (optUpper == "DISPLAY")
+                {
+                    if (!string.IsNullOrWhiteSpace(mapCsName))
+                    {
+                        sb.AppendLine(indent + $"// Display map {ObjectName} (output only)");
+                        sb.AppendLine(indent + $"Runtime.ConsoleMapRenderer.Render(24, 80, GlobalMaps.{mapCsName}.Current.Cfields, GlobalMaps.{mapCsName}.Current.Vfields);");
                         return sb.ToString();
                     }
                 }

@@ -413,6 +413,7 @@ public static partial class GlobalFunctions
                                 break;
                             }
 
+                        case "INQUIRY": // single-row read — same emission as SETINQ
                         case "SETINQ":
                             {
                                 var (whereClean, whereOrig, whereTokens) = SqlEmitHelpers.PrepClause(whereRaw);

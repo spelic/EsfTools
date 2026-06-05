@@ -17,7 +17,7 @@ public static class SqlSupport
         new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "ADD", "UPDATE", "REPLACE", "DELETE",
-            "SETINQ", "SETUPD", "SCAN", "SCANBACK",
+            "SETINQ", "INQUIRY", "SETUPD", "SCAN", "SCANBACK",
             "SQLEXEC", "CLOSE",
         };
 

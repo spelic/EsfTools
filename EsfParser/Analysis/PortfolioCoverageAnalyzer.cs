@@ -25,7 +25,9 @@ namespace EsfParser.Analysis;
 public sealed class PortfolioCoverageAnalyzer
 {
     private static readonly ItemType[] PackedZonedTypes = { ItemType.PACK, ItemType.PACF, ItemType.NUM, ItemType.NUMC };
-    private static readonly Regex EzeToken = new(@"\bE[ZY]E[A-Z0-9]+\b", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+    // EZE/EY token NOT preceded by '.' — a leading dot means it's a qualified field
+    // access (e.g. MAP.EZEMSG), which is a normal field, not a system function.
+    private static readonly Regex EzeToken = new(@"(?<![.\w])E[ZY]E[A-Z0-9]+\b", RegexOptions.Compiled | RegexOptions.IgnoreCase);
     private static readonly Regex XferWord = new(@"\bXFER\b", RegexOptions.Compiled | RegexOptions.IgnoreCase);
     private static readonly Regex DisplayWord = new(@"\bDISPLAY\b", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
@@ -215,6 +217,14 @@ public sealed class PortfolioCoverageAnalyzer
     {
         var all = EsfProgramAnalytics.GetAllStatementsRecursive(program);
 
+        // Names the program defines itself (items + record fields). An EZE* token that is a
+        // declared field (e.g. an "EZEMSG" message field on a map record) is handled by the
+        // normal field path, not the EZE runtime — so it must not count as "unsupported EZE".
+        var definedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var i in program.Items.Items) definedNames.Add(i.Name.ToUpperInvariant());
+        foreach (var rec in program.Records.Records)
+            foreach (var it in rec.Items) definedNames.Add(it.Name.ToUpperInvariant());
+
         var ezeTokens = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var s in all)
         {
@@ -224,7 +234,7 @@ public sealed class PortfolioCoverageAnalyzer
                 ezeTokens.Add(Normalize(m.Value));
         }
         r.UnsupportedEzeWords = ezeTokens
-            .Where(t => !ImplementedEze.Contains(t))
+            .Where(t => !ImplementedEze.Contains(t) && !definedNames.Contains(t))
             .OrderBy(t => t, StringComparer.OrdinalIgnoreCase)
             .ToList();
 

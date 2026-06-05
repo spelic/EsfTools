@@ -1,6 +1,6 @@
 using EsfParser.Tags;
 
-namespace NR11AV28_ConsoleApp.Runtime
+namespace EsfParser.Runtime
 {
     /// <summary>
     /// Provides a simple console renderer for ESF maps.  The renderer draws

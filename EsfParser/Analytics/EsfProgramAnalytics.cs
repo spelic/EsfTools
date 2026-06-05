@@ -71,30 +71,9 @@ namespace EsfParser.Analytics
             Console.ResetColor();
             Console.WriteLine();
 
-            int count = 1;
-
             foreach (var func in program.Functions.Functions)
             {
-                var parsedStatements = EsfProgramAnalytics.GetAllStatementsRecursive(func);
-                var unknowns = parsedStatements.Where(s => s.Type == StatementType.Unknown).ToList();
-
-                if (unknowns.Count == 0)
-                    continue;
-
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine($"==== FUNC={func.Name} has {unknowns.Count} unknown statement(s) ====");
-                Console.ResetColor();
-                int lineStartColumn = 100;
-
-                foreach (var stmt in unknowns)
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    string content = $"FUNC={func.Name,-12} {stmt.OriginalCode}";
-                    string padded = content.PadRight(lineStartColumn);
-                    Console.WriteLine($"{padded}LINE={stmt.LineNumber}");
-                }
-
-                Console.ResetColor();
+                if (!PrintFunctionUnknowns(func)) continue;
                 Console.WriteLine($"-- Statement Tree for FUNC={func.Name} --");
                 //StatementTreeVisualizer.Print(parsedStatements);
             }
@@ -104,30 +83,33 @@ namespace EsfParser.Analytics
         {
             bool hasUnknowns = false;
             foreach (var func in program.Functions.Functions)
-            {
-                var parsedStatements = EsfProgramAnalytics.GetAllStatementsRecursive(func);
-                var unknowns = parsedStatements.Where(s => s.Type == StatementType.Unknown).ToList();
-
-                if (unknowns.Count == 0)
-                    continue;
-
-                hasUnknowns = true;
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine($"==== FUNC={func.Name} has {unknowns.Count} unknown statement(s) ====");
-                Console.ResetColor();
-                int lineStartColumn = 100;
-
-                foreach (var stmt in unknowns)
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    string content = $"FUNC={func.Name,-12} {stmt.OriginalCode}";
-                    string padded = content.PadRight(lineStartColumn);
-                    Console.WriteLine($"{padded}LINE={stmt.LineNumber}");
-                }
-
-                Console.ResetColor();
-            }
+                hasUnknowns |= PrintFunctionUnknowns(func);
             return hasUnknowns;
+        }
+
+        // Shared by PrintSummaryToConsole / PrintUnknownToConsole.
+        // Returns true if the function had any unknown statements (and thus printed).
+        private static bool PrintFunctionUnknowns(FuncTag func)
+        {
+            var unknowns = GetAllStatementsRecursive(func)
+                .Where(s => s.Type == StatementType.Unknown)
+                .ToList();
+
+            if (unknowns.Count == 0) return false;
+
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine($"==== FUNC={func.Name} has {unknowns.Count} unknown statement(s) ====");
+            Console.ResetColor();
+
+            const int lineStartColumn = 100;
+            foreach (var stmt in unknowns)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                string content = $"FUNC={func.Name,-12} {stmt.OriginalCode}";
+                Console.WriteLine($"{content.PadRight(lineStartColumn)}LINE={stmt.LineNumber}");
+            }
+            Console.ResetColor();
+            return true;
         }
 
         public static void PrintAfterStatementsToConsole(EsfProgram program)
@@ -162,44 +144,23 @@ namespace EsfParser.Analytics
         }
 
         public static List<IStatement> GetAllStatementsRecursive(EsfProgram program)
-        {
-            return program.Functions.Functions
-                .SelectMany(GetAllStatementsRecursive)
-                .ToList();
-        }
+            => program.Functions.Functions.SelectMany(GetAllStatementsRecursive).ToList();
 
+        // Before-logic precedes after-logic, matching the original traversal order.
         public static List<IStatement> GetAllStatementsRecursive(FuncTag func)
-        {
-            var all = new List<IStatement>();
-            void Visit(IStatement s)
-            {
-                all.Add(s);
-
-                switch (s)
-                {
-                    case IfStatement ifs:
-                        foreach (var stmt in ifs.TrueStatements) Visit(stmt);
-                        foreach (var stmt in ifs.ElseStatements) Visit(stmt);
-                        break;
-                    case WhileStatement wh:
-                        foreach (var stmt in wh.BodyStatements) Visit(stmt);
-                        break;
-                }
-            }
-
-            foreach (var stmt in func.BeforeLogicStatements) Visit(stmt);
-            foreach (var stmt in func.AfterLogicStatements) Visit(stmt);
-
-            return all;
-        }
+            => Flatten(func.BeforeLogicStatements.Concat(func.AfterLogicStatements));
 
         public static List<IStatement> GetAllStatementsRecursive(List<IStatement> statements)
+            => Flatten(statements);
+
+        // Single depth-first walk shared by all overloads (was duplicated three ways).
+        private static List<IStatement> Flatten(IEnumerable<IStatement> statements)
         {
             var all = new List<IStatement>();
+
             void Visit(IStatement s)
             {
                 all.Add(s);
-
                 switch (s)
                 {
                     case IfStatement ifs:
@@ -211,6 +172,7 @@ namespace EsfParser.Analytics
                         break;
                 }
             }
+
             foreach (var stmt in statements) Visit(stmt);
             return all;
         }

@@ -361,3 +361,9 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+# Generated migration coverage artifacts (regenerable via `coverage` verb).
+# Keep the human-readable markdown reports; ignore the bulky/derived outputs.
+docs/migration/coverage/*.json
+docs/migration/coverage/*.csv
+docs/migration/coverage/build-logs/
+docs/migration/coverage/generated/

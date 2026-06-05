@@ -16,4 +16,19 @@
     <PackageReference Include="Net.IBM.Data.Db2" Version="9.0.0.300" />
   </ItemGroup>
 
+  <!--
+    Runtime helper sources are embedded so the code generator can emit them into the
+    generated project regardless of where the tool is run from (publish, Release, etc.).
+    They remain part of the normal compile via the SDK default globs.
+  -->
+  <ItemGroup>
+    <EmbeddedResource Include="CodeGen\EzFunctions.cs" LogicalName="EsfParser.Embedded.EzFunctions.cs" />
+    <EmbeddedResource Include="Runtime\SqlHelpers.cs" LogicalName="EsfParser.Embedded.SqlHelpers.cs" />
+    <EmbeddedResource Include="Runtime\CursorStore.cs" LogicalName="EsfParser.Embedded.CursorStore.cs" />
+    <EmbeddedResource Include="Runtime\AidKey.cs" LogicalName="EsfParser.Embedded.AidKey.cs" />
+    <EmbeddedResource Include="Runtime\ConsoleMapRenderer.cs" LogicalName="EsfParser.Embedded.ConsoleMapRenderer.cs" />
+    <EmbeddedResource Include="Runtime\ConverseConsole.cs" LogicalName="EsfParser.Embedded.ConverseConsole.cs" />
+    <EmbeddedResource Include="Startup.json" LogicalName="EsfParser.Embedded.Startup.json" />
+  </ItemGroup>
+
 </Project>

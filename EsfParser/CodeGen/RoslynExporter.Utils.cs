@@ -20,25 +20,45 @@ public static partial class RoslynExporter
         return name;
     }
 
+    /// <summary>
+    /// Load a helper source by file name. Prefers the file embedded in this assembly
+    /// (so the tool works after publish / from any working directory) and falls back to
+    /// the on-disk source path for local development. Returns null if neither is found.
+    /// </summary>
+    private static string? LoadHelperText(string fsFallbackPath)
+    {
+        var fileName = Path.GetFileName(fsFallbackPath);
+        var asm = typeof(RoslynExporter).Assembly;
+        var res = asm.GetManifestResourceNames()
+                     .FirstOrDefault(n => n.EndsWith("." + fileName, StringComparison.OrdinalIgnoreCase));
+        if (res != null)
+        {
+            using var s = asm.GetManifestResourceStream(res);
+            if (s != null) { using var r = new StreamReader(s); return r.ReadToEnd(); }
+        }
+        return File.Exists(fsFallbackPath) ? File.ReadAllText(fsFallbackPath) : null;
+    }
+
     private static void TryCopyStartupJson(string destFolder)
     {
         try
         {
             var destJson = Path.Combine(destFolder, "Startup.json");
-            if (File.Exists(StartupJsonPath))
+            var text = LoadHelperText(StartupJsonPath);
+            if (text != null)
             {
-                File.Copy(StartupJsonPath, destJson, overwrite: true);
-                Console.WriteLine($"📄  Startup.json copied to: {destJson}");
+                File.WriteAllText(destJson, text);
+                Console.WriteLine($"📄  Startup.json written to: {destJson}");
             }
-            else Console.WriteLine($"⚠️  Startup.json not found at: {StartupJsonPath}");
+            else Console.WriteLine($"⚠️  Startup.json not found (embedded or at {StartupJsonPath})");
         }
         catch (Exception ex) { Console.WriteLine($"⚠️  Failed to copy Startup.json: {ex.Message}"); }
     }
 
     private static void CopyFileIfExists(string src, string dst, Func<string, string>? post = null)
     {
-        if (!File.Exists(src)) { Console.WriteLine($"⚠️  Helper not found: {src}"); return; }
-        var text = File.ReadAllText(src);
+        var text = LoadHelperText(src);
+        if (text == null) { Console.WriteLine($"⚠️  Helper not found: {Path.GetFileName(src)}"); return; }
         if (post != null) text = post(text);
         File.WriteAllText(dst, text);
         Console.WriteLine($"📎  {Path.GetFileName(dst)} written.");

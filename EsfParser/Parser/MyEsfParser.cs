@@ -10,6 +10,11 @@ namespace EsfParser.Parser
 {
     public static class MyEsfParser
     {
+        /// <summary>
+        /// Non-fatal parse diagnostics (e.g. unexpected line formats) collected during the
+        /// most recent <see cref="Parse"/> call. Cleared at the start of each Parse.
+        /// </summary>
+        public static List<string> Diagnostics { get; } = new();
 
         // private function to parse tag name from line
         private static string ParseTagName(string line)
@@ -49,6 +54,7 @@ namespace EsfParser.Parser
 
         public static List<TagNode> Parse(string[] lines)
         {
+            Diagnostics.Clear();
             var result = new List<TagNode>();
 
             for (int curRow = 0; curRow < lines.Length; curRow++)
@@ -77,7 +83,10 @@ namespace EsfParser.Parser
 
                     newTag = ParseTag(newTag, lines);
                     result.Add(newTag);
-                    curRow = newTag.EndLine;
+                    // Never move backwards: a malformed tag with no end (EndLine < 0) would
+                    // otherwise reset curRow below its start and loop forever. Guarantee the
+                    // outer for-loop's ++ always advances past this tag's start line.
+                    curRow = Math.Max(newTag.EndLine, newTag.StartLine);
                 }
 
             }
@@ -239,7 +248,9 @@ namespace EsfParser.Parser
                     continue;
                 }
 
-                throw new InvalidOperationException(
+                // §8: don't abort the whole parse on one malformed line — record a
+                // diagnostic and skip it so the rest of the program still parses.
+                Diagnostics.Add(
                     $"Unexpected line format at line {i + 1}: '{line}'. Expected attributes or content for tag '{tagNode.TagName}'.");
             }
             return tagNode;

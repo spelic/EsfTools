@@ -1,67 +1,26 @@
-﻿using EsfParser;
-using EsfParser.Analytics;
-using EsfParser.Builder;
-using EsfParser.CodeGen;
-using EsfParser.Parser;
-using EsfParser.Parser.Logic;
-using EsfParser.Parser.Logic.Statements;
-using EsfParser.Tags;
-using System;
-using System.Collections;
-using System.IO;
-using System.Reflection;
-using System.Runtime.CompilerServices;
+using EsfConsoleConverter;
 using System.Text;
 
+// ─────────────────────────────────────────────────────────────────────────────
+// EsfConsoleConverter — verb dispatcher.
+//
+//   convert <input.esf> [--out <folder>] [--namespace <ns>]   (default when no verb)
+//   prepare-latest-esf --input <folder> --output <folder> [...]
+//
+// Backward compatible: a bare ESF path with no verb still runs the converter.
+// ─────────────────────────────────────────────────────────────────────────────
 
 Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-string path = args.Length > 0 ? args[0] : "D133A-V68.esf";
+Console.OutputEncoding = Encoding.UTF8;
 
-path = "D133A-V68.esf";
-path = "IS00A-V26.esf";
-//path = "NA70A-V25.esf";
+if (args.Length > 0 && args[0] == "prepare-latest-esf")
+    return PrepareLatestCommand.Run(args[1..]);
 
-//path = "EN00AV33.esf";
+if (args.Length > 0 && args[0] == "coverage")
+    return CoverageCommand.Run(args[1..]);
 
-//path = "IN72AV71.esf";
+if (args.Length > 0 && args[0] == "convert")
+    return ConvertCommand.Run(args[1..]);
 
-path = "NR11av28.esf";
-
-
-
-if (!File.Exists(path))
-    {
-        Console.WriteLine($"File not found: {path}");
-        return;
-    }
-
-    var lines = File.ReadAllLines(path, Encoding.GetEncoding(1250));
-    Console.OutputEncoding = Encoding.UTF8;
-
-    
-    var nodes = MyEsfParser.Parse(lines);
-//your problematic ESF statements (exact lines you want to debug)
-var problemLines = $@"
-";
-
-
-if (problemLines.Trim().Length > 0)
-{
-    foreach (var item in nodes)
-    {
-        if (item.TagName == "FUNC" && item.Children[0].TagName == "BEFORE")
-        {
-            item.Attributes["NAME"][0] = "__DEBUG_ONLY__";
-            item.Children[0].Content = problemLines;
-            break;
-        }
-    }
-}
-var program = EsfProgramBuilder.GenerateEsfProgram(nodes);
-CSharpUtils.Program = program;
-string name = path.ToLower().Replace(".esf", "").Replace("-", "_").ToUpper();
-
-RoslynExporter.WriteProjectFiles(program, @"C:\Users\denis.spelic\source\repos\Test\"+name, name + "_ConsoleApp");
-
-Console.WriteLine("Done.");
-
+// No verb (or a bare filename) → convert, preserving the original CLI.
+return ConvertCommand.Run(args);

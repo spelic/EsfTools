@@ -14,7 +14,8 @@ namespace EsfParser.CodeGen;
 
 public static partial class RoslynExporter
 {
-    private static void Structured_Write(EsfProgram program, string root, string ns)
+    private static void Structured_Write(EsfProgram program, string root, string ns,
+        System.Collections.Generic.IList<string>? generationDiagnostics = null)
     {
         // folder tree
         var runtimeDir = Path.Combine(root, "EsfRuntime");
@@ -182,7 +183,33 @@ internal static class EzeeInfo
             var usedSqlNames = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
 
             foreach (var f in program.Functions.Functions)
-            {         
+            {
+                // §9: isolate per-function failures so one unsupported function
+                // doesn't abort the entire conversion.
+                try { EmitOneFunction(f, program, functionsLogicDir, functionsSqlDir, ns, subUsings); }
+                catch (Exception ex)
+                {
+                    var msg = $"Skipped function '{f.Name}' ({f.Option}): {ex.Message}";
+                    System.Console.WriteLine($"⚠️  {msg}");
+                    generationDiagnostics?.Add(msg);
+                }
+            }
+        }
+
+        System.Console.WriteLine("✅  Structured project created.");
+    }
+
+    // §4: one ESF function → one C# method file (LOGIC or SQL). Extracted from the
+    // former ~550-line Structured_Write so orchestration and per-function emission
+    // are separable.
+    private static void EmitOneFunction(
+        FuncTag f,
+        EsfProgram program,
+        string functionsLogicDir,
+        string functionsSqlDir,
+        string ns,
+        string[] subUsings)
+    {
                 if (f.Option == "EXECUTE" || f.Option == "CONVERSE")
                 {
                     // LOGIC → Functions/Logic/<FuncName>.cs
@@ -230,8 +257,7 @@ public static partial class GlobalFunctions
 
                     if (sqlRecord == null)
                     {
-                        System.Console.WriteLine($"⚠️  Warning: SQL function '{f.Name}' references record '{sqlRecordName}' which does not exist in the program.");
-                        throw new InvalidOperationException(
+                        throw new EsfTranslationException(
                             $"SQL function '{f.Name}' references record '{sqlRecordName}' which does not exist in the program.");
                     }
 
@@ -722,10 +748,6 @@ public static partial class GlobalFunctions
                         extraUsings: extraUsings,
                         appSubNamespaceUsings: subUsings);
                 }
-            }
-        }
-
-        System.Console.WriteLine("✅  Structured project created.");
     }
 
     // proxy for local call to shared helper
@@ -780,13 +802,19 @@ public static partial class GlobalFunctions
     /// Fully qualified EsfParser.Tags references are stripped by the global
     /// replacement of EsfRuntime. later in WriteMembersFile.
     /// </summary>
+    // Matches a "namespace <something>.Runtime" declaration regardless of the original
+    // root namespace, so a stale/hardcoded namespace in a helper source can't leak through.
+    private static readonly System.Text.RegularExpressions.Regex _runtimeNsRegex =
+        new(@"namespace\s+[\w.]+\.Runtime", System.Text.RegularExpressions.RegexOptions.Compiled);
+
     private static void CopyRuntimeHelperWithNamespaceRewrite(string src, string dst, string appNs)
     {
         CopyFileIfExists(src, dst, t =>
         {
             var s = t.Replace("\r\n", "\n");
-            // rewrite namespace declarations (both file-scoped and block)
-            s = s.Replace("namespace EsfParser.Runtime", $"namespace {appNs}.Runtime");
+            // rewrite namespace declarations (both file-scoped and block), robust to the
+            // original root namespace (e.g. EsfParser.Runtime or a stale generated one).
+            s = _runtimeNsRegex.Replace(s, $"namespace {appNs}.Runtime");
             // rewrite using directives for Tags
             s = s.Replace("using EsfParser.Tags;", $"using {appNs}.Maps;");
             s = s.Replace("using EsfParser.Tags", $"using {appNs}.Maps");

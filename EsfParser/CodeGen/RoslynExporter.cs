@@ -15,7 +15,8 @@ public static partial class RoslynExporter
         EsfProgram program,
         string outputFolder,
         string @namespace = "EsfConsoleApp",
-        CancellationToken cancel = default)
+        CancellationToken cancel = default,
+        System.Collections.Generic.IList<string>? generationDiagnostics = null)
     {
         if (program is null) throw new ArgumentNullException(nameof(program));
         if (string.IsNullOrWhiteSpace(outputFolder))
@@ -26,7 +27,7 @@ public static partial class RoslynExporter
         Console.WriteLine($"Root     : {Path.GetFullPath(outputFolder)}");
         Console.WriteLine();
 
-        Structured_Write(program, outputFolder, @namespace);
+        Structured_Write(program, outputFolder, @namespace, generationDiagnostics);
 
         Console.WriteLine("ℹ️  To run:");
         Console.WriteLine($"    cd \"{Path.GetFullPath(outputFolder)}\"");

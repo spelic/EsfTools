@@ -12,7 +12,51 @@ namespace EsfParser.CodeGen;
 public static class CSharpUtils
 {
     // ── One-time program context (set right after parsing) ─────────────────
-    public static EsfProgram? Program { get; set; }
+    // NOTE: this remains static for now to avoid threading the program through every
+    // translator call site. Assigning it rebuilds the O(1) symbol-lookup caches below,
+    // which replaced the previous per-operand linear scans over every record/item/map/table.
+    private static EsfProgram? _program;
+    public static EsfProgram? Program
+    {
+        get => _program;
+        set { _program = value; RebuildSymbolCaches(value); }
+    }
+
+    // ── Symbol lookup caches (clean-name keyed, case-insensitive) ──────────
+    // Rebuilt once whenever Program is assigned.
+    private static Dictionary<string, Tags.ItemTag> _itemsByName = new(StringComparer.OrdinalIgnoreCase);
+    private static Dictionary<string, Tags.RecordTag> _recordsByName = new(StringComparer.OrdinalIgnoreCase);
+    private static Dictionary<string, Tags.MapTag> _mapsByName = new(StringComparer.OrdinalIgnoreCase);
+    private static Dictionary<string, Tags.TableTag> _tablesByName = new(StringComparer.OrdinalIgnoreCase);
+    private static Dictionary<string, Tags.RecordTag> _recordByFieldName = new(StringComparer.OrdinalIgnoreCase);
+
+    private static void RebuildSymbolCaches(EsfProgram? p)
+    {
+        var cmp = StringComparer.OrdinalIgnoreCase;
+        _itemsByName = new(cmp);
+        _recordsByName = new(cmp);
+        _mapsByName = new(cmp);
+        _tablesByName = new(cmp);
+        _recordByFieldName = new(cmp);
+        if (p == null) return;
+
+        foreach (var i in p.Items.Items)
+            _itemsByName.TryAdd(CleanName(i.Name), i);          // first wins, mirrors FirstOrDefault
+
+        foreach (var r in p.Records.Records)
+        {
+            _recordsByName.TryAdd(CleanName(r.Name), r);
+            if (r.Items == null) continue;
+            foreach (var it in r.Items)
+                _recordByFieldName.TryAdd(CleanName(it.Name), r);
+        }
+
+        foreach (var m in p.Maps.Maps)
+            _mapsByName.TryAdd(CleanName(m.MapName), m);
+
+        foreach (var t in p.Tables.Tables)
+            _tablesByName.TryAdd(CleanName(t.Name), t);
+    }
 
     // ── Global holder prefixes ────────────────────────────────────────────
     private const string WORK_PREFIX = "GlobalWorkstor.";
@@ -133,10 +177,10 @@ public static class CSharpUtils
 
     private static string RecordOrg(string name, EsfProgram? p)
     {
-        var rec = p?.Records.Records
-                     .FirstOrDefault(r => CleanName(r.Name)
-                         .Equals(name, StringComparison.OrdinalIgnoreCase));
-        return rec?.Org.ToUpperInvariant() ?? string.Empty;
+        // null-safe: a record may exist with a null Org (previously threw NRE).
+        return _recordsByName.TryGetValue(name, out var rec)
+                   ? (rec.Org?.ToUpperInvariant() ?? string.Empty)
+                   : string.Empty;
     }
 
     // ── Qualify helper ────────────────────────────────────────────────────
@@ -176,74 +220,51 @@ public static class CSharpUtils
     // ── Record-field shortcut for array indices ───────────────────────────
     private static string? TryRecordField(string basePath, string rawIdx, EsfProgram? p)
     {
-        if (p == null) return null;
-
         // If basePath contains a field (REC.FIELD), the 'recordName' is still the leftmost token.
         string recordName = CleanName(basePath.Split('.')[0]);  // e.g. "REC" from "REC.FIELD"
-        var rec = p.Records.Records
-                    .FirstOrDefault(r => CleanName(r.Name)
-                        .Equals(recordName, StringComparison.OrdinalIgnoreCase));
-        if (rec == null) return null;
+        if (!_recordsByName.TryGetValue(recordName, out var rec)) return null;
 
         string fieldName = CleanName(rawIdx);
 
         // check if field is in basePath record
-        if (fieldName.IndexOf(".")<0 && rec.Items.FirstOrDefault(t => t.Name == fieldName) == null)
+        if (fieldName.IndexOf(".") < 0 && rec.Items.FirstOrDefault(t => t.Name == fieldName) == null)
         {
             // find the right basePath
             var (found, recName) = IsRecordProperty(fieldName, p);
             if (found)
             {
                 recordName = recName;
-                rec = p.Records.Records
-                    .FirstOrDefault(r => CleanName(recName)
-                        .Equals(recordName, StringComparison.OrdinalIgnoreCase));
+                _recordsByName.TryGetValue(CleanName(recName), out rec);
             }
             else
             {
-                throw new Exception($"Field '{fieldName}' not found in record '{recordName}' or any other record.");
+                throw new EsfTranslationException(
+                    $"Field '{fieldName}' not found in record '{recordName}' or any other record.");
             }
         }
-        string prefix = rec.Org.Equals("SQLROW", StringComparison.OrdinalIgnoreCase)
+
+        string prefix = string.Equals(rec?.Org, "SQLROW", StringComparison.OrdinalIgnoreCase)
                             ? SQL_PREFIX
                             : WORK_PREFIX;
-        if (fieldName.IndexOf(".")>0)
+        if (fieldName.IndexOf(".") > 0)
         {
             string fieldbase = CleanName(basePath.Split('.')[0]);
             if (fieldbase == recordName)
                 return $"{prefix}{fieldName}";
         }
-            // NOTE: If you have a definitive field list per record, validate fieldName here.
-            return $"{prefix}{recordName}.{fieldName}";
+        // NOTE: If you have a definitive field list per record, validate fieldName here.
+        return $"{prefix}{recordName}.{fieldName}";
     }
 
-    // ── Null-safe look-ups ────────────────────────────────────────────────
-    private static bool IsItem(string n, EsfProgram? p) =>
-        p?.Items.Items.Any(i => CleanName(i.Name).Equals(n, StringComparison.OrdinalIgnoreCase)) == true;
+    // ── Cache-backed look-ups (O(1), case-insensitive on clean names) ──────
+    private static bool IsItem(string n, EsfProgram? p) => _itemsByName.ContainsKey(n);
 
-    private static bool IsRecord(string n, EsfProgram? p) =>
-        p?.Records.Records.Any(r => CleanName(r.Name).Equals(n, StringComparison.OrdinalIgnoreCase)) == true;
+    private static bool IsRecord(string n, EsfProgram? p) => _recordsByName.ContainsKey(n);
 
-    private static (bool, string) IsRecordProperty(string n, EsfProgram? p)
-    {
-        if (p == null) return (false, string.Empty);
+    private static (bool, string) IsRecordProperty(string n, EsfProgram? p) =>
+        _recordByFieldName.TryGetValue(n, out var rec) ? (true, rec.Name) : (false, string.Empty);
 
-        foreach (var rec in p.Records.Records)
-        {
-            if (rec.Items == null) continue;
-            // Check if any item in the record matches the cleaned name
-            // Use CleanName to normalize the comparison
-            var found = rec.Items.FirstOrDefault(i => CleanName(i.Name).Equals(n, StringComparison.OrdinalIgnoreCase));
-            if (found != null)
-                return (true, rec.Name);
-        }
+    private static bool IsMap(string n, EsfProgram? p) => _mapsByName.ContainsKey(n);
 
-        return (false, string.Empty);
-    }
-
-    private static bool IsMap(string n, EsfProgram? p) =>
-        p?.Maps.Maps.Any(m => CleanName(m.MapName).Equals(n, StringComparison.OrdinalIgnoreCase)) == true;
-
-    private static bool IsTable(string n, EsfProgram? p) =>
-        p?.Tables.Tables.Any(t => CleanName(t.Name).Equals(n, StringComparison.OrdinalIgnoreCase)) == true;
+    private static bool IsTable(string n, EsfProgram? p) => _tablesByName.ContainsKey(n);
 }
